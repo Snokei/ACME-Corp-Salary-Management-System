@@ -194,6 +194,32 @@ export const ROLES = [
   "Legal Counsel",
 ] as const;
 
+export const COUNTRIES = [
+  "United States",
+  "United Kingdom",
+  "Canada",
+  "Australia",
+  "Germany",
+  "France",
+  "India",
+  "Singapore",
+  "Japan",
+  "Brazil",
+] as const;
+
+export const CITIES_BY_COUNTRY: Record<string, string[]> = {
+  "United States": ["New York", "San Francisco", "Austin", "Chicago", "Seattle"],
+  "United Kingdom": ["London", "Manchester", "Birmingham", "Edinburgh", "Glasgow"],
+  "Canada": ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa"],
+  "Australia": ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"],
+  "Germany": ["Berlin", "Munich", "Frankfurt", "Hamburg", "Stuttgart"],
+  "France": ["Paris", "Lyon", "Marseille", "Toulouse", "Nice"],
+  "India": ["Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Pune"],
+  "Singapore": ["Downtown Core", "Jurong East", "Tampines", "Woodlands", "Changi"],
+  "Japan": ["Tokyo", "Osaka", "Kyoto", "Yokohama", "Sapporo"],
+  "Brazil": ["São Paulo", "Rio de Janeiro", "Brasília", "Salvador", "Belo Horizonte"],
+};
+
 export const INITIAL_EMPLOYEE_FORM = {
   firstName: "",
   lastName: "",

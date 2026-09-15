@@ -39,7 +39,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
 
   // Fetch unique options for dropdowns
   const uniqueRolesPromise = prisma.employee.findMany({ select: { role: true }, distinct: ['role'] });
-  const uniqueLocationsPromise = prisma.employee.findMany({ select: { city: true }, distinct: ['city'] });
+  const uniqueLocationsPromise = prisma.employee.findMany({ select: { country: true }, distinct: ['country'] });
 
   const [data, uniqueRolesResult, uniqueLocationsResult] = await Promise.all([
     dataPromise,
@@ -48,7 +48,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   ]);
 
   const uniqueRoles = ['All', ...uniqueRolesResult.map(r => r.role).filter(Boolean).sort()];
-  const uniqueLocations = ['All', ...uniqueLocationsResult.map(l => l.city).filter(Boolean).sort()];
+  const uniqueLocations = ['All', ...uniqueLocationsResult.map(l => l.country).filter(Boolean).sort()];
 
   return (
     <Suspense

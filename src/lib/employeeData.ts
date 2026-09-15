@@ -238,7 +238,7 @@ export async function getEmployeesData(
   }
 
   if (params.location && params.location !== 'All') {
-    whereClause.city = params.location;
+    whereClause.country = params.location;
   }
 
   if (params.tab && params.tab !== 'All') {

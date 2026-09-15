@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Button, Input, Select } from '@/components/ui';
 import { Plus } from 'lucide-react';
-import { DEPARTMENTS, PAY_GRADES, INITIAL_EMPLOYEE_FORM, ROLES } from '@/constants';
+import { DEPARTMENTS, PAY_GRADES, INITIAL_EMPLOYEE_FORM, ROLES, COUNTRIES, CITIES_BY_COUNTRY } from '@/constants';
 import { createEmployeeAction, updateEmployeeAction } from '@/actions/employees';
 import { Employee } from '@/types';
 
@@ -177,18 +177,37 @@ export function AddEmployeeModal({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Input
+          <Select
+            label="Country"
+            value={formData.country}
+            onChange={(e) => {
+              const newCountry = e.target.value;
+              const newCities = CITIES_BY_COUNTRY[newCountry] || [];
+              setFormData({ 
+                ...formData, 
+                country: newCountry,
+                city: newCities.length > 0 ? newCities[0] : "" // Auto-select first city when country changes
+              });
+            }}
+          >
+            {COUNTRIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Select>
+          <Select
             label="City"
             value={formData.city}
             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            placeholder="San Francisco"
-          />
-          <Input
-            label="Country"
-            value={formData.country}
-            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-            placeholder="United States"
-          />
+            disabled={!CITIES_BY_COUNTRY[formData.country]}
+          >
+            {(CITIES_BY_COUNTRY[formData.country] || []).map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </Select>
         </div>
 
         <div className="flex justify-end gap-2 pt-3">
