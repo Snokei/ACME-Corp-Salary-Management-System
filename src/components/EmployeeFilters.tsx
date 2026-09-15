@@ -4,7 +4,7 @@ import React from 'react';
 import { Button, Input, Select, SearchableSelect } from '@/components/ui';
 import { Search, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
   EMPLOYEE_STATUS_TABS,
   EmployeeStatusTab,
@@ -43,6 +43,12 @@ export function EmployeeFilters({
     location !== 'All'
   );
 
+  const [searchValue, setSearchValue] = useState(search);
+
+  useEffect(() => {
+    setSearchValue(search);
+  }, [search]);
+
   return (
     <form
       ref={formRef}
@@ -54,7 +60,8 @@ export function EmployeeFilters({
         <Input
           name="search"
           shape="pill"
-          defaultValue={search}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Search by name, role, email..."
           leftIcon={<Search className="w-4 h-4 text-stone-400" />}
           containerClassName="w-full"

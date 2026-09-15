@@ -2,12 +2,17 @@
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CURRENT_USER, NAV_ITEMS } from "@/constants";
-import { Bell } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logoutAction } from "@/actions/auth";
 
 export function HeaderNav() {
   const pathname = usePathname();
+
+  if (pathname === '/login') {
+    return null;
+  }
 
   return (
     <header className="w-full flex items-center justify-between gap-4 py-3 px-2">
@@ -55,16 +60,35 @@ export function HeaderNav() {
 
         <ThemeToggle />
 
-        {/* User Avatar Pill */}
-        <div className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm cursor-pointer hover:border-amber-400/50 transition-colors">
-          <img
-            src={CURRENT_USER.avatar}
-            alt={CURRENT_USER.name}
-            className="w-6 h-6 rounded-full object-cover ring-1 ring-amber-400/30"
-          />
-          <span className="text-xs font-medium text-stone-800 dark:text-stone-200">
-            {CURRENT_USER.name}
-          </span>
+        {/* User Avatar Pill with Hover Dropdown */}
+        <div className="relative group">
+          <div className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm cursor-pointer hover:border-amber-400/50 transition-colors">
+            <img
+              src={CURRENT_USER.avatar}
+              alt={CURRENT_USER.name}
+              className="w-6 h-6 rounded-full object-cover ring-1 ring-amber-400/30"
+            />
+            <span className="text-xs font-medium text-stone-800 dark:text-stone-200">
+              {CURRENT_USER.name}
+            </span>
+          </div>
+
+          {/* Dropdown Menu */}
+          <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border border-stone-200/50 dark:border-stone-800/50 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 translate-y-2 group-hover:translate-y-0 z-50">
+            <div className="p-1">
+              <button className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100/80 dark:hover:bg-stone-800/80 rounded-xl transition-colors">
+                <User className="w-4 h-4" />
+                Profile Settings
+              </button>
+              <div className="h-px w-full bg-stone-200/50 dark:bg-stone-800/50 my-1"></div>
+              <form action={logoutAction} className="w-full">
+                <button type="submit" className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors">
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </header>
