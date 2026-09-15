@@ -1,47 +1,44 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { Bell, Search } from 'lucide-react';
-import { NAV_ITEMS, CURRENT_USER, NavTabId } from '@/constants';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { CURRENT_USER, NAV_ITEMS } from "@/constants";
+import { Bell, Search } from "lucide-react";
 
-interface HeaderNavProps {
-  activeTab: NavTabId;
-  setActiveTab: (tab: NavTabId) => void;
-  onAddEmployee?: () => void;
-}
+export function HeaderNav() {
+  const pathname = usePathname();
 
-export function HeaderNav({
-  activeTab,
-  setActiveTab,
-  onAddEmployee,
-}: HeaderNavProps) {
   return (
     <header className="w-full flex items-center justify-between gap-4 py-3 px-2">
       {/* Brand Logo */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-semibold tracking-tight text-sm shadow-sm">
+      <Link href="/" className="flex items-center gap-3 group">
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-semibold tracking-tight text-sm shadow-sm group-hover:opacity-90 transition-opacity">
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          <span>Craftio</span>
+          <span>ACME Salary Management System</span>
         </div>
-      </div>
+      </Link>
 
       {/* Center Floating Pill Navigation */}
       <nav className="flex items-center gap-1.5 p-1.5 rounded-full bg-white/70 dark:bg-stone-900/80 backdrop-blur-md border border-stone-200/70 dark:border-stone-800 shadow-sm transition-all">
         {NAV_ITEMS.map((item) => {
-          const isActive = activeTab === item.id;
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(item.href);
+
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              href={item.href}
               className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-semibold'
-                  : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100/60 dark:hover:bg-stone-800/60'
+                  ? "bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-semibold"
+                  : "text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100/60 dark:hover:bg-stone-800/60"
               }`}
             >
               {item.label}
-            </button>
+            </Link>
           );
         })}
       </nav>
@@ -85,3 +82,4 @@ export function HeaderNav({
     </header>
   );
 }
+

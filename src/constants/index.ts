@@ -10,21 +10,22 @@ export type NavTabId =
 export interface NavItem {
   id: NavTabId;
   label: string;
+  href: string;
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'people', label: 'People' },
+  { id: 'dashboard', label: 'Dashboard', href: '/' },
+  { id: 'people', label: 'People', href: '/people' },
 ];
 
 export const ALL_NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'people', label: 'People' },
-  { id: 'salary', label: 'Salary' },
-  { id: 'reviews', label: 'Reviews' },
-  { id: 'leaves', label: 'Leaves' },
-  { id: 'payroll', label: 'Payroll' },
-  { id: 'settings', label: 'Settings' },
+  { id: 'dashboard', label: 'Dashboard', href: '/' },
+  { id: 'people', label: 'People', href: '/people' },
+  { id: 'salary', label: 'Salary', href: '/people?tab=salary' },
+  { id: 'reviews', label: 'Reviews', href: '/people?tab=reviews' },
+  { id: 'leaves', label: 'Leaves', href: '/people?tab=leaves' },
+  { id: 'payroll', label: 'Payroll', href: '/people?tab=payroll' },
+  { id: 'settings', label: 'Settings', href: '/settings' },
 ];
 
 export const CURRENT_USER = {

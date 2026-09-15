@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Employee } from '@/types';
 import {
   Search,
@@ -34,11 +35,20 @@ interface EmployeesViewProps {
 }
 
 export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
+  const searchParams = useSearchParams();
+  const initialTabParam = searchParams.get('tab');
+  const initialDeptParam = searchParams.get('department');
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [selectedTab, setSelectedTab] = useState<EmployeeStatusTab>('Active');
-  const [departmentFilter, setDepartmentFilter] = useState('All');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [selectedTab, setSelectedTab] = useState<EmployeeStatusTab>(() => {
+    if (initialTabParam && (EMPLOYEE_STATUS_TABS as readonly string[]).includes(initialTabParam)) {
+      return initialTabParam as EmployeeStatusTab;
+    }
+    return 'Active';
+  });
+  const [departmentFilter, setDepartmentFilter] = useState(initialDeptParam || 'All');
   const [selectedRowId, setSelectedRowId] = useState<string>('2'); // Default selected row highlighted in yellow as in screenshot
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set(['2']));
   const [page, setPage] = useState(1);

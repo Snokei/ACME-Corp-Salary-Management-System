@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -30,7 +31,7 @@ import {
 } from '@/constants';
 
 interface DashboardViewProps {
-  onNavigateToPeople: () => void;
+  onNavigateToPeople?: () => void;
 }
 
 export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
@@ -211,12 +212,13 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
           <div className="bg-white/90 dark:bg-stone-900/90 rounded-3xl p-5 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-sm space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-stone-900 dark:text-white">Salary</h2>
-              <button
+              <Link
+                href="/people"
                 onClick={onNavigateToPeople}
                 className="text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline flex items-center gap-1"
               >
                 Manage all <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              </Link>
             </div>
 
             <div className="divide-y divide-stone-100 dark:divide-stone-800/80">
