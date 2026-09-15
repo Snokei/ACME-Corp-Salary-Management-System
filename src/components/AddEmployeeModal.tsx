@@ -1,21 +1,54 @@
 import React, { useState } from 'react';
 import { Modal, Button, Input, Select } from '@/components/ui';
 import { Plus } from 'lucide-react';
-import { DEPARTMENTS, PAY_GRADES, INITIAL_EMPLOYEE_FORM } from '@/constants';
-import { createEmployeeAction } from '@/actions/employees';
+import { DEPARTMENTS, PAY_GRADES, INITIAL_EMPLOYEE_FORM, ROLES } from '@/constants';
+import { createEmployeeAction, updateEmployeeAction } from '@/actions/employees';
+import { Employee } from '@/types';
 
 export interface AddEmployeeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialData?: Employee | null;
 }
 
 export function AddEmployeeModal({
   isOpen,
   onClose,
   onSuccess,
+  initialData,
 }: AddEmployeeModalProps) {
-  const [formData, setFormData] = useState(INITIAL_EMPLOYEE_FORM);
+  const [formData, setFormData] = useState(initialData ? {
+    firstName: initialData.firstName,
+    lastName: initialData.lastName,
+    email: initialData.email,
+    department: initialData.department,
+    role: initialData.role,
+    country: initialData.country,
+    city: initialData.city,
+    baseSalary: initialData.baseSalary?.toString() || "",
+    payGrade: initialData.payGrade || "L4",
+  } : INITIAL_EMPLOYEE_FORM);
+
+  // Update form data when initialData changes (e.g. when opening modal for a different employee)
+  React.useEffect(() => {
+    if (initialData) {
+      setFormData({
+        firstName: initialData.firstName,
+        lastName: initialData.lastName,
+        email: initialData.email,
+        department: initialData.department,
+        role: initialData.role,
+        country: initialData.country,
+        city: initialData.city,
+        baseSalary: initialData.baseSalary?.toString() || "",
+        payGrade: initialData.payGrade || "L4",
+      });
+    } else {
+      setFormData(INITIAL_EMPLOYEE_FORM);
+    }
+  }, [initialData, isOpen]);
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,18 +58,25 @@ export function AddEmployeeModal({
     setError(null);
 
     try {
-      const res = await createEmployeeAction(formData);
-
-      if (!res.success) {
-        throw new Error(res.error || 'Failed to add employee');
+      let res;
+      if (initialData) {
+        res = await updateEmployeeAction(initialData.id, formData);
+      } else {
+        res = await createEmployeeAction(formData);
       }
 
-      setFormData(INITIAL_EMPLOYEE_FORM);
+      if (!res.success) {
+        throw new Error(res.error || `Failed to ${initialData ? 'update' : 'add'} employee`);
+      }
+
+      if (!initialData) {
+        setFormData(INITIAL_EMPLOYEE_FORM);
+      }
       onClose();
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      console.error('Error adding employee:', err);
-      setError(err?.message || 'Failed to create employee record. Please try again.');
+      console.error(`Error ${initialData ? 'updating' : 'adding'} employee:`, err);
+      setError(err?.message || `Failed to ${initialData ? 'update' : 'create'} employee record. Please try again.`);
     } finally {
       setSubmitting(false);
     }
@@ -49,7 +89,7 @@ export function AddEmployeeModal({
       title={
         <div className="flex items-center gap-2">
           <Plus className="w-5 h-5 text-amber-500" />
-          <span>Add New Employee</span>
+          <span>{initialData ? 'Edit Employee' : 'Add New Employee'}</span>
         </div>
       }
       maxWidth="lg"
@@ -100,13 +140,17 @@ export function AddEmployeeModal({
             ))}
           </Select>
 
-          <Input
+          <Select
             label="Role / Title"
-            required
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            placeholder="Software Engineer"
-          />
+          >
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </Select>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -159,12 +203,12 @@ export function AddEmployeeModal({
           </Button>
           <Button
             type="submit"
-            variant="amber"
+            variant="primary"
             shape="pill"
             disabled={submitting}
-            leftIcon={submitting ? undefined : <Plus className="w-4 h-4" />}
+            isLoading={submitting}
           >
-            {submitting ? 'Saving...' : 'Save Employee'}
+            {initialData ? 'Update Employee' : 'Add Employee'}
           </Button>
         </div>
       </form>

@@ -55,8 +55,7 @@ export function EmployeesView({
 
   // Client-only UI States (Modals, Selection and Row Highlight)
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
-  const [activeEmployeeModal, setActiveEmployeeModal] = useState<Employee | null>(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [modalState, setModalState] = useState<{ type: 'add' | 'edit' | 'view' | null; employee: Employee | null }>({ type: null, employee: null });
   const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredEmployees = employees;
@@ -87,9 +86,10 @@ export function EmployeesView({
     setCheckedIds(next);
   };
 
-  const handleViewDetails = (emp: Employee, e: React.MouseEvent) => {
+  const handleViewDetails = (employee: Employee, e: React.MouseEvent) => {
     e.stopPropagation();
-    setActiveEmployeeModal(emp);
+    // Instead of opening EmployeeDetailModal on Edit, open AddEmployeeModal in edit mode
+    setModalState({ type: 'edit', employee });
   };
 
   // CSV Export handlers
@@ -164,11 +164,10 @@ export function EmployeesView({
           {checkedIds.size > 0 ? `Export Selected (${checkedIds.size})` : 'Export CSV'}
         </Button>
         <Button
-          variant="amber"
-          size="sm"
+          variant="primary"
           shape="pill"
-          leftIcon={<Plus className="w-3.5 h-3.5" />}
-          onClick={() => setIsAddModalOpen(true)}
+          leftIcon={<Plus className="w-4 h-4" />}
+          onClick={() => setModalState({ type: 'add', employee: null })}
         >
           Add Employee
         </Button>
@@ -250,15 +249,17 @@ export function EmployeesView({
 
       {/* Employee Detail Modal */}
       <EmployeeDetailModal
-        employee={activeEmployeeModal}
-        onClose={() => setActiveEmployeeModal(null)}
+        employee={modalState.type === 'view' ? modalState.employee : null}
+        onClose={() => setModalState({ type: null, employee: null })}
       />
 
       {/* Add Employee Modal */}
       <AddEmployeeModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        isOpen={modalState.type === 'add' || modalState.type === 'edit'}
+        onClose={() => setModalState({ type: null, employee: null })}
+        initialData={modalState.type === 'edit' ? modalState.employee : null}
         onSuccess={() => {
+          toast.success(`Employee ${modalState.type === 'edit' ? 'updated' : 'added'} successfully!`);
           router.refresh();
         }}
       />

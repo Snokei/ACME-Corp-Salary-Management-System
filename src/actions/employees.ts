@@ -101,6 +101,55 @@ export async function createEmployeeAction(data: {
 }
 
 /**
+ * Server Action to update an existing employee and revalidate people pages.
+ */
+export async function updateEmployeeAction(id: string, data: {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  department?: string;
+  role?: string;
+  country?: string;
+  city?: string;
+  currency?: string;
+  baseSalary?: number | string;
+  baseSalaryUSD?: number | string;
+  bonusUSD?: number | string;
+  payGrade?: string;
+  gender?: string;
+  status?: string;
+}) {
+  try {
+    const updateData: any = { ...data };
+    
+    if (data.baseSalary !== undefined) {
+      updateData.baseSalary = typeof data.baseSalary === 'string' ? parseFloat(data.baseSalary) || 0 : data.baseSalary;
+    }
+    
+    if (data.baseSalaryUSD !== undefined) {
+      updateData.baseSalaryUSD = typeof data.baseSalaryUSD === 'string' ? parseFloat(data.baseSalaryUSD) || updateData.baseSalary : data.baseSalaryUSD;
+    }
+
+    if (data.bonusUSD !== undefined) {
+      updateData.bonusUSD = typeof data.bonusUSD === 'string' ? parseFloat(data.bonusUSD) || 0 : data.bonusUSD;
+    }
+
+    const updatedEmployee = await prisma.employee.update({
+      where: { id },
+      data: updateData,
+    });
+
+    revalidatePath('/people');
+    revalidatePath('/');
+
+    return { success: true, employee: updatedEmployee };
+  } catch (error: any) {
+    console.error('Server action updateEmployeeAction failed:', error);
+    return { success: false, error: error.message || 'Failed to update employee' };
+  }
+}
+
+/**
  * Server Action to delete one or multiple employees by ID.
  */
 export async function deleteEmployeesAction(ids: string[]) {

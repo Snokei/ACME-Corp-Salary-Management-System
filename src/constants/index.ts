@@ -179,6 +179,21 @@ export const DEPARTMENTS = [
 
 export const PAY_GRADES = ["L1", "L2", "L3", "L4", "L5", "L6", "L7"] as const;
 
+export const ROLES = [
+  "Software Engineer",
+  "Frontend Developer",
+  "Backend Developer",
+  "Product Manager",
+  "Product Designer",
+  "Data Scientist",
+  "DevOps Engineer",
+  "HR Manager",
+  "Sales Representative",
+  "Marketing Specialist",
+  "Accountant",
+  "Legal Counsel",
+] as const;
+
 export const INITIAL_EMPLOYEE_FORM = {
   firstName: "",
   lastName: "",
