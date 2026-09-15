@@ -1,11 +1,31 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { Employee } from '@/types';
 import { Drawer, Button } from '@/components/ui';
+import { SalaryAdjustmentModal } from '@/components/SalaryAdjustmentModal';
+import { getSalaryHistoryAction } from '@/actions/salaryAdjustments';
+import { Plus, History, DollarSign, Tag, Calendar, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export interface EmployeeDetailDrawerProps {
   employee: Employee | null;
   onClose: () => void;
   onEdit?: (employee: Employee) => void;
+  onEmployeeUpdated?: (updatedEmployee: Employee) => void;
+}
+
+export interface SalaryHistoryItem {
+  id: string;
+  employeeId: string;
+  amount: number;
+  currency: string;
+  amountUSD: number;
+  effectiveDate: string | Date;
+  reason: string;
+  notes?: string | null;
+  createdBy?: string | null;
+  createdAt: string | Date;
 }
 
 const VERIFIED_AVATAR_SEEDS = [
@@ -41,127 +61,292 @@ export function EmployeeDetailDrawer({
   employee,
   onClose,
   onEdit,
+  onEmployeeUpdated,
 }: EmployeeDetailDrawerProps) {
-  if (!employee) return null;
+  const router = useRouter();
+  const [currentEmp, setCurrentEmp] = useState<Employee | null>(employee);
+  const [salaryHistory, setSalaryHistory] = useState<SalaryHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState<boolean>(false);
 
-  const avatar = getEmployeeAvatar(employee);
+  useEffect(() => {
+    setCurrentEmp(employee);
+  }, [employee]);
+
+  // Fetch salary history whenever the active employee changes
+  useEffect(() => {
+    if (currentEmp?.id) {
+      setLoadingHistory(true);
+      getSalaryHistoryAction(currentEmp.id)
+        .then((res) => {
+          if (res.success && res.history) {
+            setSalaryHistory(res.history as SalaryHistoryItem[]);
+          } else {
+            setSalaryHistory([]);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load salary history:', err);
+          setSalaryHistory([]);
+        })
+        .finally(() => setLoadingHistory(false));
+    }
+  }, [currentEmp?.id]);
+
+  if (!currentEmp) return null;
+
+  const avatar = getEmployeeAvatar(currentEmp);
   const fallbackAvatar = `https://ui-avatars.com/api/?background=f5c242&color=18181b&bold=true&name=${encodeURIComponent(
-    employee.firstName + ' ' + employee.lastName
+    currentEmp.firstName + ' ' + currentEmp.lastName
   )}`;
 
+  const currentSalaryAmount = currentEmp.baseSalaryUSD ?? currentEmp.baseSalary ?? 0;
+
+  const handleAdjustmentSuccess = async () => {
+    // Re-fetch history
+    if (currentEmp.id) {
+      setLoadingHistory(true);
+      try {
+        const res = await getSalaryHistoryAction(currentEmp.id);
+        if (res.success && res.history && res.history.length > 0) {
+          setSalaryHistory(res.history as SalaryHistoryItem[]);
+          const latest = res.history[0];
+          const updated = {
+            ...currentEmp,
+            baseSalary: latest.amount,
+            baseSalaryUSD: latest.amountUSD || latest.amount,
+          };
+          setCurrentEmp(updated);
+          if (onEmployeeUpdated) {
+            onEmployeeUpdated(updated);
+          }
+        }
+      } catch (err) {
+        console.error('Error refreshing salary history:', err);
+      } finally {
+        setLoadingHistory(false);
+      }
+    }
+    router.refresh();
+  };
+
   return (
-    <Drawer isOpen={Boolean(employee)} onClose={onClose} title="Employee Profile">
-      <div className="space-y-6">
-        {/* Header Profile */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={avatar}
-              alt={`${employee.firstName} ${employee.lastName}`}
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src !== fallbackAvatar) {
-                  target.src = fallbackAvatar;
-                }
-              }}
-              className="w-14 h-14 rounded-2xl object-cover ring-2 ring-amber-400 shrink-0 bg-stone-100 dark:bg-stone-800"
-            />
-            <div>
-              <h3 className="text-lg font-bold text-stone-900 dark:text-white">
-                {employee.firstName} {employee.lastName}
-              </h3>
-              <p className="text-xs text-stone-500 dark:text-stone-400">
-                {employee.role} &bull; {employee.email}
-              </p>
+    <>
+      <Drawer isOpen={Boolean(employee)} onClose={onClose} title="Employee Profile">
+        <div className="space-y-6">
+          {/* Header Profile */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <img
+                src={avatar}
+                alt={`${currentEmp.firstName} ${currentEmp.lastName}`}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== fallbackAvatar) {
+                    target.src = fallbackAvatar;
+                  }
+                }}
+                className="w-14 h-14 rounded-2xl object-cover ring-2 ring-amber-400 shrink-0 bg-stone-100 dark:bg-stone-800"
+              />
+              <div>
+                <h3 className="text-lg font-bold text-stone-900 dark:text-white">
+                  {currentEmp.firstName} {currentEmp.lastName}
+                </h3>
+                <p className="text-xs text-stone-500 dark:text-stone-400">
+                  {currentEmp.role} &bull; {currentEmp.email}
+                </p>
+                <p className="text-[11px] text-stone-400 font-mono mt-0.5">
+                  ID: {currentEmp.employeeId}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-3 py-2 text-xs">
-          <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
-            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Status
-            </span>
-            <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              <span className={`inline-flex items-center gap-1.5 ${employee.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-600 dark:text-stone-400'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${employee.status === 'Active' ? 'bg-emerald-500' : 'bg-stone-400'}`}></span>
-                {employee.status || 'Active'}
+          {/* Details Grid */}
+          <div className="grid grid-cols-2 gap-3 py-1 text-xs">
+            <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
+              <span className="text-stone-400 block text-[10px] uppercase font-semibold">
+                Status
               </span>
-            </span>
+              <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
+                <span
+                  className={`inline-flex items-center gap-1.5 ${
+                    currentEmp.status === 'Active'
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-stone-600 dark:text-stone-400'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      currentEmp.status === 'Active' ? 'bg-emerald-500' : 'bg-stone-400'
+                    }`}
+                  ></span>
+                  {currentEmp.status || 'Active'}
+                </span>
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
+              <span className="text-stone-400 block text-[10px] uppercase font-semibold">
+                Hire Date
+              </span>
+              <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
+                {currentEmp.hireDate
+                  ? new Date(currentEmp.hireDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  : 'N/A'}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
+              <span className="text-stone-400 block text-[10px] uppercase font-semibold">
+                Department
+              </span>
+              <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
+                {currentEmp.department}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
+              <span className="text-stone-400 block text-[10px] uppercase font-semibold">
+                Pay Grade
+              </span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400 mt-0.5 block">
+                {currentEmp.payGrade || 'L5 Senior'}
+              </span>
+            </div>
+
+            <div className="col-span-2 p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
+              <span className="text-stone-400 block text-[10px] uppercase font-semibold">
+                Location
+              </span>
+              <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
+                {currentEmp.city ? `${currentEmp.city}, ${currentEmp.country}` : currentEmp.country}
+              </span>
+            </div>
           </div>
 
-          <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
-            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Hire Date
-            </span>
-            <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              {employee.hireDate ? new Date(employee.hireDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
-            </span>
+          {/* Current Compensation Section */}
+          <div className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider block">
+                  Current Compensation
+                </span>
+                <span className="text-xl font-extrabold text-stone-900 dark:text-white mt-0.5 block">
+                  ${currentSalaryAmount.toLocaleString('en-US')}{' '}
+                  <span className="text-xs font-normal text-stone-500 dark:text-stone-400">
+                    {currentEmp.currency || 'USD'} / yr
+                  </span>
+                </span>
+              </div>
+              <Button
+                variant="amber"
+                size="sm"
+                shape="pill"
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
+                onClick={() => setIsAdjustmentModalOpen(true)}
+              >
+                + Add Salary Adjustment
+              </Button>
+            </div>
+
+            {currentEmp.bonusUSD ? (
+              <div className="pt-2 border-t border-amber-500/20 flex items-center justify-between text-xs">
+                <span className="text-stone-600 dark:text-stone-300 font-medium">Target Annual Bonus:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-100">
+                  ${currentEmp.bonusUSD.toLocaleString('en-US')} USD
+                </span>
+              </div>
+            ) : null}
           </div>
 
-          <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
-            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Department
-            </span>
-            <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              {employee.department}
-            </span>
+          {/* Salary History Section */}
+          <div className="space-y-3 pt-1">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-stone-900 dark:text-white">
+                <History className="w-4 h-4 text-amber-500" />
+                <span>Salary History</span>
+              </div>
+              <span className="text-[10px] text-stone-400">Ordered by date (desc)</span>
+            </div>
+
+            {loadingHistory ? (
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/40 text-center text-xs text-stone-400 animate-pulse">
+                Loading salary history...
+              </div>
+            ) : salaryHistory.length === 0 ? (
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/40 border border-dashed border-stone-200 dark:border-stone-800 text-center text-xs text-stone-400">
+                No previous salary adjustments recorded yet.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {salaryHistory.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800 hover:border-amber-500/40 transition-colors text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between font-medium">
+                      <span className="font-bold text-stone-900 dark:text-white text-sm">
+                        ${item.amount.toLocaleString('en-US')} {item.currency || 'USD'}
+                      </span>
+                      <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full text-[10px]">
+                        <Tag className="w-2.5 h-2.5" />
+                        {item.reason}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-stone-400" />
+                        {new Date(item.effectiveDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                      {item.createdBy && <span className="text-[10px]">By {item.createdBy}</span>}
+                    </div>
+
+                    {item.notes && (
+                      <p className="text-[11px] text-stone-600 dark:text-stone-300 italic pt-0.5">
+                        &quot;{item.notes}&quot;
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
-            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Pay Grade
-            </span>
-            <span className="font-semibold text-amber-600 dark:text-amber-400 mt-0.5 block">
-              {employee.payGrade || 'L5 Senior'}
-            </span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
-            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Base Salary
-            </span>
-            <span className="font-bold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              ${(employee.baseSalaryUSD ?? employee.baseSalary ?? 0).toLocaleString('en-US')} USD
-            </span>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
-            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Target Bonus
-            </span>
-            <span className="font-bold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              ${(employee.bonusUSD ?? 0).toLocaleString('en-US')} USD
-            </span>
-          </div>
-
-          <div className="col-span-2 p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
-            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Location
-            </span>
-            <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              {employee.city ? `${employee.city}, ${employee.country}` : employee.country}
-            </span>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-800">
+            <Button variant="outline" shape="pill" onClick={onClose}>
+              Close
+            </Button>
+            <Button
+              variant="amber"
+              shape="pill"
+              onClick={() => {
+                if (onEdit && currentEmp) onEdit(currentEmp);
+              }}
+            >
+              Edit Details
+            </Button>
           </div>
         </div>
+      </Drawer>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" shape="pill" onClick={onClose}>
-            Close
-          </Button>
-          <Button
-            variant="amber"
-            shape="pill"
-            onClick={() => {
-              if (onEdit) onEdit(employee);
-            }}
-          >
-            Edit Details
-          </Button>
-        </div>
-      </div>
-    </Drawer>
+      {/* Salary Adjustment Form Modal */}
+      <SalaryAdjustmentModal
+        isOpen={isAdjustmentModalOpen}
+        onClose={() => setIsAdjustmentModalOpen(false)}
+        employee={currentEmp}
+        onSuccess={handleAdjustmentSuccess}
+      />
+    </>
   );
 }

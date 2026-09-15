@@ -31,12 +31,30 @@ model Employee {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  salaryHistories   SalaryHistory[]
+
   @@index([department])
   @@index([country])
   @@index([baseSalaryUSD])
   @@index([payGrade])
   @@index([lastName])
   @@index([status])
+}
+
+model SalaryHistory {
+  id            String   @id @default(uuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  amount        Float
+  currency      String   @default("USD")
+  amountUSD     Float
+  effectiveDate DateTime
+  reason        String
+  notes         String?
+  createdBy     String?
+  createdAt     DateTime @default(now())
+
+  @@index([employeeId, effectiveDate])
 }
 
 model User {
