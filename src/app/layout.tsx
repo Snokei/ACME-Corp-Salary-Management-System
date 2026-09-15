@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { HeaderNav } from '@/components/HeaderNav';
+import { ToastProvider } from '@/components/ToastProvider';
 
 export const metadata: Metadata = {
   title: 'ACME Corp - Salary Management System',
@@ -28,6 +29,7 @@ export default function RootLayout({
               {children}
             </main>
           </div>
+          <ToastProvider />
         </ThemeProvider>
       </body>
     </html>

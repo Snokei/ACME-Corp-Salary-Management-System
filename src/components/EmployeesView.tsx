@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import toast from 'react-hot-toast';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { EmployeeFilters } from '@/components/EmployeeFilters';
@@ -18,6 +19,7 @@ import {
   buildPaginationUrl,
 } from '@/lib/employeeUtils';
 import { deleteEmployeesAction } from '@/actions/employees';
+import { showConfirmDeleteToast } from '@/lib/toastUtils';
 
 export interface EmployeesViewProps {
   data: EmployeesResponseData;
@@ -103,37 +105,49 @@ export function EmployeesView({
         ? filteredEmployees.filter((e) => checkedIds.has(e.id))
         : filteredEmployees;
     exportEmployeesToCSV(toExport);
+    toast.success(`Exported ${toExport.length} employees to CSV`);
+    setCheckedIds(new Set());
   };
 
   const handleExportSelectedCSV = () => {
     const selectedEmployees = filteredEmployees.filter((e) => checkedIds.has(e.id));
     exportEmployeesToCSV(selectedEmployees, `ACME_Selected_Employees_${checkedIds.size}.csv`);
+    toast.success(`Exported ${selectedEmployees.length} selected employees to CSV`);
+    setCheckedIds(new Set());
   };
 
   // Bulk Delete handler
-  const handleBulkDelete = async () => {
+  const handleBulkDeleteClick = () => {
     if (checkedIds.size === 0) return;
-    const count = checkedIds.size;
-    if (
-      !window.confirm(
-        `Are you sure you want to delete ${count} selected employee(s)? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    
+    showConfirmDeleteToast({
+      message: (
+        <>
+          Are you sure you want to delete <strong className="text-stone-900 dark:text-white">{checkedIds.size}</strong> selected employee(s)? This action cannot be undone.
+        </>
+      ),
+      onConfirm: confirmBulkDelete,
+    });
+  };
 
+  const confirmBulkDelete = async () => {
+    if (checkedIds.size === 0) return;
     setIsDeleting(true);
+    const count = checkedIds.size;
+    const toastId = toast.loading('Deleting employees...');
+    
     try {
       const idsToDelete = Array.from(checkedIds);
       const res = await deleteEmployeesAction(idsToDelete);
       if (res.success) {
         setCheckedIds(new Set());
         router.refresh();
+        toast.success(`Successfully deleted ${count} employees`, { id: toastId });
       } else {
-        alert(`Failed to delete employees: ${res.error}`);
+        toast.error(`Failed to delete employees: ${res.error}`, { id: toastId });
       }
     } catch (err: any) {
-      alert(`An error occurred while deleting employees: ${err.message}`);
+      toast.error(`An error occurred while deleting employees: ${err.message}`, { id: toastId });
     } finally {
       setIsDeleting(false);
     }
@@ -203,8 +217,7 @@ export function EmployeesView({
               size="sm"
               shape="pill"
               leftIcon={<Trash2 className="w-3.5 h-3.5" />}
-              onClick={handleBulkDelete}
-              isLoading={isDeleting}
+              onClick={handleBulkDeleteClick}
               disabled={isDeleting}
             >
               {isDeleting ? 'Deleting...' : `Delete Selected (${checkedIds.size})`}
@@ -256,4 +269,3 @@ export function EmployeesView({
     </div>
   );
 }
-
