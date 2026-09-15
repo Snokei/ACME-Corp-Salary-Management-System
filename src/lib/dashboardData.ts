@@ -58,9 +58,21 @@ export async function getDashboardData() {
       hireDate: true,
       baseSalaryUSD: true,
       bonusUSD: true,
+      country: true,
     },
     where: { status: 'Active' },
   });
+
+  const totalGlobalPayroll = allEmployees.reduce((sum, emp) => sum + emp.baseSalaryUSD, 0);
+  const averageBaseSalary = allEmployees.length > 0 ? totalGlobalPayroll / allEmployees.length : 0;
+  
+  const sortedSalaries = allEmployees.map(e => e.baseSalaryUSD).sort((a, b) => a - b);
+  const mid = Math.floor(sortedSalaries.length / 2);
+  const medianCompensation = sortedSalaries.length > 0 
+    ? (sortedSalaries.length % 2 !== 0 ? sortedSalaries[mid] : (sortedSalaries[mid - 1] + sortedSalaries[mid]) / 2)
+    : 0;
+    
+  const countriesCount = new Set(allEmployees.map(e => e.country)).size;
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
   const salaryStatistics = months.map((month, index) => {
@@ -92,13 +104,56 @@ export async function getDashboardData() {
     };
   });
 
+  // 5. Average Salary by Department
+  const deptAverages = await prisma.employee.groupBy({
+    by: ['department'],
+    _avg: {
+      baseSalaryUSD: true,
+    },
+    orderBy: {
+      _avg: {
+        baseSalaryUSD: 'desc',
+      },
+    },
+  });
+
+  const avgSalaryByDept = deptAverages.map((g) => ({
+    department: g.department,
+    averageSalary: Math.round(g._avg.baseSalaryUSD || 0),
+  }));
+
+  // 6. Average Salary by Country (Top 6 by average salary)
+  const countryAverages = await prisma.employee.groupBy({
+    by: ['country'],
+    _avg: {
+      baseSalaryUSD: true,
+    },
+    orderBy: {
+      _avg: {
+        baseSalaryUSD: 'desc',
+      },
+    },
+    take: 6,
+  });
+
+  const avgSalaryByCountry = countryAverages.map((g) => ({
+    country: g.country,
+    averageSalary: Math.round(g._avg.baseSalaryUSD || 0),
+  }));
+
   return {
     stats: {
       activeCount,
       totalEmployees,
+      totalGlobalPayroll,
+      averageBaseSalary,
+      medianCompensation,
+      countriesCount,
     },
     recentSalaries,
     salaryStatistics,
     departmentComposition,
+    avgSalaryByDept,
+    avgSalaryByCountry,
   };
 }
