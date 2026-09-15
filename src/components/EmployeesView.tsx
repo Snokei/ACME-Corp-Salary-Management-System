@@ -55,7 +55,6 @@ export function EmployeesView({
   const currentTab = (searchParams.tab || nextSearchParams.get('tab') || 'Active') as EmployeeStatusTab;
 
   // Client-only UI States (Modals, Selection and Row Highlight)
-  const [selectedRowId, setSelectedRowId] = useState<string>('2');
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
   const [activeEmployeeModal, setActiveEmployeeModal] = useState<Employee | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -91,14 +90,6 @@ export function EmployeesView({
       next.add(id);
     }
     setCheckedIds(next);
-  };
-
-  const handleRowClick = (emp: Employee) => {
-    setSelectedRowId(emp.id);
-    setActiveEmployeeModal(emp);
-    if (onSelectEmployee) {
-      onSelectEmployee(emp);
-    }
   };
 
   const handleViewDetails = (emp: Employee, e: React.MouseEvent) => {
@@ -251,9 +242,7 @@ export function EmployeesView({
       <EmployeesTable
         employees={filteredEmployees}
         loading={false}
-        selectedRowId={selectedRowId}
         checkedIds={checkedIds}
-        onRowClick={handleRowClick}
         onToggleSelectAll={toggleSelectAll}
         onToggleRowCheck={toggleRowCheck}
         onViewDetails={handleViewDetails}

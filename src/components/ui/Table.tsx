@@ -123,6 +123,7 @@ export function TableBody({ children, className = '', ...props }: TableBodyProps
 export interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
   selected?: boolean;
   clickable?: boolean;
+  hoverable?: boolean;
 }
 
 export function TableRow({
@@ -130,17 +131,18 @@ export function TableRow({
   className = '',
   selected = false,
   clickable = false,
+  hoverable = true,
   ...props
 }: TableRowProps) {
   const stateClass = selected
     ? 'bg-amber-200/60 dark:bg-amber-400/20 font-medium text-stone-900 dark:text-stone-100 shadow-xs'
-    : clickable
+    : (clickable || hoverable)
     ? 'hover:bg-amber-100/50 dark:hover:bg-amber-400/10 transition-colors duration-200'
     : '';
 
   return (
     <tr
-      className={`transition-all duration-200 ${clickable ? 'cursor-pointer group' : ''} ${stateClass} ${className}`}
+      className={`group transition-all duration-200 ${clickable ? 'cursor-pointer' : ''} ${stateClass} ${className}`}
       {...props}
     >
       {children}

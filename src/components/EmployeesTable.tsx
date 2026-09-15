@@ -15,14 +15,12 @@ import {
   Button,
   Checkbox,
 } from '@/components/ui';
-import { MapPin, MoreVertical, Users } from 'lucide-react';
+import { MapPin, Edit2, Users } from 'lucide-react';
 
 export interface EmployeesTableProps {
   employees: Employee[];
   loading?: boolean;
-  selectedRowId?: string;
   checkedIds?: Set<string>;
-  onRowClick?: (employee: Employee) => void;
   onToggleSelectAll?: () => void;
   onToggleRowCheck?: (id: string, e: React.MouseEvent) => void;
   onViewDetails?: (employee: Employee, e: React.MouseEvent) => void;
@@ -42,9 +40,7 @@ import { getEmployeeAvatar, formatDateSafe, formatSalaryUSD } from '@/lib/employ
 export function EmployeesTable({
   employees,
   loading = false,
-  selectedRowId,
   checkedIds = new Set(),
-  onRowClick,
   onToggleSelectAll,
   onToggleRowCheck,
   onViewDetails,
@@ -94,7 +90,6 @@ export function EmployeesTable({
             />
           ) : (
             employees.map((emp) => {
-              const isHighlighted = selectedRowId === emp.id;
               const isChecked = checkedIds.has(emp.id);
               const avatar = getEmployeeAvatar(emp);
               const fallbackAvatar = `https://ui-avatars.com/api/?background=f5c242&color=18181b&bold=true&name=${encodeURIComponent(
@@ -104,9 +99,7 @@ export function EmployeesTable({
               return (
                 <TableRow
                   key={emp.id}
-                  selected={isHighlighted}
-                  clickable={Boolean(onRowClick)}
-                  onClick={() => onRowClick && onRowClick(emp)}
+                  className="group"
                 >
                   {/* Row Checkbox with custom small yellow check tick */}
                   <TableCell
@@ -195,10 +188,11 @@ export function EmployeesTable({
                   <TableCell align="center">
                     <Button
                       variant="ghost"
-                      shape="circle"
+                      shape="pill"
                       size="sm"
-                      aria-label={`Options for ${emp.firstName}`}
-                      className="hover:bg-amber-300/40 dark:hover:bg-amber-500/20 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200"
+                      leftIcon={<Edit2 className="w-3.5 h-3.5" />}
+                      aria-label={`Edit ${emp.firstName}`}
+                      className="hover:bg-amber-300/40 dark:hover:bg-amber-500/20 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 font-medium"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (onViewDetails) {
@@ -206,7 +200,7 @@ export function EmployeesTable({
                         }
                       }}
                     >
-                      <MoreVertical className="w-4 h-4" />
+                      Edit
                     </Button>
                   </TableCell>
                 </TableRow>
