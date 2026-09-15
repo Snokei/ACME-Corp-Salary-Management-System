@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Employee } from '@/types';
 import {
   TableContainer,
@@ -127,7 +128,10 @@ export function EmployeesTable({
 
                   {/* Name & Avatar with Amber Accent Ring + resilient fallback */}
                   <TableCell>
-                    <div className="flex items-center gap-3">
+                    <Link
+                      href={`/people/${encodeURIComponent(emp.employeeId || emp.id)}`}
+                      className="flex items-center gap-3 group/link cursor-pointer"
+                    >
                       <img
                         src={avatar}
                         alt={`${emp.firstName} ${emp.lastName}`}
@@ -137,17 +141,17 @@ export function EmployeesTable({
                             target.src = fallbackAvatar;
                           }
                         }}
-                        className="w-8 h-8 rounded-full object-cover ring-2 ring-amber-400/40 group-hover:ring-amber-400 transition-all duration-200 shrink-0 bg-stone-100 dark:bg-stone-800"
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-amber-400/40 group-hover/link:ring-amber-400 transition-all duration-200 shrink-0 bg-stone-100 dark:bg-stone-800"
                       />
                       <div className="min-w-0">
-                        <div className="font-semibold text-stone-900 dark:text-stone-100 truncate group-hover:text-amber-900 dark:group-hover:text-amber-300 transition-colors">
+                        <div className="font-semibold text-stone-900 dark:text-stone-100 truncate group-hover/link:text-amber-600 dark:group-hover/link:text-amber-400 transition-colors">
                           {emp.firstName} {emp.lastName}
                         </div>
                         <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
                           {emp.email}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </TableCell>
 
                   {/* Job Title */}

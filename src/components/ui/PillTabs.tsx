@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 
 export interface PillTabOption<T extends string = string> {

@@ -323,3 +323,58 @@ export async function getEmployeesData(
     totalPages: Math.ceil(filtered.length / limit) || 1,
   };
 }
+
+export async function getEmployeeById(idOrEmpId: string): Promise<Employee | null> {
+  if (!idOrEmpId) return null;
+  const targetId = decodeURIComponent(idOrEmpId).trim();
+
+  try {
+    const emp = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { employeeId: targetId },
+          { id: targetId },
+        ],
+      },
+    });
+
+    if (emp) {
+      const avatarUrl =
+        VERIFIED_AVATARS[0] ||
+        `https://ui-avatars.com/api/?background=f5c242&color=18181b&name=${encodeURIComponent(
+          emp.firstName + ' ' + emp.lastName
+        )}`;
+
+      return {
+        id: emp.id,
+        employeeId: emp.employeeId,
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        email: emp.email,
+        department: emp.department,
+        role: emp.role,
+        country: emp.country,
+        city: emp.city,
+        currency: emp.currency,
+        baseSalary: emp.baseSalary,
+        baseSalaryUSD: emp.baseSalaryUSD,
+        bonusUSD: emp.bonusUSD,
+        payGrade: emp.payGrade,
+        gender: emp.gender,
+        hireDate: emp.hireDate instanceof Date ? emp.hireDate.toISOString() : String(emp.hireDate),
+        performanceRating: emp.performanceRating,
+        status: (emp as any).status || 'Active',
+        avatarUrl,
+      };
+    }
+  } catch (dbErr) {
+    console.warn('DB query error in getEmployeeById, checking mock fallback:', dbErr);
+  }
+
+  // Fallback to MOCK_EMPLOYEES
+  const found = MOCK_EMPLOYEES.find(
+    (e) => e.employeeId.toLowerCase() === targetId.toLowerCase() || e.id.toLowerCase() === targetId.toLowerCase()
+  );
+  return found || null;
+}
+

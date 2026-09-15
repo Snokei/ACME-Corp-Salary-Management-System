@@ -60,7 +60,8 @@ export function AddEmployeeModal({
     try {
       let res;
       if (initialData) {
-        res = await updateEmployeeAction(initialData.id, formData);
+        const { baseSalary, ...updatePayload } = formData;
+        res = await updateEmployeeAction(initialData.id, updatePayload);
       } else {
         res = await createEmployeeAction(formData);
       }
@@ -153,15 +154,17 @@ export function AddEmployeeModal({
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="Base Salary (USD)"
-            type="number"
-            required
-            value={formData.baseSalary}
-            onChange={(e) => setFormData({ ...formData, baseSalary: e.target.value })}
-            placeholder="120000"
-          />
+        <div className={initialData ? "block" : "grid grid-cols-2 gap-3"}>
+          {!initialData && (
+            <Input
+              label="Base Salary (USD)"
+              type="number"
+              required
+              value={formData.baseSalary}
+              onChange={(e) => setFormData({ ...formData, baseSalary: e.target.value })}
+              placeholder="120000"
+            />
+          )}
 
           <Select
             label="Pay Grade"

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, analysis });
     }
 
-    const bands = await getAllSalaryBands(search);
+    const bands = await getAllSalaryBands({ search });
     return NextResponse.json({ success: true, bands });
   } catch (error: any) {
     if (error instanceof SalaryBandError) {

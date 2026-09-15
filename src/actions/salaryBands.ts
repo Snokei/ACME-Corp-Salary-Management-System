@@ -10,7 +10,7 @@ import {
 
 export async function getSalaryBandsAction(search?: string) {
   try {
-    const bands = await getAllSalaryBands(search);
+    const bands = await getAllSalaryBands({ search });
     return { success: true, bands };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to fetch salary bands' };

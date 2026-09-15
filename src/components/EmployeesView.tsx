@@ -88,7 +88,7 @@ export function EmployeesView({
 
   const handleViewDetails = (employee: Employee, e: React.MouseEvent) => {
     e.stopPropagation();
-    setModalState({ type: 'view', employee });
+    router.push(`/people/${encodeURIComponent(employee.employeeId || employee.id)}`);
   };
 
   // CSV Export handlers
