@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CURRENT_USER, NAV_ITEMS } from "@/constants";
-import { Bell, Search } from "lucide-react";
+import { Bell } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function HeaderNav() {
   const pathname = usePathname();
@@ -45,18 +45,6 @@ export function HeaderNav() {
 
       {/* Right Controls & User Profile */}
       <div className="flex items-center gap-2.5">
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 text-xs text-stone-500 shadow-sm">
-          <Search className="w-3.5 h-3.5 text-stone-400" />
-          <input
-            type="text"
-            placeholder="Search anything..."
-            className="bg-transparent border-none outline-none w-28 placeholder:text-stone-400 text-stone-700 dark:text-stone-200 text-xs"
-          />
-          <kbd className="px-1.5 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-[10px] text-stone-400">
-            ⌘K
-          </kbd>
-        </div>
-
         <button
           className="p-2 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors relative"
           title="Notifications"
@@ -82,4 +70,3 @@ export function HeaderNav() {
     </header>
   );
 }
-

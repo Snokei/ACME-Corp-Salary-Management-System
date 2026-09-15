@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/PageHeader';
+import { PillTabs, GlassCard, StatusBadge } from '@/components/ui';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -48,7 +50,7 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Error loading dashboard:', err);
+        console.error('Failed to load dashboard:', err);
         setLoading(false);
       });
   }, []);
@@ -62,16 +64,10 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Top Welcome & Metrics Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-white">
-            Hello {CURRENT_USER.name}
-          </h1>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-            Compensation insights, attendance tracking, and scheduled talent reviews.
-          </p>
-        </div>
-
+      <PageHeader
+        title={`Hello ${CURRENT_USER.name}`}
+        description="Compensation insights, attendance tracking, and scheduled talent reviews."
+      >
         {/* Metric Summary Counters */}
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 bg-white/70 dark:bg-stone-900/60 backdrop-blur-md p-2 sm:px-5 sm:py-2.5 rounded-2xl border border-stone-200/70 dark:border-stone-800 shadow-sm">
           <div className="flex items-center gap-2">
@@ -102,25 +98,16 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
             </div>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Filter / Scope Selection Bar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm">
-          {TIME_RANGES.map((r) => (
-            <button
-              key={r}
-              onClick={() => setTimeRange(r)}
-              className={`px-3.5 py-1 rounded-full text-xs font-medium transition-all ${
-                timeRange === r
-                  ? 'bg-amber-400 text-stone-950 font-semibold shadow-xs'
-                  : 'text-stone-600 dark:text-stone-400 hover:text-stone-900'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        <PillTabs
+          options={TIME_RANGES}
+          value={timeRange}
+          onChange={setTimeRange}
+          variant="amber"
+        />
 
         <div className="flex items-center gap-2">
           <div className="px-3.5 py-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 text-xs font-medium text-stone-600 dark:text-stone-400 shadow-sm">
@@ -133,14 +120,15 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: Schedule (Width 4) */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white/90 dark:bg-stone-900/90 rounded-3xl p-5 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-sm space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-stone-900 dark:text-white">Schedule</h2>
+          <GlassCard
+            title="Schedule"
+            headerAction={
               <button className="text-xs text-stone-500 hover:text-stone-900 dark:hover:text-stone-300 flex items-center gap-1">
                 View all <ChevronRight className="w-3.5 h-3.5" />
               </button>
-            </div>
-
+            }
+            className="p-5 space-y-5"
+          >
             {/* Date Strip */}
             <div className="grid grid-cols-5 gap-1.5 p-1.5 rounded-2xl bg-stone-50/80 dark:bg-stone-950/50 border border-stone-100 dark:border-stone-800/80 text-center">
               {DAYS_OF_WEEK.map((item) => {
@@ -203,15 +191,15 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
         </div>
 
         {/* Middle Column: Salary & Salary Statistics (Width 5) */}
         <div className="lg:col-span-5 space-y-4">
           {/* Top Card: Salary Mini Table */}
-          <div className="bg-white/90 dark:bg-stone-900/90 rounded-3xl p-5 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-stone-900 dark:text-white">Salary</h2>
+          <GlassCard
+            title="Salary"
+            headerAction={
               <Link
                 href="/people"
                 onClick={onNavigateToPeople}
@@ -219,8 +207,9 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
               >
                 Manage all <ChevronRight className="w-3.5 h-3.5" />
               </Link>
-            </div>
-
+            }
+            className="p-5 space-y-4"
+          >
             <div className="divide-y divide-stone-100 dark:divide-stone-800/80">
               {recentSalaries.map((item: any) => (
                 <div key={item.id} className="py-2.5 flex items-center justify-between gap-3">
@@ -238,14 +227,12 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
 
                   <div className="text-right flex items-center gap-3">
                     <div className="text-xs font-bold text-stone-900 dark:text-stone-100">{item.netSalary}</div>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
-                      {item.status}
-                    </span>
+                    <StatusBadge status={item.status} />
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </GlassCard>
 
           {/* Bottom Card: Salary Statistics Chart */}
           <div className="bg-white/90 dark:bg-stone-900/90 rounded-3xl p-5 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-sm space-y-3">
