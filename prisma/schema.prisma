@@ -1,0 +1,38 @@
+// Prisma Schema for ACME Salary Management System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Employee {
+  id                String   @id @default(uuid())
+  employeeId        String   @unique
+  firstName         String
+  lastName          String
+  email             String   @unique
+  department        String
+  role              String
+  country           String
+  city              String
+  currency          String
+  baseSalary        Float
+  baseSalaryUSD     Float
+  bonusUSD          Float
+  payGrade          String
+  gender            String
+  hireDate          DateTime
+  performanceRating Int      @default(3)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([department])
+  @@index([country])
+  @@index([baseSalaryUSD])
+  @@index([payGrade])
+  @@index([lastName])
+}
