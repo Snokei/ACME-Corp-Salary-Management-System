@@ -1,12 +1,13 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { ThemeProvider } from '@/components/theme-provider';
-import { HeaderNav } from '@/components/HeaderNav';
-import { ToastProvider } from '@/components/ToastProvider';
+import { HeaderNav } from "@/components/HeaderNav";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/ToastProvider";
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'ACME Corp - Salary Management System',
-  description: 'Enterprise HR Salary Analytics & Employee Management System for 10,000 global employees.',
+  title: "ACME - Salary Management System",
+  description:
+    "Enterprise HR Salary Analytics & Employee Management System for 10,000 global employees.",
 };
 
 export default function RootLayout({
@@ -25,9 +26,7 @@ export default function RootLayout({
           {/* Main Layout Container */}
           <div className="relative z-10 max-w-[1400px] mx-auto p-3 md:p-6 lg:p-8 space-y-6">
             <HeaderNav />
-            <main className="transition-all duration-300">
-              {children}
-            </main>
+            <main className="transition-all duration-300">{children}</main>
           </div>
           <ToastProvider />
         </ThemeProvider>
@@ -35,4 +34,3 @@ export default function RootLayout({
     </html>
   );
 }
-

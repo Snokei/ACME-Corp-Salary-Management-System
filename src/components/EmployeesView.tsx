@@ -14,7 +14,6 @@ import { Employee } from '@/types';
 import { EmployeeStatusTab } from '@/constants';
 import { EmployeesResponseData } from '@/lib/employeeData';
 import {
-  filterEmployeesByStatus,
   exportEmployeesToCSV,
   buildPaginationUrl,
 } from '@/lib/employeeUtils';
@@ -60,11 +59,7 @@ export function EmployeesView({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Status Tab filtering helper
-  const filteredEmployees = useMemo(
-    () => filterEmployeesByStatus(employees, currentTab),
-    [employees, currentTab]
-  );
+  const filteredEmployees = employees;
 
   // Page navigation via URL searchParams
   const handlePageChange = (newPage: number) => {

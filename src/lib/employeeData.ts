@@ -241,6 +241,10 @@ export async function getEmployeesData(
     whereClause.city = params.location;
   }
 
+  if (params.tab && params.tab !== 'All') {
+    whereClause.status = params.tab;
+  }
+
   try {
     const [employees, total] = await Promise.all([
       prisma.employee.findMany({
@@ -254,18 +258,6 @@ export async function getEmployeesData(
 
     if (employees && employees.length > 0) {
       const mappedEmployees: Employee[] = employees.map((emp, index) => {
-        const statuses: ('Active' | 'On Leave' | 'Probation' | 'Full Time')[] = [
-          'Active',
-          'Active',
-          'Active',
-          'On Leave',
-          'Full Time',
-        ];
-        const empStatus =
-          statuses[
-            (index + emp.employeeId.charCodeAt(emp.employeeId.length - 1)) %
-              statuses.length
-          ];
 
         const avatarUrl =
           VERIFIED_AVATARS[index % VERIFIED_AVATARS.length] ||
@@ -291,7 +283,7 @@ export async function getEmployeesData(
           gender: emp.gender,
           hireDate: emp.hireDate instanceof Date ? emp.hireDate.toISOString() : String(emp.hireDate),
           performanceRating: emp.performanceRating,
-          status: empStatus,
+          status: (emp as any).status || 'Active',
           avatarUrl,
         };
       });
@@ -322,6 +314,10 @@ export async function getEmployeesData(
   }
   if (department !== 'All') {
     filtered = filtered.filter((e) => e.department === department);
+  }
+  
+  if (params.tab && params.tab !== 'All') {
+    filtered = filtered.filter((e) => e.status === params.tab);
   }
 
   const paginated = filtered.slice(skip, skip + limit);

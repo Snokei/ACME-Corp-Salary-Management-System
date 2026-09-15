@@ -53,6 +53,7 @@ export async function createEmployeeAction(data: {
   bonusUSD?: number | string;
   payGrade?: string;
   gender?: string;
+  status?: string;
 }) {
   try {
     const salary = typeof data.baseSalary === 'string' ? parseFloat(data.baseSalary) || 0 : data.baseSalary;
@@ -85,6 +86,7 @@ export async function createEmployeeAction(data: {
         gender: data.gender || 'Female',
         hireDate: new Date(),
         performanceRating: 5,
+        status: data.status || 'Active',
       },
     });
 

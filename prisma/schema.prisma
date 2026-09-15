@@ -27,6 +27,7 @@ model Employee {
   gender            String
   hireDate          DateTime
   performanceRating Int      @default(3)
+  status            String   @default("Active")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -35,4 +36,5 @@ model Employee {
   @@index([baseSalaryUSD])
   @@index([payGrade])
   @@index([lastName])
+  @@index([status])
 }
