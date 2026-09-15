@@ -5,6 +5,7 @@ export interface GetEmployeesParams {
   search?: string;
   department?: string;
   role?: string;
+  location?: string;
   status?: string;
   tab?: string;
   page?: number | string;
@@ -234,6 +235,10 @@ export async function getEmployeesData(
 
   if (role !== 'All') {
     whereClause.role = role;
+  }
+
+  if (params.location && params.location !== 'All') {
+    whereClause.city = params.location;
   }
 
   try {

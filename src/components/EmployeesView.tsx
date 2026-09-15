@@ -23,9 +23,13 @@ import { showConfirmDeleteToast } from '@/lib/toastUtils';
 
 export interface EmployeesViewProps {
   data: EmployeesResponseData;
+  uniqueRoles: string[];
+  uniqueLocations: string[];
   searchParams?: {
     search?: string;
     department?: string;
+    role?: string;
+    location?: string;
     tab?: string;
     page?: string;
   };
@@ -34,6 +38,8 @@ export interface EmployeesViewProps {
 
 export function EmployeesView({
   data,
+  uniqueRoles,
+  uniqueLocations,
   searchParams = {},
   onSelectEmployee,
 }: EmployeesViewProps) {
@@ -44,6 +50,8 @@ export function EmployeesView({
   const { employees, total, page, totalPages } = data;
   const currentSearch = searchParams.search || nextSearchParams.get('search') || '';
   const currentDept = searchParams.department || nextSearchParams.get('department') || 'All';
+  const currentRole = searchParams.role || nextSearchParams.get('role') || 'All';
+  const currentLocation = searchParams.location || nextSearchParams.get('location') || 'All';
   const currentTab = (searchParams.tab || nextSearchParams.get('tab') || 'Active') as EmployeeStatusTab;
 
   // Client-only UI States (Modals, Selection and Row Highlight)
@@ -183,8 +191,12 @@ export function EmployeesView({
       {/* Server Action Filter Form - No Local State */}
       <EmployeeFilters
         search={currentSearch}
-        department={currentDept}
         selectedTab={currentTab}
+        department={currentDept}
+        role={currentRole}
+        location={currentLocation}
+        uniqueRoles={uniqueRoles}
+        uniqueLocations={uniqueLocations}
       />
 
       {/* Bulk Selection Actions Toolbar */}

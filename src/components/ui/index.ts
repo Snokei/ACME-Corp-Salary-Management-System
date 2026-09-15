@@ -8,3 +8,4 @@ export * from './Modal';
 export * from './SearchInput';
 export * from './Table';
 export * from './Checkbox';
+export * from './SearchableSelect';

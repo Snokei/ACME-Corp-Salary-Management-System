@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Button, Input, Select } from '@/components/ui';
+import { Button, Input, Select, SearchableSelect } from '@/components/ui';
 import { Search, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
+import { useRef } from 'react';
 import {
   EMPLOYEE_STATUS_TABS,
   EmployeeStatusTab,
@@ -15,6 +16,10 @@ export interface EmployeeFiltersProps {
   search?: string;
   selectedTab?: EmployeeStatusTab;
   department?: string;
+  role?: string;
+  location?: string;
+  uniqueRoles?: string[];
+  uniqueLocations?: string[];
   className?: string;
 }
 
@@ -22,14 +27,25 @@ export function EmployeeFilters({
   search = '',
   selectedTab = 'Active',
   department = 'All',
+  role = 'All',
+  location = 'All',
+  uniqueRoles = [],
+  uniqueLocations = [],
   className = '',
 }: EmployeeFiltersProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+
   const hasActiveFilters = Boolean(
-    search.trim() !== '' || (selectedTab !== 'Active' && selectedTab !== 'All') || department !== 'All'
+    search.trim() !== '' || 
+    (selectedTab !== 'Active' && selectedTab !== 'All') || 
+    department !== 'All' ||
+    role !== 'All' ||
+    location !== 'All'
   );
 
   return (
     <form
+      ref={formRef}
       action={filterEmployeesAction}
       className={`flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 ${className}`}
     >
@@ -48,23 +64,31 @@ export function EmployeeFilters({
         </Button>
       </div>
 
-      {/* Right side: Department dropdown, Status tabs, Reset */}
+      {/* Right side: Dropdowns, Status tabs, Reset */}
       <div className="flex items-center gap-2.5 flex-wrap shrink-0">
-        <div className="min-w-[140px]">
-          <Select
-            name="department"
-            shape="pill"
-            defaultValue={department}
-            onChange={(e) => e.target.form?.requestSubmit()}
-            containerClassName="w-full"
-          >
-            {DEPARTMENTS.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept === 'All' ? 'All Depts' : dept}
-              </option>
-            ))}
-          </Select>
-        </div>
+        <SearchableSelect
+          name="department"
+          options={[...DEPARTMENTS]}
+          defaultValue={department}
+          placeholder="All Depts"
+          onChange={() => formRef.current?.requestSubmit()}
+        />
+
+        <SearchableSelect
+          name="role"
+          options={uniqueRoles}
+          defaultValue={role}
+          placeholder="All Roles"
+          onChange={() => formRef.current?.requestSubmit()}
+        />
+
+        <SearchableSelect
+          name="location"
+          options={uniqueLocations}
+          defaultValue={location}
+          placeholder="All Locations"
+          onChange={() => formRef.current?.requestSubmit()}
+        />
 
         {/* Status Tabs as Submit Buttons */}
         <div className="inline-flex p-1 rounded-full bg-stone-100 dark:bg-stone-800/80 border border-stone-200/60 dark:border-stone-700/60">

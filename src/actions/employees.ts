@@ -19,12 +19,16 @@ export async function getEmployeesAction(params: GetEmployeesParams): Promise<Em
 export async function filterEmployeesAction(formData: FormData) {
   const search = formData.get('search')?.toString() || '';
   const department = formData.get('department')?.toString() || 'All';
+  const role = formData.get('role')?.toString() || 'All';
+  const location = formData.get('location')?.toString() || 'All';
   const tab = formData.get('tab')?.toString() || 'Active';
   const page = formData.get('page')?.toString() || '1';
 
   const params = new URLSearchParams();
   if (search.trim()) params.set('search', search.trim());
   if (department !== 'All') params.set('department', department);
+  if (role !== 'All') params.set('role', role);
+  if (location !== 'All') params.set('location', location);
   if (tab !== 'Active') params.set('tab', tab);
   if (page !== '1') params.set('page', page);
 
