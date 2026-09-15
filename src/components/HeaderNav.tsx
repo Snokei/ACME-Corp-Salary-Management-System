@@ -2,25 +2,20 @@
 
 import React from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Search, Bell, Sparkles, SlidersHorizontal, Plus } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
+import { NAV_ITEMS, CURRENT_USER, NavTabId } from '@/constants';
 
 interface HeaderNavProps {
-  activeTab: 'dashboard' | 'people' | 'salary' | 'reviews' | 'leaves' | 'payroll' | 'settings';
-  setActiveTab: (tab: 'dashboard' | 'people' | 'salary' | 'reviews' | 'leaves' | 'payroll' | 'settings') => void;
+  activeTab: NavTabId;
+  setActiveTab: (tab: NavTabId) => void;
   onAddEmployee?: () => void;
 }
 
-export function HeaderNav({ activeTab, setActiveTab, onAddEmployee }: HeaderNavProps) {
-  const navItems: { id: 'dashboard' | 'people' | 'salary' | 'reviews' | 'leaves' | 'payroll' | 'settings'; label: string }[] = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'people', label: 'People' },
-    { id: 'salary', label: 'Salary' },
-    { id: 'reviews', label: 'Reviews' },
-    { id: 'leaves', label: 'Leaves' },
-    { id: 'payroll', label: 'Payroll' },
-    { id: 'settings', label: 'Settings' },
-  ];
-
+export function HeaderNav({
+  activeTab,
+  setActiveTab,
+  onAddEmployee,
+}: HeaderNavProps) {
   return (
     <header className="w-full flex items-center justify-between gap-4 py-3 px-2">
       {/* Brand Logo */}
@@ -33,7 +28,7 @@ export function HeaderNav({ activeTab, setActiveTab, onAddEmployee }: HeaderNavP
 
       {/* Center Floating Pill Navigation */}
       <nav className="flex items-center gap-1.5 p-1.5 rounded-full bg-white/70 dark:bg-stone-900/80 backdrop-blur-md border border-stone-200/70 dark:border-stone-800 shadow-sm transition-all">
-        {navItems.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const isActive = activeTab === item.id;
           return (
             <button
@@ -60,7 +55,9 @@ export function HeaderNav({ activeTab, setActiveTab, onAddEmployee }: HeaderNavP
             placeholder="Search anything..."
             className="bg-transparent border-none outline-none w-28 placeholder:text-stone-400 text-stone-700 dark:text-stone-200 text-xs"
           />
-          <kbd className="px-1.5 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-[10px] text-stone-400">⌘K</kbd>
+          <kbd className="px-1.5 py-0.5 rounded bg-stone-100 dark:bg-stone-800 text-[10px] text-stone-400">
+            ⌘K
+          </kbd>
         </div>
 
         <button
@@ -76,11 +73,13 @@ export function HeaderNav({ activeTab, setActiveTab, onAddEmployee }: HeaderNavP
         {/* User Avatar Pill */}
         <div className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm cursor-pointer hover:border-amber-400/50 transition-colors">
           <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80"
-            alt="Valentino"
+            src={CURRENT_USER.avatar}
+            alt={CURRENT_USER.name}
             className="w-6 h-6 rounded-full object-cover ring-1 ring-amber-400/30"
           />
-          <span className="text-xs font-medium text-stone-800 dark:text-stone-200">Valentino</span>
+          <span className="text-xs font-medium text-stone-800 dark:text-stone-200">
+            {CURRENT_USER.name}
+          </span>
         </div>
       </div>
     </header>

@@ -15,15 +15,19 @@ import {
 import {
   ChevronRight,
   TrendingUp,
-  Users,
-  Calendar,
-  DollarSign,
-  Clock,
   ArrowUpRight,
-  MoreHorizontal,
-  Sparkles,
-  CheckCircle2,
 } from 'lucide-react';
+import {
+  DAYS_OF_WEEK,
+  TIME_RANGES,
+  TimeRange,
+  DEFAULT_CHART_DATA,
+  DEFAULT_DEPARTMENT_COMPOSITION,
+  DEFAULT_SCHEDULE_EVENTS,
+  DEFAULT_RECENT_SALARIES,
+  ATTENDANCE_DOT_MATRIX,
+  CURRENT_USER,
+} from '@/constants';
 
 interface DashboardViewProps {
   onNavigateToPeople: () => void;
@@ -32,7 +36,7 @@ interface DashboardViewProps {
 export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<'Day' | 'Week' | 'Month'>('Week');
+  const [timeRange, setTimeRange] = useState<TimeRange>('Week');
   const [selectedDay, setSelectedDay] = useState<number>(25);
 
   useEffect(() => {
@@ -48,101 +52,11 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
       });
   }, []);
 
-  const daysOfWeek = [
-    { day: 'Mon', date: 23 },
-    { day: 'Tue', date: 24 },
-    { day: 'Wed', date: 25 },
-    { day: 'Thu', date: 26 },
-    { day: 'Fri', date: 27 },
-  ];
-
-  const chartData = data?.salaryStatistics || [
-    { month: 'Jan', current: 48000, previous: 42000 },
-    { month: 'Feb', current: 52000, previous: 45000 },
-    { month: 'Mar', current: 61000, previous: 49000 },
-    { month: 'Apr', current: 58000, previous: 53000 },
-    { month: 'May', current: 72000, previous: 60000 },
-    { month: 'Jun', current: 84250, previous: 68000 },
-    { month: 'Jul', current: 79000, previous: 71000 },
-    { month: 'Aug', current: 92000, previous: 76000 },
-    { month: 'Sep', current: 98500, previous: 82000 },
-  ];
-
-  const pieData = data?.departmentComposition || [
-    { name: 'Engineering', count: 155, percentage: 45, color: '#18181B' },
-    { name: 'Product & Design', count: 86, percentage: 25, color: '#F5C242' },
-    { name: 'Marketing & Sales', count: 62, percentage: 18, color: '#CBD5E1' },
-    { name: 'Operations & HR', count: 42, percentage: 12, color: '#94A3B8' },
-  ];
-
-  const scheduleEvents = data?.scheduleEvents || [
-    {
-      id: 'ev-1',
-      time: '09:00 AM',
-      title: 'Team Product Sync',
-      category: 'Design',
-      tagColor: '#F5C242',
-      attendees: [
-        { name: 'Valentino M.', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80' },
-        { name: 'Keiko T.', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80' },
-      ],
-    },
-    {
-      id: 'ev-2',
-      time: '11:30 AM',
-      title: 'Salary Review & Promotion Q3',
-      category: 'HR',
-      tagColor: '#10B981',
-      attendees: [
-        { name: 'Amara O.', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=80&h=80&q=80' },
-        { name: 'Elena R.', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=80&h=80&q=80' },
-      ],
-    },
-    {
-      id: 'ev-3',
-      time: '02:00 PM',
-      title: '1-on-1 Performance Check',
-      category: 'Review',
-      tagColor: '#8B5CF6',
-      attendees: [
-        { name: 'Sophia C.', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=80&h=80&q=80' },
-      ],
-    },
-  ];
-
-  const recentSalaries = data?.recentSalaries || [
-    {
-      id: 'sal-1',
-      name: 'Valentino Morales',
-      jobTitle: 'Lead Designer',
-      netSalary: '$12,500',
-      status: 'Paid',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80',
-    },
-    {
-      id: 'sal-2',
-      name: 'Keiko Tanaka',
-      jobTitle: 'DevOps Specialist',
-      netSalary: '$9,400',
-      status: 'Paid',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80',
-    },
-    {
-      id: 'sal-3',
-      name: 'Elena Rostova',
-      jobTitle: 'People Ops Lead',
-      netSalary: '$8,200',
-      status: 'Paid',
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=80&h=80&q=80',
-    },
-  ];
-
-  // Dot matrix for attendance report card
-  const dotMatrix = Array.from({ length: 32 }, (_, i) => ({
-    id: i,
-    active: i < 20,
-    highlight: i % 4 === 0,
-  }));
+  const chartData = data?.salaryStatistics || DEFAULT_CHART_DATA;
+  const pieData = data?.departmentComposition || DEFAULT_DEPARTMENT_COMPOSITION;
+  const scheduleEvents = data?.scheduleEvents || DEFAULT_SCHEDULE_EVENTS;
+  const recentSalaries = data?.recentSalaries || DEFAULT_RECENT_SALARIES;
+  const dotMatrix = ATTENDANCE_DOT_MATRIX;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -150,7 +64,7 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-white">
-            Hello Valentino
+            Hello {CURRENT_USER.name}
           </h1>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
             Compensation insights, attendance tracking, and scheduled talent reviews.
@@ -192,7 +106,7 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
       {/* Filter / Scope Selection Bar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm">
-          {(['Day', 'Week', 'Month'] as const).map((r) => (
+          {TIME_RANGES.map((r) => (
             <button
               key={r}
               onClick={() => setTimeRange(r)}
@@ -216,7 +130,7 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
 
       {/* Main 3-Column Bento Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Column: Schedule (Width 3.5) */}
+        {/* Left Column: Schedule (Width 4) */}
         <div className="lg:col-span-4 space-y-4">
           <div className="bg-white/90 dark:bg-stone-900/90 rounded-3xl p-5 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-sm space-y-5">
             <div className="flex items-center justify-between">
@@ -228,7 +142,7 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
 
             {/* Date Strip */}
             <div className="grid grid-cols-5 gap-1.5 p-1.5 rounded-2xl bg-stone-50/80 dark:bg-stone-950/50 border border-stone-100 dark:border-stone-800/80 text-center">
-              {daysOfWeek.map((item) => {
+              {DAYS_OF_WEEK.map((item) => {
                 const isSelected = selectedDay === item.date;
                 return (
                   <button

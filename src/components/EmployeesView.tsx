@@ -20,6 +20,14 @@ import {
   X,
   Sparkles,
 } from 'lucide-react';
+import {
+  EMPLOYEE_STATUS_TABS,
+  EmployeeStatusTab,
+  DEPARTMENTS,
+  PAY_GRADES,
+  INITIAL_EMPLOYEE_FORM,
+  CSV_EXPORT_HEADERS,
+} from '@/constants';
 
 interface EmployeesViewProps {
   onSelectEmployee?: (employee: Employee) => void;
@@ -29,7 +37,7 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedTab, setSelectedTab] = useState<'All' | 'Active' | 'On Leave' | 'Contract'>('Active');
+  const [selectedTab, setSelectedTab] = useState<EmployeeStatusTab>('Active');
   const [departmentFilter, setDepartmentFilter] = useState('All');
   const [selectedRowId, setSelectedRowId] = useState<string>('2'); // Default selected row highlighted in yellow as in screenshot
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set(['2']));
@@ -40,19 +48,7 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
   // Drawer / Modal state
   const [activeEmployeeModal, setActiveEmployeeModal] = useState<Employee | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newEmployeeForm, setNewEmployeeForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    department: 'Engineering',
-    role: 'Software Engineer',
-    country: 'United States',
-    city: 'San Francisco',
-    baseSalary: '135000',
-    payGrade: 'L4',
-  });
-
-  const departments = ['All', 'Engineering', 'Product', 'Sales', 'Marketing', 'Human Resources', 'Finance', 'Legal', 'Operations'];
+  const [newEmployeeForm, setNewEmployeeForm] = useState(INITIAL_EMPLOYEE_FORM);
 
   const fetchEmployees = () => {
     setLoading(true);
@@ -125,17 +121,7 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
       if (res.ok) {
         setIsAddModalOpen(false);
         fetchEmployees();
-        setNewEmployeeForm({
-          firstName: '',
-          lastName: '',
-          email: '',
-          department: 'Engineering',
-          role: 'Software Engineer',
-          country: 'United States',
-          city: 'San Francisco',
-          baseSalary: '135000',
-          payGrade: 'L4',
-        });
+        setNewEmployeeForm(INITIAL_EMPLOYEE_FORM);
       }
     } catch (err) {
       console.error('Error adding employee:', err);
@@ -143,14 +129,14 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
   };
 
   const exportCSV = () => {
-    const headers = ['Employee ID', 'Name', 'Email', 'Department', 'Role', 'Country', 'Salary USD', 'Status'];
+    const headers = [...CSV_EXPORT_HEADERS];
     const rows = filteredEmployees.map((e) => [
       e.employeeId,
-      `${e.firstName} ${e.lastName}`,
+      `"${e.firstName} ${e.lastName}"`,
       e.email,
       e.department,
-      e.role,
-      e.country,
+      `"${e.role}"`,
+      `"${e.country}"`,
       e.baseSalaryUSD,
       e.status || 'Active',
     ]);
@@ -179,7 +165,7 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
 
         {/* Tab Filter Pills (All, Active, On Leave, Contract) */}
         <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm">
-          {(['All', 'Active', 'On Leave', 'Contract'] as const).map((tab) => {
+          {EMPLOYEE_STATUS_TABS.map((tab) => {
             const isTabActive = selectedTab === tab;
             return (
               <button
@@ -229,7 +215,7 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
             }}
             className="px-3.5 py-2 rounded-full bg-white/90 dark:bg-stone-900/90 border border-stone-200/80 dark:border-stone-800 text-xs text-stone-700 dark:text-stone-300 outline-none cursor-pointer shadow-sm"
           >
-            {departments.map((dept) => (
+            {DEPARTMENTS.map((dept) => (
               <option key={dept} value={dept}>
                 Dept: {dept}
               </option>
@@ -567,7 +553,7 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
                     onChange={(e) => setNewEmployeeForm({ ...newEmployeeForm, department: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white"
                   >
-                    {departments.filter((d) => d !== 'All').map((d) => (
+                    {DEPARTMENTS.filter((d) => d !== 'All').map((d) => (
                       <option key={d} value={d}>
                         {d}
                       </option>
@@ -603,7 +589,7 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
                     onChange={(e) => setNewEmployeeForm({ ...newEmployeeForm, payGrade: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white"
                   >
-                    {['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7'].map((g) => (
+                    {PAY_GRADES.map((g) => (
                       <option key={g} value={g}>
                         {g}
                       </option>
