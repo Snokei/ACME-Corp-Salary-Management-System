@@ -39,7 +39,7 @@ export function HeaderNav() {
               className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
                 isActive
                   ? "bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-semibold"
-                  : "text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100/60 dark:hover:bg-stone-800/60"
+                  : "text-stone-600 dark:text-stone-400 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/30 dark:hover:text-amber-100"
               }`}
             >
               {item.label}

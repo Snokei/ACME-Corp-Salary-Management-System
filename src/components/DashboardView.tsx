@@ -140,7 +140,7 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
                     className={`py-2 rounded-xl flex flex-col items-center justify-center transition-all ${
                       isSelected
                         ? 'bg-amber-400 text-stone-950 font-bold shadow-sm'
-                        : 'hover:bg-stone-200/50 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-400'
+                        : 'text-stone-600 dark:text-stone-400 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/30 dark:hover:text-amber-100'
                     }`}
                   >
                     <span className="text-[10px] uppercase font-semibold opacity-70">{item.day}</span>

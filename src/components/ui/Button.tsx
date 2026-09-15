@@ -1,8 +1,27 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from "react";
 
-export type ButtonVariant = 'primary' | 'amber' | 'secondary' | 'outline' | 'ghost' | 'danger';
-export type ButtonSize = 'sm' | 'md' | 'lg';
-export type ButtonShape = 'pill' | 'rounded' | 'circle';
+const rippleStyle = `
+@keyframes ripple-effect {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+`;
+
+export type ButtonVariant =
+  | "primary"
+  | "amber"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "danger";
+export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonShape = "pill" | "rounded" | "circle";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -15,62 +34,104 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-stone-900 text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-100 shadow-sm active:scale-[0.98]',
+    "bg-stone-900 text-white hover:bg-amber-500 hover:text-stone-950 dark:bg-white dark:text-stone-900 dark:hover:bg-amber-500 shadow-sm active:scale-[0.98]",
   amber:
-    'bg-amber-400 text-stone-950 font-bold hover:bg-amber-300 shadow-sm shadow-amber-400/20 active:scale-[0.98]',
+    "bg-amber-400 text-stone-950 font-bold hover:bg-amber-500 shadow-sm shadow-amber-400/20 active:scale-[0.98]",
   secondary:
-    'bg-white/90 dark:bg-stone-900/90 border border-stone-200/80 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 shadow-sm active:scale-[0.98]',
+    "bg-white/90 dark:bg-stone-900/90 border border-stone-200/80 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-amber-500 hover:text-stone-950 dark:hover:bg-amber-500 dark:hover:text-stone-950 shadow-sm active:scale-[0.98]",
   outline:
-    'bg-transparent border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 active:scale-[0.98]',
+    "bg-transparent border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-amber-500 hover:text-stone-950 hover:border-amber-500 dark:hover:bg-amber-500 dark:hover:text-stone-950 active:scale-[0.98]",
   ghost:
-    'bg-transparent text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-100/70 dark:hover:bg-stone-800/70 active:scale-[0.98]',
+    "bg-transparent text-stone-600 dark:text-stone-400 hover:bg-amber-500/20 hover:text-amber-600 dark:hover:bg-amber-500/20 dark:hover:text-amber-500 active:scale-[0.98]",
   danger:
-    'bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 active:scale-[0.98]',
+    "bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/20 active:scale-[0.98]",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'text-xs px-3 py-1.5 gap-1.5',
-  md: 'text-xs px-4 py-2 gap-2',
-  lg: 'text-sm px-5 py-2.5 gap-2.5',
+  sm: "text-xs px-3 py-1.5 gap-1.5",
+  md: "text-xs px-4 py-2 gap-2",
+  lg: "text-sm px-5 py-2.5 gap-2.5",
 };
 
 const shapeStyles: Record<ButtonShape, string> = {
-  pill: 'rounded-full',
-  rounded: 'rounded-xl',
-  circle: 'rounded-full p-2 aspect-square',
+  pill: "rounded-full",
+  rounded: "rounded-xl",
+  circle: "rounded-full p-2 aspect-square",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       children,
-      variant = 'primary',
-      size = 'md',
-      shape = 'pill',
+      variant = "primary",
+      size = "md",
+      shape = "pill",
       isLoading = false,
       leftIcon,
       rightIcon,
       disabled,
-      className = '',
-      type = 'button',
+      className = "",
+      type = "button",
+      onClick,
       ...props
     },
-    ref
+    ref,
   ) => {
     const isDisabled = disabled || isLoading;
+    const [ripples, setRipples] = useState<{ x: number; y: number; size: number; id: number }[]>([]);
+
+    useEffect(() => {
+      if (ripples.length > 0) {
+        const timeout = setTimeout(() => {
+          setRipples((prev) => prev.slice(1));
+        }, 500);
+        return () => clearTimeout(timeout);
+      }
+    }, [ripples]);
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      const button = e.currentTarget;
+      const rect = button.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top - size / 2;
+      
+      setRipples((prev) => [...prev, { x, y, size, id: Date.now() }]);
+
+      if (onClick) {
+        onClick(e);
+      }
+    };
 
     return (
       <button
         ref={ref}
         type={type}
         disabled={isDisabled}
-        className={`inline-flex items-center justify-center font-medium transition-all duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
+        onClick={handleClick}
+        className={`relative overflow-hidden inline-flex items-center justify-center font-medium transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md active:shadow-sm select-none outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
           variantStyles[variant]
         } ${sizeStyles[size]} ${shapeStyles[shape]} ${
-          isDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
+          isDisabled
+            ? "opacity-50 cursor-not-allowed pointer-events-none"
+            : "cursor-pointer"
         } ${className}`}
         {...props}
       >
+        <style>{rippleStyle}</style>
+        {ripples.map((ripple) => (
+          <span
+            key={ripple.id}
+            className="absolute rounded-full bg-white/40 dark:bg-black/20 pointer-events-none"
+            style={{
+              width: ripple.size,
+              height: ripple.size,
+              top: ripple.y,
+              left: ripple.x,
+              animation: "ripple-effect 0.5s linear",
+            }}
+          />
+        ))}
         {isLoading ? (
           <svg
             className="animate-spin -ml-0.5 mr-1.5 h-3.5 w-3.5"
@@ -93,7 +154,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             />
           </svg>
         ) : (
-          leftIcon && <span className="inline-flex shrink-0 items-center">{leftIcon}</span>
+          leftIcon && (
+            <span className="inline-flex shrink-0 items-center">
+              {leftIcon}
+            </span>
+          )
         )}
         {children}
         {!isLoading && rightIcon && (
@@ -101,7 +166,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
       </button>
     );
-  }
+  },
 );
 
-Button.displayName = 'Button';
+Button.displayName = "Button";

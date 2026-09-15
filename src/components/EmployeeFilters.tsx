@@ -110,7 +110,7 @@ export function EmployeeFilters({
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                   isSelected
                     ? 'bg-amber-500 text-stone-950 shadow-sm'
-                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                    : 'text-stone-600 dark:text-stone-400 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/30 dark:hover:text-amber-100'
                 }`}
               >
                 {tab}
