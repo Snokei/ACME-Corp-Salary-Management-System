@@ -37,47 +37,7 @@ export interface EmployeesTableProps {
   className?: string;
 }
 
-const VERIFIED_AVATAR_SEEDS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=120&h=120&q=80',
-  'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=120&h=120&q=80',
-];
-
-function getEmployeeAvatar(emp: Employee): string {
-  // If employee has a valid avatar that is not a broken dynamic template
-  if (emp.avatarUrl && emp.avatarUrl.startsWith('http') && !emp.avatarUrl.includes('photo-NaN')) {
-    return emp.avatarUrl;
-  }
-  const key = `${emp.id || ''}${emp.firstName || ''}${emp.lastName || ''}`;
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = (hash << 5) - hash + key.charCodeAt(i);
-    hash |= 0;
-  }
-  const index = Math.abs(hash) % VERIFIED_AVATAR_SEEDS.length;
-  return VERIFIED_AVATAR_SEEDS[index];
-}
-
-function formatDate(date: string | Date | undefined): string {
-  if (!date) return '—';
-  if (typeof date === 'string') {
-    return date.substring(0, 10);
-  }
-  try {
-    return date.toISOString().substring(0, 10);
-  } catch {
-    return String(date);
-  }
-}
+import { getEmployeeAvatar, formatDateSafe, formatSalaryUSD } from '@/lib/employeeUtils';
 
 export function EmployeesTable({
   employees,
@@ -223,7 +183,7 @@ export function EmployeesTable({
 
                   {/* Date Joined */}
                   <TableCell className="text-stone-500 dark:text-stone-400 text-[11px] whitespace-nowrap">
-                    {formatDate(emp.hireDate)}
+                    {formatDateSafe(emp.hireDate)}
                   </TableCell>
 
                   {/* Status */}
