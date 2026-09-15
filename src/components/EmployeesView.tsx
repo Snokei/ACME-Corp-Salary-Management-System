@@ -6,7 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { EmployeeFilters } from '@/components/EmployeeFilters';
 import { EmployeesTable } from '@/components/EmployeesTable';
-import { EmployeeDetailModal } from '@/components/EmployeeDetailModal';
+import { EmployeeDetailDrawer } from '@/components/EmployeeDetailDrawer';
 import { AddEmployeeModal } from '@/components/AddEmployeeModal';
 import { Button } from '@/components/ui';
 import { Download, Plus, Trash2, X } from 'lucide-react';
@@ -88,8 +88,7 @@ export function EmployeesView({
 
   const handleViewDetails = (employee: Employee, e: React.MouseEvent) => {
     e.stopPropagation();
-    // Instead of opening EmployeeDetailModal on Edit, open AddEmployeeModal in edit mode
-    setModalState({ type: 'edit', employee });
+    setModalState({ type: 'view', employee });
   };
 
   // CSV Export handlers
@@ -240,6 +239,10 @@ export function EmployeesView({
         onToggleSelectAll={toggleSelectAll}
         onToggleRowCheck={toggleRowCheck}
         onViewDetails={handleViewDetails}
+        onEditDetails={(emp, e) => {
+          e.stopPropagation();
+          setModalState({ type: 'edit', employee: emp });
+        }}
         page={page}
         totalPages={totalPages}
         totalCount={total}
@@ -247,10 +250,11 @@ export function EmployeesView({
         onPageChange={handlePageChange}
       />
 
-      {/* Employee Detail Modal */}
-      <EmployeeDetailModal
+      {/* Employee Detail Drawer */}
+      <EmployeeDetailDrawer
         employee={modalState.type === 'view' ? modalState.employee : null}
         onClose={() => setModalState({ type: null, employee: null })}
+        onEdit={(emp) => setModalState({ type: 'edit', employee: emp })}
       />
 
       {/* Add Employee Modal */}

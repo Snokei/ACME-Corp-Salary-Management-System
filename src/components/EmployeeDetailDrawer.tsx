@@ -1,8 +1,8 @@
 import React from 'react';
 import { Employee } from '@/types';
-import { Modal, Button } from '@/components/ui';
+import { Drawer, Button } from '@/components/ui';
 
-export interface EmployeeDetailModalProps {
+export interface EmployeeDetailDrawerProps {
   employee: Employee | null;
   onClose: () => void;
   onEdit?: (employee: Employee) => void;
@@ -37,11 +37,11 @@ function getEmployeeAvatar(emp: Employee): string {
   return VERIFIED_AVATAR_SEEDS[index];
 }
 
-export function EmployeeDetailModal({
+export function EmployeeDetailDrawer({
   employee,
   onClose,
   onEdit,
-}: EmployeeDetailModalProps) {
+}: EmployeeDetailDrawerProps) {
   if (!employee) return null;
 
   const avatar = getEmployeeAvatar(employee);
@@ -50,8 +50,8 @@ export function EmployeeDetailModal({
   )}`;
 
   return (
-    <Modal isOpen={Boolean(employee)} onClose={onClose} maxWidth="lg">
-      <div className="space-y-5">
+    <Drawer isOpen={Boolean(employee)} onClose={onClose} title="Employee Profile">
+      <div className="space-y-6">
         {/* Header Profile */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -81,19 +81,31 @@ export function EmployeeDetailModal({
         <div className="grid grid-cols-2 gap-3 py-2 text-xs">
           <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
             <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Department
+              Status
             </span>
             <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              {employee.department}
+              <span className={`inline-flex items-center gap-1.5 ${employee.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-600 dark:text-stone-400'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${employee.status === 'Active' ? 'bg-emerald-500' : 'bg-stone-400'}`}></span>
+                {employee.status || 'Active'}
+              </span>
             </span>
           </div>
 
           <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
             <span className="text-stone-400 block text-[10px] uppercase font-semibold">
-              Compensation
+              Hire Date
             </span>
-            <span className="font-bold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              ${(employee.baseSalaryUSD ?? employee.baseSalary ?? 0).toLocaleString('en-US')} USD/yr
+            <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
+              {employee.hireDate ? new Date(employee.hireDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
+            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
+              Department
+            </span>
+            <span className="font-semibold text-stone-800 dark:text-stone-100 mt-0.5 block">
+              {employee.department}
             </span>
           </div>
 
@@ -107,6 +119,24 @@ export function EmployeeDetailModal({
           </div>
 
           <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
+            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
+              Base Salary
+            </span>
+            <span className="font-bold text-stone-800 dark:text-stone-100 mt-0.5 block">
+              ${(employee.baseSalaryUSD ?? employee.baseSalary ?? 0).toLocaleString('en-US')} USD
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
+            <span className="text-stone-400 block text-[10px] uppercase font-semibold">
+              Target Bonus
+            </span>
+            <span className="font-bold text-stone-800 dark:text-stone-100 mt-0.5 block">
+              ${(employee.bonusUSD ?? 0).toLocaleString('en-US')} USD
+            </span>
+          </div>
+
+          <div className="col-span-2 p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
             <span className="text-stone-400 block text-[10px] uppercase font-semibold">
               Location
             </span>
@@ -126,13 +156,12 @@ export function EmployeeDetailModal({
             shape="pill"
             onClick={() => {
               if (onEdit) onEdit(employee);
-              onClose();
             }}
           >
             Edit Details
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }

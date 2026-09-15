@@ -15,7 +15,7 @@ import {
   Button,
   Checkbox,
 } from '@/components/ui';
-import { MapPin, Edit2, Users } from 'lucide-react';
+import { MapPin, Edit2, Users, Eye } from 'lucide-react';
 
 export interface EmployeesTableProps {
   employees: Employee[];
@@ -24,6 +24,7 @@ export interface EmployeesTableProps {
   onToggleSelectAll?: () => void;
   onToggleRowCheck?: (id: string, e: React.MouseEvent) => void;
   onViewDetails?: (employee: Employee, e: React.MouseEvent) => void;
+  onEditDetails?: (employee: Employee, e: React.MouseEvent) => void;
 
   // Pagination props
   page: number;
@@ -44,6 +45,7 @@ export function EmployeesTable({
   onToggleSelectAll,
   onToggleRowCheck,
   onViewDetails,
+  onEditDetails,
   page,
   totalPages,
   totalCount,
@@ -186,22 +188,40 @@ export function EmployeesTable({
 
                   {/* Actions */}
                   <TableCell align="center">
-                    <Button
-                      variant="ghost"
-                      shape="pill"
-                      size="sm"
-                      leftIcon={<Edit2 className="w-3.5 h-3.5" />}
-                      aria-label={`Edit ${emp.firstName}`}
-                      className="hover:bg-amber-300/40 dark:hover:bg-amber-500/20 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 font-medium"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onViewDetails) {
-                          onViewDetails(emp, e);
-                        }
-                      }}
-                    >
-                      Edit
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        shape="circle"
+                        size="sm"
+                        title="View Profile"
+                        aria-label={`View ${emp.firstName}`}
+                        className="hover:bg-amber-300/40 dark:hover:bg-amber-500/20 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 font-medium"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onViewDetails) {
+                            onViewDetails(emp, e);
+                          }
+                        }}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        shape="circle"
+                        size="sm"
+                        title="Edit Details"
+                        aria-label={`Edit ${emp.firstName}`}
+                        className="hover:bg-amber-300/40 dark:hover:bg-amber-500/20 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 font-medium"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onEditDetails) {
+                            onEditDetails(emp, e);
+                          }
+                        }}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
