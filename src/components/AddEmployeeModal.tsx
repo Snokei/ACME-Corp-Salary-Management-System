@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Input, Select } from '@/components/ui';
 import { Plus } from 'lucide-react';
 import { DEPARTMENTS, PAY_GRADES, INITIAL_EMPLOYEE_FORM } from '@/constants';
+import { createEmployeeAction } from '@/actions/employees';
 
 export interface AddEmployeeModalProps {
   isOpen: boolean;
@@ -24,22 +25,18 @@ export function AddEmployeeModal({
     setError(null);
 
     try {
-      const res = await fetch('/api/employees', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+      const res = await createEmployeeAction(formData);
 
-      if (!res.ok) {
-        throw new Error(`Failed to add employee: ${res.statusText}`);
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to add employee');
       }
 
       setFormData(INITIAL_EMPLOYEE_FORM);
       onClose();
       if (onSuccess) onSuccess();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding employee:', err);
-      setError('Failed to create employee record. Please try again.');
+      setError(err?.message || 'Failed to create employee record. Please try again.');
     } finally {
       setSubmitting(false);
     }

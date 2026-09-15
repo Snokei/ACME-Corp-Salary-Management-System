@@ -93,7 +93,7 @@ export function EmployeeDetailModal({
               Compensation
             </span>
             <span className="font-bold text-stone-800 dark:text-stone-100 mt-0.5 block">
-              ${(employee.baseSalaryUSD ?? employee.baseSalary ?? 0).toLocaleString()} USD/yr
+              ${(employee.baseSalaryUSD ?? employee.baseSalary ?? 0).toLocaleString('en-US')} USD/yr
             </span>
           </div>
 

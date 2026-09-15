@@ -273,7 +273,7 @@ export function DashboardView({ onNavigateToPeople }: DashboardViewProps) {
                       color: '#fff',
                       fontSize: '11px',
                     }}
-                    formatter={(val: number) => [`$${val.toLocaleString()}`, 'Payroll']}
+                    formatter={(val: number) => [`$${val.toLocaleString('en-US')}`, 'Payroll']}
                   />
                   <Area
                     type="monotone"

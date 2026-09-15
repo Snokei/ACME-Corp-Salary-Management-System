@@ -262,7 +262,7 @@ export function TablePagination({
       <div className="text-xs text-stone-500 dark:text-stone-400">
         Showing <span className="font-semibold text-stone-800 dark:text-stone-200">{startItem}</span> to{' '}
         <span className="font-semibold text-stone-800 dark:text-stone-200">{endItem}</span> of{' '}
-        <span className="font-semibold text-stone-800 dark:text-stone-200">{totalCount.toLocaleString()}</span> {itemLabel}
+        <span className="font-semibold text-stone-800 dark:text-stone-200">{totalCount.toLocaleString('en-US')}</span> {itemLabel}
       </div>
 
       <div className="flex items-center gap-2">

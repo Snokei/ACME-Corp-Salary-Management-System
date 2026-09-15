@@ -217,7 +217,7 @@ export function EmployeesTable({
 
                   {/* Salary */}
                   <TableCell className="font-semibold text-stone-900 dark:text-stone-100 whitespace-nowrap">
-                    ${(emp.baseSalaryUSD ?? emp.baseSalary ?? 0).toLocaleString()}{' '}
+                    ${(emp.baseSalaryUSD ?? emp.baseSalary ?? 0).toLocaleString('en-US')}{' '}
                     <span className="text-[10px] font-normal text-stone-400">USD</span>
                   </TableCell>
 

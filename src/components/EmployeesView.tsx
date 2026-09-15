@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { EmployeeFilters } from '@/components/EmployeeFilters';
 import { EmployeesTable } from '@/components/EmployeesTable';
@@ -10,101 +10,62 @@ import { AddEmployeeModal } from '@/components/AddEmployeeModal';
 import { Button } from '@/components/ui';
 import { Download, Plus } from 'lucide-react';
 import { Employee } from '@/types';
-import {
-  EMPLOYEE_STATUS_TABS,
-  EmployeeStatusTab,
-  CSV_EXPORT_HEADERS,
-} from '@/constants';
+import { CSV_EXPORT_HEADERS, EmployeeStatusTab } from '@/constants';
+import { EmployeesResponseData } from '@/lib/employeeData';
 
 export interface EmployeesViewProps {
+  data: EmployeesResponseData;
+  searchParams?: {
+    search?: string;
+    department?: string;
+    tab?: string;
+    page?: string;
+  };
   onSelectEmployee?: (employee: Employee) => void;
 }
 
-export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
-  const searchParams = useSearchParams();
-  const initialTabParam = searchParams.get('tab');
-  const initialDeptParam = searchParams.get('department');
+export function EmployeesView({
+  data,
+  searchParams = {},
+  onSelectEmployee,
+}: EmployeesViewProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const nextSearchParams = useSearchParams();
 
-  // State: Employee data & pagination
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const { employees, total, page, totalPages } = data;
+  const currentSearch = searchParams.search || nextSearchParams.get('search') || '';
+  const currentDept = searchParams.department || nextSearchParams.get('department') || 'All';
+  const currentTab = (searchParams.tab || nextSearchParams.get('tab') || 'Active') as EmployeeStatusTab;
 
-  // State: Filters
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [selectedTab, setSelectedTab] = useState<EmployeeStatusTab>(() => {
-    if (initialTabParam && (EMPLOYEE_STATUS_TABS as readonly string[]).includes(initialTabParam)) {
-      return initialTabParam as EmployeeStatusTab;
-    }
-    return 'Active';
-  });
-  const [departmentFilter, setDepartmentFilter] = useState(initialDeptParam || 'All');
-
-  // State: Selections & Highlights
+  // Client-only UI States (Modals and Table Row Highlight)
   const [selectedRowId, setSelectedRowId] = useState<string>('2');
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set(['2']));
-
-  // State: Modals
   const [activeEmployeeModal, setActiveEmployeeModal] = useState<Employee | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Fetch employees from API
-  const fetchEmployees = useCallback(() => {
-    setLoading(true);
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: '10',
-      search,
-      department: departmentFilter,
-    });
-
-    fetch(`/api/employees?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setEmployees(data.employees || []);
-        setTotalPages(data.totalPages || 1);
-        setTotalCount(data.total || (data.employees ? data.employees.length : 0));
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch employees:', err);
-        setLoading(false);
-      });
-  }, [page, search, departmentFilter]);
-
-  useEffect(() => {
-    fetchEmployees();
-  }, [page, departmentFilter]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-    fetchEmployees();
-  };
-
-  const handleResetFilters = () => {
-    setSearch('');
-    setSelectedTab('Active');
-    setDepartmentFilter('All');
-    setPage(1);
-  };
-
-  const hasActiveFilters = Boolean(
-    search.trim() !== '' || selectedTab !== 'Active' || departmentFilter !== 'All'
-  );
-
-  // Status Tab filtering (client-side refinement)
-  const filteredEmployees = useMemo(() => {
-    if (selectedTab === 'All') return employees;
-    if (selectedTab === 'Active') return employees.filter((e) => e.status === 'Active' || !e.status);
-    if (selectedTab === 'On Leave') return employees.filter((e) => e.status === 'On Leave');
-    if (selectedTab === 'Contract') return employees.filter((e) => e.status === 'Contract' || e.status === 'Full Time');
+  // Status Tab filtering (client-side refinement if needed)
+  const filteredEmployees = React.useMemo(() => {
+    if (currentTab === 'All') return employees;
+    if (currentTab === 'Active') return employees.filter((e) => e.status === 'Active' || !e.status);
+    if (currentTab === 'On Leave') return employees.filter((e) => e.status === 'On Leave');
+    if (currentTab === 'Contract') return employees.filter((e) => e.status === 'Contract' || e.status === 'Full Time');
     return employees;
-  }, [employees, selectedTab]);
+  }, [employees, currentTab]);
 
-  // Selection toggles
+  // Page navigation via URL searchParams (triggers Server Component SSR re-render)
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(nextSearchParams.toString());
+    if (newPage > 1) {
+      params.set('page', newPage.toString());
+    } else {
+      params.delete('page');
+    }
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  // Checkbox toggles
   const toggleSelectAll = () => {
     if (checkedIds.size === filteredEmployees.length) {
       setCheckedIds(new Set());
@@ -164,7 +125,7 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Title & Page Header with Action Buttons inline */}
+      {/* Title & Page Header with Action Buttons */}
       <PageHeader
         title="People"
         description="Manage organization members, compensation tiers, roles, and status."
@@ -189,29 +150,17 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
         </Button>
       </PageHeader>
 
-      {/* Reusable Filters Component (Status tabs, search bar & department dropdown inline) */}
+      {/* Server Action Filter Form - No Local State */}
       <EmployeeFilters
-        search={search}
-        onSearchChange={setSearch}
-        onSearchSubmit={handleSearchSubmit}
-        selectedTab={selectedTab}
-        onTabChange={(tab) => {
-          setSelectedTab(tab);
-          setPage(1);
-        }}
-        department={departmentFilter}
-        onDepartmentChange={(dept) => {
-          setDepartmentFilter(dept);
-          setPage(1);
-        }}
-        onResetFilters={handleResetFilters}
-        hasActiveFilters={hasActiveFilters}
+        search={currentSearch}
+        department={currentDept}
+        selectedTab={currentTab}
       />
 
-      {/* Reusable Employees Table Component */}
+      {/* Server-Rendered Employees Table */}
       <EmployeesTable
         employees={filteredEmployees}
-        loading={loading}
+        loading={false}
         selectedRowId={selectedRowId}
         checkedIds={checkedIds}
         onRowClick={handleRowClick}
@@ -220,9 +169,9 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
         onViewDetails={handleViewDetails}
         page={page}
         totalPages={totalPages}
-        totalCount={totalCount}
+        totalCount={total}
         pageSize={10}
-        onPageChange={setPage}
+        onPageChange={handlePageChange}
       />
 
       {/* Employee Detail Modal */}
@@ -231,12 +180,12 @@ export function EmployeesView({ onSelectEmployee }: EmployeesViewProps) {
         onClose={() => setActiveEmployeeModal(null)}
       />
 
-      {/* Add Employee Modal */}
+      {/* Add Employee Modal (Invokes createEmployeeAction Server Action) */}
       <AddEmployeeModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => {
-          fetchEmployees();
+          router.refresh();
         }}
       />
     </div>
