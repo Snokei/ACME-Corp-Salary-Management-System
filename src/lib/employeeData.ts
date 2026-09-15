@@ -222,10 +222,6 @@ export async function getEmployeesData(
       { firstName: { contains: search } },
       { lastName: { contains: search } },
       { email: { contains: search } },
-      { role: { contains: search } },
-      { department: { contains: search } },
-      { city: { contains: search } },
-      { country: { contains: search } },
     ];
   }
 
@@ -307,9 +303,7 @@ export async function getEmployeesData(
       (e) =>
         e.firstName.toLowerCase().includes(q) ||
         e.lastName.toLowerCase().includes(q) ||
-        e.email.toLowerCase().includes(q) ||
-        e.role.toLowerCase().includes(q) ||
-        e.department.toLowerCase().includes(q)
+        e.email.toLowerCase().includes(q)
     );
   }
   if (department !== 'All') {

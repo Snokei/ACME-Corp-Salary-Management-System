@@ -1,16 +1,15 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Button, Input, Select, SearchableSelect } from '@/components/ui';
-import { Search, RotateCcw } from 'lucide-react';
-import Link from 'next/link';
-import { useRef, useState, useEffect } from 'react';
+import { filterEmployeesAction } from "@/actions/employees";
+import { Button, Input, SearchableSelect } from "@/components/ui";
 import {
+  DEPARTMENTS,
   EMPLOYEE_STATUS_TABS,
   EmployeeStatusTab,
-  DEPARTMENTS,
-} from '@/constants';
-import { filterEmployeesAction } from '@/actions/employees';
+} from "@/constants";
+import { RotateCcw, Search } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 export interface EmployeeFiltersProps {
   search?: string;
@@ -24,23 +23,23 @@ export interface EmployeeFiltersProps {
 }
 
 export function EmployeeFilters({
-  search = '',
-  selectedTab = 'Active',
-  department = 'All',
-  role = 'All',
-  location = 'All',
+  search = "",
+  selectedTab = "Active",
+  department = "All",
+  role = "All",
+  location = "All",
   uniqueRoles = [],
   uniqueLocations = [],
-  className = '',
+  className = "",
 }: EmployeeFiltersProps) {
   const formRef = useRef<HTMLFormElement>(null);
 
   const hasActiveFilters = Boolean(
-    search.trim() !== '' || 
-    (selectedTab !== 'Active' && selectedTab !== 'All') || 
-    department !== 'All' ||
-    role !== 'All' ||
-    location !== 'All'
+    search.trim() !== "" ||
+    (selectedTab !== "Active" && selectedTab !== "All") ||
+    department !== "All" ||
+    role !== "All" ||
+    location !== "All",
   );
 
   const [searchValue, setSearchValue] = useState(search);
@@ -62,7 +61,7 @@ export function EmployeeFilters({
           shape="pill"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
-          placeholder="Search by name, role, email..."
+          placeholder="Search by name, email..."
           leftIcon={<Search className="w-4 h-4 text-stone-400" />}
           containerClassName="w-full"
         />
@@ -109,8 +108,8 @@ export function EmployeeFilters({
                 value={tab}
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                   isSelected
-                    ? 'bg-amber-500 text-stone-950 shadow-sm'
-                    : 'text-stone-600 dark:text-stone-400 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/30 dark:hover:text-amber-100'
+                    ? "bg-amber-500 text-stone-950 shadow-sm"
+                    : "text-stone-600 dark:text-stone-400 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/30 dark:hover:text-amber-100"
                 }`}
               >
                 {tab}
