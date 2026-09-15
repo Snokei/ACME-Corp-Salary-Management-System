@@ -25,7 +25,7 @@ export async function filterEmployeesAction(formData: FormData) {
   const params = new URLSearchParams();
   if (search.trim()) params.set('search', search.trim());
   if (department !== 'All') params.set('department', department);
-  if (tab !== 'Active' && tab !== 'All') params.set('tab', tab);
+  if (tab !== 'Active') params.set('tab', tab);
   if (page !== '1') params.set('page', page);
 
   const queryString = params.toString();
@@ -93,3 +93,29 @@ export async function createEmployeeAction(data: {
     return { success: false, error: error.message || 'Failed to create employee' };
   }
 }
+
+/**
+ * Server Action to delete one or multiple employees by ID.
+ */
+export async function deleteEmployeesAction(ids: string[]) {
+  try {
+    if (!ids || ids.length === 0) {
+      return { success: false, error: 'No employee IDs provided' };
+    }
+
+    await prisma.employee.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+
+    revalidatePath('/people');
+    revalidatePath('/');
+
+    return { success: true, count: ids.length };
+  } catch (error: any) {
+    console.error('Server action deleteEmployeesAction failed:', error);
+    return { success: false, error: error.message || 'Failed to delete employee(s)' };
+  }
+}
+
