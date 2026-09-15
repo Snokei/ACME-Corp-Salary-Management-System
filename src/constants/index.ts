@@ -16,6 +16,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/" },
   { id: "people", label: "People", href: "/people" },
+  { id: "salary", label: "Salary Bands", href: "/salary-bands" },
 ];
 
 export const ALL_NAV_ITEMS: NavItem[] = [

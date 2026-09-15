@@ -65,3 +65,17 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model SalaryBand {
+  id             String   @id @default(uuid())
+  payGrade       String
+  currency       String   @default("USD")
+  minSalary      Float
+  midpointSalary Float
+  maxSalary      Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([payGrade, currency])
+  @@index([payGrade])
+}

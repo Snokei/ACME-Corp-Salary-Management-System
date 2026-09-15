@@ -141,6 +141,36 @@ export async function getDashboardData() {
     averageSalary: Math.round(g._avg.baseSalaryUSD || 0),
   }));
 
+  // 7. Salary Band Distribution (Below, Within, Above)
+  let belowBandCount = 0;
+  let withinBandCount = 0;
+  let aboveBandCount = 0;
+
+  const salaryBandModel = (prisma as any).salaryBand;
+  if (salaryBandModel) {
+    try {
+      const salaryBands = await salaryBandModel.findMany({ where: { currency: 'USD' } });
+      for (const band of salaryBands) {
+        const [below, within, above] = await Promise.all([
+          prisma.employee.count({
+            where: { payGrade: band.payGrade, baseSalaryUSD: { lt: band.minSalary } },
+          }),
+          prisma.employee.count({
+            where: { payGrade: band.payGrade, baseSalaryUSD: { gte: band.minSalary, lte: band.maxSalary } },
+          }),
+          prisma.employee.count({
+            where: { payGrade: band.payGrade, baseSalaryUSD: { gt: band.maxSalary } },
+          }),
+        ]);
+        belowBandCount += below;
+        withinBandCount += within;
+        aboveBandCount += above;
+      }
+    } catch (e) {
+      console.warn('SalaryBand query error:', e);
+    }
+  }
+
   return {
     stats: {
       activeCount,
@@ -149,6 +179,11 @@ export async function getDashboardData() {
       averageBaseSalary,
       medianCompensation,
       countriesCount,
+    },
+    bandDistribution: {
+      below: belowBandCount,
+      within: withinBandCount,
+      above: aboveBandCount,
     },
     recentSalaries,
     salaryStatistics,

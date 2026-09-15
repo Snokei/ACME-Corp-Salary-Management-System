@@ -5,7 +5,9 @@ import { Employee } from '@/types';
 import { Drawer, Button } from '@/components/ui';
 import { SalaryAdjustmentModal } from '@/components/SalaryAdjustmentModal';
 import { getSalaryHistoryAction } from '@/actions/salaryAdjustments';
-import { Plus, History, DollarSign, Tag, Calendar, ChevronRight } from 'lucide-react';
+import { getCompensationAnalysisAction } from '@/actions/salaryBands';
+import { CompensationAnalysisResult } from '@/lib/compaRatioService';
+import { Plus, History, DollarSign, Tag, Calendar, Layers, Target, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export interface EmployeeDetailDrawerProps {
@@ -68,6 +70,8 @@ export function EmployeeDetailDrawer({
   const [salaryHistory, setSalaryHistory] = useState<SalaryHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState<boolean>(false);
+  const [compAnalysis, setCompAnalysis] = useState<CompensationAnalysisResult | null>(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState<boolean>(false);
 
   useEffect(() => {
     setCurrentEmp(employee);
@@ -93,6 +97,27 @@ export function EmployeeDetailDrawer({
     }
   }, [currentEmp?.id]);
 
+  // Fetch compensation analysis whenever employee salary or pay grade changes
+  useEffect(() => {
+    if (currentEmp) {
+      const salary = currentEmp.baseSalaryUSD ?? currentEmp.baseSalary ?? 0;
+      setLoadingAnalysis(true);
+      getCompensationAnalysisAction(salary, currentEmp.payGrade || 'L4', currentEmp.currency || 'USD')
+        .then((res) => {
+          if (res.success && res.analysis) {
+            setCompAnalysis(res.analysis);
+          } else {
+            setCompAnalysis(null);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load compensation analysis:', err);
+          setCompAnalysis(null);
+        })
+        .finally(() => setLoadingAnalysis(false));
+    }
+  }, [currentEmp?.id, currentEmp?.baseSalary, currentEmp?.baseSalaryUSD, currentEmp?.payGrade]);
+
   if (!currentEmp) return null;
 
   const avatar = getEmployeeAvatar(currentEmp);
@@ -103,7 +128,6 @@ export function EmployeeDetailDrawer({
   const currentSalaryAmount = currentEmp.baseSalaryUSD ?? currentEmp.baseSalary ?? 0;
 
   const handleAdjustmentSuccess = async () => {
-    // Re-fetch history
     if (currentEmp.id) {
       setLoadingHistory(true);
       try {
@@ -250,7 +274,7 @@ export function EmployeeDetailDrawer({
                 leftIcon={<Plus className="w-3.5 h-3.5" />}
                 onClick={() => setIsAdjustmentModalOpen(true)}
               >
-                + Add Salary Adjustment
+                Add Salary Adjustment
               </Button>
             </div>
 
@@ -262,6 +286,100 @@ export function EmployeeDetailDrawer({
                 </span>
               </div>
             ) : null}
+          </div>
+
+          {/* Compensation Position & Salary Band Section */}
+          <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-stone-900 dark:text-white">
+                <Target className="w-4 h-4 text-amber-500" />
+                <span>Salary Band & Compa-Ratio</span>
+              </div>
+              {compAnalysis?.hasBand && (
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    compAnalysis.status === 'Within Band'
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                      : compAnalysis.status === 'Below Band'
+                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                      : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
+                  }`}
+                >
+                  {compAnalysis.status}
+                </span>
+              )}
+            </div>
+
+            {loadingAnalysis ? (
+              <div className="py-2 text-center text-xs text-stone-400 animate-pulse">
+                Analyzing salary band position...
+              </div>
+            ) : !compAnalysis?.hasBand || !compAnalysis.band ? (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
+                <span>No matching salary band defined for pay grade ({currentEmp.payGrade || 'N/A'}).</span>
+              </div>
+            ) : (
+              <div className="space-y-3 text-xs">
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                  <div className="p-2 rounded-xl bg-white/80 dark:bg-stone-900/60 border border-stone-100 dark:border-stone-800">
+                    <span className="text-[10px] text-stone-400 block uppercase font-bold">Minimum</span>
+                    <span className="font-semibold text-stone-800 dark:text-stone-200">
+                      ${compAnalysis.band.minSalary.toLocaleString('en-US')}
+                    </span>
+                  </div>
+
+                  <div className="p-2 rounded-xl bg-white/80 dark:bg-stone-900/60 border border-stone-100 dark:border-stone-800">
+                    <span className="text-[10px] text-stone-400 block uppercase font-bold">Midpoint</span>
+                    <span className="font-semibold text-stone-800 dark:text-stone-200">
+                      ${compAnalysis.band.midpointSalary.toLocaleString('en-US')}
+                    </span>
+                  </div>
+
+                  <div className="p-2 rounded-xl bg-white/80 dark:bg-stone-900/60 border border-stone-100 dark:border-stone-800">
+                    <span className="text-[10px] text-stone-400 block uppercase font-bold">Maximum</span>
+                    <span className="font-semibold text-stone-800 dark:text-stone-200">
+                      ${compAnalysis.band.maxSalary.toLocaleString('en-US')}
+                    </span>
+                  </div>
+
+                  <div className="p-2 rounded-xl bg-white/80 dark:bg-stone-900/60 border border-amber-400/40">
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 block uppercase font-bold">Compa-Ratio</span>
+                    <span className="font-extrabold text-stone-900 dark:text-white text-sm">
+                      {compAnalysis.compaRatio !== null ? `${compAnalysis.compaRatio.toFixed(1)}%` : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Range Bar Indicator */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between text-[10px] font-semibold text-stone-500 dark:text-stone-400">
+                    <span>Position in Band: <strong className="text-stone-900 dark:text-white">{compAnalysis.displayPosition}</strong></span>
+                    <span>Grade {compAnalysis.band.payGrade} ({compAnalysis.band.currency})</span>
+                  </div>
+
+                  <div className="relative w-full h-3 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 rounded-full ${
+                        compAnalysis.status === 'Within Band'
+                          ? 'bg-gradient-to-r from-emerald-500 to-amber-500'
+                          : compAnalysis.status === 'Below Band'
+                          ? 'bg-amber-500'
+                          : 'bg-indigo-500'
+                      }`}
+                      style={{ width: `${compAnalysis.visualPercent}%` }}
+                    />
+                  </div>
+
+                  <div className="flex justify-between text-[9px] text-stone-400 font-mono">
+                    <span>${compAnalysis.band.minSalary.toLocaleString()}</span>
+                    <span>Mid: ${compAnalysis.band.midpointSalary.toLocaleString()}</span>
+                    <span>${compAnalysis.band.maxSalary.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Salary History Section */}
@@ -284,7 +402,7 @@ export function EmployeeDetailDrawer({
               </div>
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                {salaryHistory.map((item, idx) => (
+                {salaryHistory.map((item) => (
                   <div
                     key={item.id}
                     className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800 hover:border-amber-500/40 transition-colors text-xs space-y-1"

@@ -97,11 +97,13 @@ export function DashboardView({
 
         <div className="bg-white/70 dark:bg-stone-900/60 backdrop-blur-md p-4 rounded-2xl border border-stone-200/70 dark:border-stone-800 shadow-sm flex flex-col gap-2">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">Active Employees</span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold">+0.6%</span>
+            <span className="text-xs font-medium text-stone-500 dark:text-stone-400">Salary Band Insights</span>
+            <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-semibold">Live Bands</span>
           </div>
-          <div className="text-2xl font-bold text-stone-900 dark:text-white flex items-baseline gap-1.5">
-            {(data?.stats?.activeCount || 0).toLocaleString()} <span className="text-xs text-stone-400 font-medium font-normal">| {data?.stats?.countriesCount || 0} Countries</span>
+          <div className="flex items-center justify-between text-xs font-semibold pt-1">
+            <span className="text-amber-600 dark:text-amber-400" title="Employees Below Band">Below: {data?.bandDistribution?.below ?? 0}</span>
+            <span className="text-emerald-600 dark:text-emerald-400" title="Employees Within Band">Within: {data?.bandDistribution?.within ?? 0}</span>
+            <span className="text-indigo-600 dark:text-indigo-400" title="Employees Above Band">Above: {data?.bandDistribution?.above ?? 0}</span>
           </div>
         </div>
       </div>

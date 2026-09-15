@@ -295,3 +295,18 @@ export function TablePagination({
     </div>
   );
 }
+
+/* ==========================================================================
+   Static Compound Subcomponents Attachment
+   ========================================================================== */
+Table.Container = TableContainer;
+Table.Header = TableHeader;
+Table.Head = TableHead;
+Table.Body = TableBody;
+Table.Row = TableRow;
+Table.Cell = TableCell;
+Table.Footer = TableFooter;
+Table.Loading = TableLoading;
+Table.Empty = TableEmpty;
+Table.Pagination = TablePagination;
+
