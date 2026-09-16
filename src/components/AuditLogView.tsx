@@ -125,12 +125,6 @@ export function AuditLogView({ logs, pagination, searchParams }: AuditLogViewPro
       {/* Filter Toolbar — single inline row matching other modules */}
       <GlassCard className="p-4">
         <div className="flex flex-wrap items-center gap-3">
-          {/* Filter label */}
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 shrink-0">
-            <Filter className="w-4 h-4 text-amber-500" />
-            <span>Filters</span>
-          </div>
-
           {/* Search */}
           <div className="flex-1 min-w-[200px] max-w-xs">
             <SearchInput

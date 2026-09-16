@@ -5,6 +5,11 @@ import { EmployeeDetailPage } from '@/components/EmployeeDetailPage';
 import { ArrowLeft, UserX } from 'lucide-react';
 import { Button } from '@/components/ui';
 
+export const metadata = {
+  title: "Employee Details - ACME Salary Management System",
+  description: "View and manage employee profile and details.",
+};
+
 interface PageProps {
   params: Promise<{ id: string }> | { id: string };
 }

@@ -166,7 +166,7 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
     <div className="space-y-6 pb-12 animate-fade-in">
       {/* Unified PageHeader */}
       <PageHeader
-        title="Compensation Planning & Budget"
+        title="Planning & Budget"
         description="Create fiscal year budgets, allocate compensation pools across departments, plan employee salary increases, and model scenarios."
       >
         <Button

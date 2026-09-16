@@ -2,6 +2,11 @@ import { Suspense } from 'react';
 import { EmployeesView } from '@/components/EmployeesView';
 import { getEmployeesData } from '@/lib/employeeData';
 
+export const metadata = {
+  title: "People - ACME Salary Management System",
+  description: "View and manage employee directory.",
+};
+
 interface PeoplePageProps {
   searchParams?: {
     search?: string;

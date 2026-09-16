@@ -36,6 +36,7 @@ export function SearchableSelect({
   const [mounted, setMounted] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -76,7 +77,11 @@ export function SearchableSelect({
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isOutsideContainer = containerRef.current && !containerRef.current.contains(target);
+      const isOutsideDropdown = dropdownRef.current ? !dropdownRef.current.contains(target) : true;
+
+      if (isOutsideContainer && isOutsideDropdown) {
         setIsOpen(false);
         setSearch('');
       }
@@ -127,6 +132,7 @@ export function SearchableSelect({
 
   const dropdownEl = isOpen && mounted ? createPortal(
     <div
+      ref={dropdownRef}
       style={dropdownStyle}
       className="py-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-2xl max-h-60 overflow-y-auto animate-fade-in"
     >

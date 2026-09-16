@@ -21,10 +21,13 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "people", label: "People", href: "/people" },
   { id: "salary", label: "Salary Bands", href: "/salary-bands" },
   { id: "analytics", label: "Analytics", href: "/compensation-analytics" },
-  { id: "planning", label: "Comp Planning", href: "/compensation-planning" },
+  {
+    id: "planning",
+    label: "Planning & Budget",
+    href: "/compensation-planning",
+  },
   { id: "audit-log", label: "Audit Log", href: "/audit-log" },
 ];
-
 
 export const ALL_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/" },
@@ -216,16 +219,40 @@ export const COUNTRIES = [
 ] as const;
 
 export const CITIES_BY_COUNTRY: Record<string, string[]> = {
-  "United States": ["New York", "San Francisco", "Austin", "Chicago", "Seattle"],
-  "United Kingdom": ["London", "Manchester", "Birmingham", "Edinburgh", "Glasgow"],
-  "Canada": ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa"],
-  "Australia": ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"],
-  "Germany": ["Berlin", "Munich", "Frankfurt", "Hamburg", "Stuttgart"],
-  "France": ["Paris", "Lyon", "Marseille", "Toulouse", "Nice"],
-  "India": ["Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Pune"],
-  "Singapore": ["Downtown Core", "Jurong East", "Tampines", "Woodlands", "Changi"],
-  "Japan": ["Tokyo", "Osaka", "Kyoto", "Yokohama", "Sapporo"],
-  "Brazil": ["São Paulo", "Rio de Janeiro", "Brasília", "Salvador", "Belo Horizonte"],
+  "United States": [
+    "New York",
+    "San Francisco",
+    "Austin",
+    "Chicago",
+    "Seattle",
+  ],
+  "United Kingdom": [
+    "London",
+    "Manchester",
+    "Birmingham",
+    "Edinburgh",
+    "Glasgow",
+  ],
+  Canada: ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa"],
+  Australia: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"],
+  Germany: ["Berlin", "Munich", "Frankfurt", "Hamburg", "Stuttgart"],
+  France: ["Paris", "Lyon", "Marseille", "Toulouse", "Nice"],
+  India: ["Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Pune"],
+  Singapore: [
+    "Downtown Core",
+    "Jurong East",
+    "Tampines",
+    "Woodlands",
+    "Changi",
+  ],
+  Japan: ["Tokyo", "Osaka", "Kyoto", "Yokohama", "Sapporo"],
+  Brazil: [
+    "São Paulo",
+    "Rio de Janeiro",
+    "Brasília",
+    "Salvador",
+    "Belo Horizonte",
+  ],
 };
 
 export const INITIAL_EMPLOYEE_FORM = {

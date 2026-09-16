@@ -175,16 +175,6 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
       {/* Filter Control Bar */}
       <GlassCard className="relative z-30 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-stone-800 dark:text-stone-200">
-            <Filter className="w-4 h-4 text-amber-500" />
-            <span>Filters</span>
-            {hasActiveFilters && (
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
-                Active
-              </span>
-            )}
-          </div>
-
           {/* Dropdown Filters — changes push URL params, triggering SSR re-render */}
           <div className="flex items-center gap-2.5 flex-wrap">
             {/* Department */}

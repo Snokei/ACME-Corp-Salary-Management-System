@@ -2,6 +2,11 @@ import { Suspense } from 'react';
 import { getAllSalaryBands } from '@/lib/compaRatioService';
 import { SalaryBandsView } from '@/components/SalaryBandsView';
 
+export const metadata = {
+  title: "Salary Bands - ACME Salary Management System",
+  description: "View and manage salary bands across the organization.",
+};
+
 interface SalaryBandsPageProps {
   searchParams?: {
     search?: string;

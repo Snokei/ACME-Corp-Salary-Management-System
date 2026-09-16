@@ -159,7 +159,7 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
           className="inline-flex items-center gap-2 text-xs font-semibold text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Compensation Planning Overview</span>
+          <span>Back to Planning & Budget Overview</span>
         </Link>
       </div>
 

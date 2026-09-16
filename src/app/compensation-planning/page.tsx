@@ -2,7 +2,7 @@ import { CompensationPlanningOverview } from "@/components/CompensationPlanningO
 import { getAllCompensationPlans } from "@/lib/compensationPlanningService";
 
 export const metadata = {
-  title: "Compensation Planning & Budget - ACME Salary Management System",
+  title: "Planning & Budget - ACME Salary Management System",
   description: "Annual fiscal budget planning, department allocations, and salary increase workflows.",
 };
 

@@ -7,6 +7,11 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 
+export const metadata = {
+  title: "Login - ACME Salary Management System",
+  description: "Login to ACME Salary Management System",
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@acme.com");
