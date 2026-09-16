@@ -5,8 +5,20 @@ import { Employee } from '@/types';
 import { Modal, Button, Input, Select } from '@/components/ui';
 import { SALARY_ADJUSTMENT_REASONS, calculateSalaryChange } from '@/lib/salaryAdjustmentService';
 import { createSalaryAdjustmentAction } from '@/actions/salaryAdjustments';
+import { getCompensationAnalysisAction } from '@/actions/salaryBands';
 import toast from 'react-hot-toast';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, Tag, AlertTriangle, FileText } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Calendar,
+  Tag,
+  AlertTriangle,
+  FileText,
+  Target,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
 
 export interface SalaryAdjustmentModalProps {
   isOpen: boolean;
@@ -28,6 +40,13 @@ export function SalaryAdjustmentModal({
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ newSalary?: string; effectiveDate?: string; reason?: string }>({});
+  const [bandData, setBandData] = useState<{
+    minSalary: number;
+    midpointSalary: number;
+    maxSalary: number;
+    payGrade: string;
+  } | null>(null);
+  const [loadingBand, setLoadingBand] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen && employee) {
@@ -39,6 +58,28 @@ export function SalaryAdjustmentModal({
       setNotes('');
       setErrors({});
       setIsSubmitting(false);
+
+      if (employee.payGrade) {
+        setLoadingBand(true);
+        const empSalary = employee.baseSalaryUSD ?? employee.baseSalary ?? 0;
+        getCompensationAnalysisAction(empSalary, employee.payGrade, employee.currency || 'USD')
+          .then((res) => {
+            if (res.success && res.analysis?.hasBand && res.analysis.band) {
+              setBandData({
+                minSalary: res.analysis.band.minSalary,
+                midpointSalary: res.analysis.band.midpointSalary,
+                maxSalary: res.analysis.band.maxSalary,
+                payGrade: employee.payGrade,
+              });
+            } else {
+              setBandData(null);
+            }
+          })
+          .catch(() => setBandData(null))
+          .finally(() => setLoadingBand(false));
+      } else {
+        setBandData(null);
+      }
     }
   }, [isOpen, employee]);
 
@@ -51,6 +92,35 @@ export function SalaryAdjustmentModal({
   const { change, percentage } = isValidNewSalary
     ? calculateSalaryChange(currentSalary, numericNewSalary)
     : { change: 0, percentage: 0 };
+
+  // Calculate live position in band & compa ratio for proposed new salary
+  const targetSalaryForAnalysis = isValidNewSalary ? numericNewSalary : currentSalary;
+  let newCompaRatio: number | null = null;
+  let newBandStatus: 'Within Band' | 'Below Band' | 'Above Band' | null = null;
+  let visualPercent = 0;
+  let diffFromMin = 0;
+  let diffFromMax = 0;
+
+  if (bandData && bandData.minSalary && bandData.maxSalary && bandData.midpointSalary) {
+    if (bandData.midpointSalary > 0) {
+      newCompaRatio = Math.round((targetSalaryForAnalysis / bandData.midpointSalary) * 1000) / 10;
+    }
+    const range = bandData.maxSalary - bandData.minSalary;
+    if (range > 0) {
+      const pos = ((targetSalaryForAnalysis - bandData.minSalary) / range) * 100;
+      visualPercent = Math.max(0, Math.min(100, Math.round(pos * 10) / 10));
+    }
+
+    if (targetSalaryForAnalysis < bandData.minSalary) {
+      newBandStatus = 'Below Band';
+      diffFromMin = Math.round(bandData.minSalary - targetSalaryForAnalysis);
+    } else if (targetSalaryForAnalysis > bandData.maxSalary) {
+      newBandStatus = 'Above Band';
+      diffFromMax = Math.round(targetSalaryForAnalysis - bandData.maxSalary);
+    } else {
+      newBandStatus = 'Within Band';
+    }
+  }
 
   const isDecrease = change < 0;
 
@@ -214,6 +284,120 @@ export function SalaryAdjustmentModal({
             />
           </div>
 
+          {/* Salary Band & Range Guardrails */}
+          {bandData && (
+            <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-amber-500" />
+                  <span className="font-bold text-xs text-stone-900 dark:text-white">
+                    Salary Band for {bandData.payGrade}
+                  </span>
+                </div>
+                {newBandStatus && (
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      newBandStatus === 'Within Band'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                        : newBandStatus === 'Below Band'
+                        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                        : 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30'
+                    }`}
+                  >
+                    {newBandStatus === 'Within Band' && <CheckCircle2 className="w-3 h-3" />}
+                    {newBandStatus !== 'Within Band' && <AlertCircle className="w-3 h-3" />}
+                    <span>{newBandStatus}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Band Metrics Grid */}
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="p-2 rounded-xl bg-white dark:bg-stone-900/60 border border-stone-200/60 dark:border-stone-700/60">
+                  <span className="text-[10px] text-stone-400 uppercase font-semibold block">Minimum</span>
+                  <span className="font-mono font-bold text-stone-800 dark:text-stone-200 text-xs">
+                    ${bandData.minSalary.toLocaleString('en-US')}
+                  </span>
+                </div>
+                <div className="p-2 rounded-xl bg-white dark:bg-stone-900/60 border border-stone-200/60 dark:border-stone-700/60">
+                  <span className="text-[10px] text-stone-400 uppercase font-semibold block">Midpoint</span>
+                  <span className="font-mono font-bold text-stone-800 dark:text-stone-200 text-xs">
+                    ${bandData.midpointSalary.toLocaleString('en-US')}
+                  </span>
+                </div>
+                <div className="p-2 rounded-xl bg-white dark:bg-stone-900/60 border border-stone-200/60 dark:border-stone-700/60">
+                  <span className="text-[10px] text-stone-400 uppercase font-semibold block">Maximum</span>
+                  <span className="font-mono font-bold text-stone-800 dark:text-stone-200 text-xs">
+                    ${bandData.maxSalary.toLocaleString('en-US')}
+                  </span>
+                </div>
+                <div className="p-2 rounded-xl bg-white dark:bg-stone-900/60 border border-amber-400/40">
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-bold block">New Compa</span>
+                  <span className="font-mono font-extrabold text-stone-900 dark:text-white text-xs">
+                    {newCompaRatio !== null ? `${newCompaRatio.toFixed(1)}%` : '—'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Visual Position in Band Bar */}
+              <div className="space-y-1 pt-1">
+                <div className="flex justify-between text-[10px] text-stone-400 font-mono">
+                  <span>${bandData.minSalary.toLocaleString('en-US')} (Min)</span>
+                  <span>Midpoint: ${bandData.midpointSalary.toLocaleString('en-US')}</span>
+                  <span>${bandData.maxSalary.toLocaleString('en-US')} (Max)</span>
+                </div>
+                <div className="relative w-full h-2.5 rounded-full bg-stone-200/80 dark:bg-stone-700/80 overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 rounded-full ${
+                      newBandStatus === 'Below Band'
+                        ? 'bg-amber-500'
+                        : newBandStatus === 'Above Band'
+                        ? 'bg-indigo-500'
+                        : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${visualPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Guardrail Guidance Alerts */}
+              {newBandStatus === 'Below Band' && (
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-[11px] flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
+                  <span>
+                    Proposed salary is <strong>${diffFromMin.toLocaleString('en-US')} below</strong> the band minimum ($
+                    {bandData.minSalary.toLocaleString('en-US')}). This employee may be underpaid relative to their {bandData.payGrade} market range.
+                  </span>
+                </div>
+              )}
+
+              {newBandStatus === 'Above Band' && (
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-800 dark:text-indigo-300 text-[11px] flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-indigo-500 mt-0.5" />
+                  <span>
+                    Proposed salary is <strong>${diffFromMax.toLocaleString('en-US')} above</strong> the band maximum ($
+                    {bandData.maxSalary.toLocaleString('en-US')}). Exceeding the band top may require leadership or compensation committee approval.
+                  </span>
+                </div>
+              )}
+
+              {newBandStatus === 'Within Band' && (
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[11px] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+                  <span>
+                    Proposed salary is within the official range for {bandData.payGrade} (Compa-Ratio: {newCompaRatio}% of market midpoint).
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {loadingBand && (
+            <div className="py-2 text-center text-xs text-stone-400 animate-pulse">
+              Loading salary band metrics...
+            </div>
+          )}
+
           {/* Calculated Live Preview */}
           <div className="p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 space-y-2">
             <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider block">
@@ -370,6 +554,33 @@ export function SalaryAdjustmentModal({
                   })}
                 </span>
               </div>
+              {bandData && (
+                <div>
+                  <span className="text-stone-400 block text-[10px] uppercase font-bold">
+                    Band Position ({bandData.payGrade})
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span
+                      className={`font-semibold text-xs inline-flex items-center gap-1 ${
+                        newBandStatus === 'Within Band'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : newBandStatus === 'Below Band'
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-indigo-600 dark:text-indigo-400'
+                      }`}
+                    >
+                      {newBandStatus === 'Within Band' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      {newBandStatus !== 'Within Band' && <AlertCircle className="w-3.5 h-3.5" />}
+                      <span>{newBandStatus}</span>
+                    </span>
+                    {newCompaRatio !== null && (
+                      <span className="text-stone-400 font-mono text-[11px]">
+                        ({newCompaRatio}% Compa)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               {notes && (
                 <div className="col-span-2">
                   <span className="text-stone-400 block text-[10px] uppercase font-bold">Notes</span>
