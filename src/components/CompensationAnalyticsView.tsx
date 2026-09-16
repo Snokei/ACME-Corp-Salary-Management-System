@@ -205,14 +205,14 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
           </div>
 
           {/* Dropdown Filters */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-center gap-3 w-full md:w-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-end items-end gap-3 w-full md:w-auto">
             {/* Department */}
             <div>
               <label className="block text-[10px] uppercase font-semibold text-stone-400 mb-1">Department</label>
               <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="w-full text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                className="w-full h-9 text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
               >
                 <option value="All">All Departments</option>
                 {data?.filterOptions?.departments?.map((d) => (
@@ -229,7 +229,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                className="w-full h-9 text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
               >
                 <option value="All">All Countries</option>
                 {data?.filterOptions?.countries?.map((c) => (
@@ -246,7 +246,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
               <select
                 value={payGrade}
                 onChange={(e) => setPayGrade(e.target.value)}
-                className="w-full text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                className="w-full h-9 text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
               >
                 <option value="All">All Pay Grades</option>
                 {data?.filterOptions?.payGrades?.map((pg) => (
@@ -263,7 +263,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                className="w-full h-9 text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
               >
                 <option value="All">All Currencies</option>
                 {data?.filterOptions?.currencies?.map((cur) => (
@@ -279,7 +279,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
               <div className="flex items-end">
                 <button
                   onClick={handleResetFilters}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-stone-200/70 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/40 dark:hover:text-amber-100 transition-colors"
+                  className="h-9 flex items-center justify-center gap-1.5 text-xs px-3.5 rounded-xl bg-stone-200/70 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/40 dark:hover:text-amber-100 transition-colors shrink-0"
                   title="Reset all filters"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   Filter,
@@ -544,9 +545,10 @@ export function EmployeePlanningTable({
       </div>
 
       {/* Bulk Apply Increase Modal */}
-      {showBulkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 p-6 space-y-4 shadow-2xl">
+      {showBulkModal && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="fixed inset-0" onClick={() => setShowBulkModal(false)} aria-hidden="true" />
+          <div className="relative z-10 w-full max-w-md bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 p-6 space-y-4 shadow-2xl">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-500">
                 <Sparkles className="w-5 h-5" />
@@ -608,7 +610,8 @@ export function EmployeePlanningTable({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

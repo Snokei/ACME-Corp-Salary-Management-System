@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, DollarSign, Calendar, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { Checkbox } from "@/components/ui";
 
 interface CreatePlanModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface CreatePlanModalProps {
 }
 
 export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [name, setName] = useState(`FY${new Date().getFullYear() + 1} Global Compensation Plan`);
   const [fiscalYear, setFiscalYear] = useState(`FY${new Date().getFullYear() + 1}`);
   const [totalBudgetUSD, setTotalBudgetUSD] = useState("2500000");
@@ -18,7 +21,22 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,9 +82,10 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-lg bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-2xl overflow-hidden transition-all">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
+      <div className="relative z-10 w-full max-w-lg bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-2xl overflow-hidden transition-all animate-fade-in">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-950/50">
           <div className="flex items-center gap-3">
@@ -154,23 +173,26 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
           </div>
 
           {/* Option: Auto populate active employees */}
-          <div className="pt-2">
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
+          <div
+            onClick={() => setAutoPopulateEmployees((prev) => !prev)}
+            className="flex items-start gap-3 p-2.5 -mx-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/50 cursor-pointer group select-none transition-colors"
+          >
+            <div className="pt-0.5 shrink-0">
+              <Checkbox
                 checked={autoPopulateEmployees}
-                onChange={(e) => setAutoPopulateEmployees(e.target.checked)}
-                className="mt-0.5 rounded border-stone-300 dark:border-stone-700 text-amber-500 focus:ring-amber-500"
+                onChange={(checked) => setAutoPopulateEmployees(checked)}
+                size="sm"
+                ariaLabel="Auto-include all active employees & pro-rate department budgets"
               />
-              <div>
-                <span className="text-xs font-medium text-stone-800 dark:text-stone-200 group-hover:text-amber-500 transition-colors">
-                  Auto-include all active employees & pro-rate department budgets
-                </span>
-                <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
-                  Populates current active workforce salaries and calculates starting department allocations automatically.
-                </p>
-              </div>
-            </label>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-stone-800 dark:text-stone-200 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors block">
+                Auto-include all active employees & pro-rate department budgets
+              </span>
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 leading-relaxed">
+                Populates current active workforce salaries and calculates starting department allocations automatically.
+              </p>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -199,6 +221,7 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
