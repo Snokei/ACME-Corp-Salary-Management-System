@@ -251,6 +251,8 @@ export async function getAllSalaryBands(options?: {
   search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }) {
   let model;
   try {
@@ -273,16 +275,26 @@ export async function getAllSalaryBands(options?: {
     ];
   }
 
+  let orderBy: any = [
+    { payGrade: 'asc' },
+    { currency: 'asc' },
+  ];
+
+  if (options?.sortBy) {
+    const validSortFields = ['minSalary', 'midpointSalary', 'maxSalary', 'payGrade'];
+    if (validSortFields.includes(options.sortBy)) {
+      const dir = options.sortOrder === 'desc' ? 'desc' : 'asc';
+      orderBy = { [options.sortBy]: dir };
+    }
+  }
+
   const [total, bands] = await Promise.all([
     model.count({ where }),
     model.findMany({
       where,
       skip,
       take: limit,
-      orderBy: [
-        { payGrade: 'asc' },
-        { currency: 'asc' },
-      ],
+      orderBy,
     }),
   ]);
 

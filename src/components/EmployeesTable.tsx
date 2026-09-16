@@ -34,6 +34,11 @@ export interface EmployeesTableProps {
   pageSize?: number;
   onPageChange: (page: number) => void;
 
+  // Sorting props
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
+
   className?: string;
 }
 
@@ -52,13 +57,16 @@ export function EmployeesTable({
   totalCount,
   pageSize = 10,
   onPageChange,
+  sortBy = '',
+  sortOrder = 'desc',
+  onSort,
   className = '',
 }: EmployeesTableProps) {
   const isAllChecked =
     employees.length > 0 && checkedIds.size === employees.length;
 
   return (
-    <TableContainer className={className}>
+    <TableContainer className={`relative z-10 ${className}`}>
       <Table>
         <TableHeader>
           <tr>
@@ -70,12 +78,30 @@ export function EmployeesTable({
                 size="sm"
               />
             </TableHead>
-            <TableHead>Name</TableHead>
+            <TableHead
+              sortable
+              sorted={sortBy === 'name' ? sortOrder : false}
+              onSort={() => onSort && onSort('name')}
+            >
+              Name
+            </TableHead>
             <TableHead>Job Title</TableHead>
             <TableHead>Department</TableHead>
             <TableHead>Location</TableHead>
-            <TableHead>Salary</TableHead>
-            <TableHead>Date Joined</TableHead>
+            <TableHead
+              sortable
+              sorted={sortBy === 'salary' ? sortOrder : false}
+              onSort={() => onSort && onSort('salary')}
+            >
+              Salary
+            </TableHead>
+            <TableHead
+              sortable
+              sorted={sortBy === 'hireDate' ? sortOrder : false}
+              onSort={() => onSort && onSort('hireDate')}
+            >
+              Date Joined
+            </TableHead>
             <TableHead>Status</TableHead>
             <TableHead align="center">Action</TableHead>
           </tr>

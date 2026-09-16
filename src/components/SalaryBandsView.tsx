@@ -21,6 +21,8 @@ export interface SalaryBandsViewProps {
   searchParams?: {
     search?: string;
     page?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   };
 }
 
@@ -36,14 +38,33 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
   const pageSize = 10;
 
   const currentSearch = searchParams.search || nextSearchParams.get('search') || '';
+  const sortBy = searchParams.sortBy || nextSearchParams.get('sortBy') || '';
+  const sortOrder = (searchParams.sortOrder || nextSearchParams.get('sortOrder') || 'asc') as 'asc' | 'desc';
+
   const [search, setSearch] = useState<string>(currentSearch);
   const [modalState, setModalState] = useState<{ isOpen: boolean; band: SalaryBandData | null }>({
     isOpen: false,
     band: null,
   });
 
+  const handleSort = (field: string) => {
+    const params = new URLSearchParams(nextSearchParams.toString());
+    if (sortBy === field) {
+      if (sortOrder === 'asc') {
+        params.set('sortOrder', 'desc');
+      } else {
+        params.delete('sortBy');
+        params.delete('sortOrder');
+      }
+    } else {
+      params.set('sortBy', field);
+      params.set('sortOrder', 'asc');
+    }
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   const handleSearchSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
     const params = new URLSearchParams(nextSearchParams.toString());
     if (search.trim()) {
       params.set('search', search.trim());
@@ -89,7 +110,7 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
       </PageHeader>
 
       {/* Filter / Search Bar - with white bg container */}
-      <form onSubmit={handleSearchSubmit} className="p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
+      <form onSubmit={handleSearchSubmit} className="relative z-20 p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
         <div className="flex-1 max-w-md flex items-center gap-2">
           <Input
             placeholder="Search by pay grade or currency..."
@@ -118,15 +139,39 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
       </form>
 
       {/* Salary Bands Table inside TableContainer matching People module */}
-      <Table.Container>
+      <Table.Container className="relative z-10">
         <Table>
           <Table.Header>
             <Table.Row hoverable={false}>
-              <Table.Head>Pay Grade</Table.Head>
+              <Table.Head
+                sortable
+                sorted={sortBy === 'payGrade' ? (sortOrder as 'asc' | 'desc') : false}
+                onSort={() => handleSort('payGrade')}
+              >
+                Pay Grade
+              </Table.Head>
               <Table.Head>Currency</Table.Head>
-              <Table.Head>Minimum Salary</Table.Head>
-              <Table.Head>Midpoint Salary</Table.Head>
-              <Table.Head>Maximum Salary</Table.Head>
+              <Table.Head
+                sortable
+                sorted={sortBy === 'minSalary' ? (sortOrder as 'asc' | 'desc') : false}
+                onSort={() => handleSort('minSalary')}
+              >
+                Minimum Salary
+              </Table.Head>
+              <Table.Head
+                sortable
+                sorted={sortBy === 'midpointSalary' ? (sortOrder as 'asc' | 'desc') : false}
+                onSort={() => handleSort('midpointSalary')}
+              >
+                Midpoint Salary
+              </Table.Head>
+              <Table.Head
+                sortable
+                sorted={sortBy === 'maxSalary' ? (sortOrder as 'asc' | 'desc') : false}
+                onSort={() => handleSort('maxSalary')}
+              >
+                Maximum Salary
+              </Table.Head>
               <Table.Head>Spread Range</Table.Head>
               <Table.Head align="center" className="text-center">Action</Table.Head>
             </Table.Row>

@@ -11,6 +11,8 @@ interface PeoplePageProps {
     status?: string;
     tab?: string;
     page?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   };
 }
 
@@ -24,6 +26,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   const status = typeof searchParams?.status === 'string' ? searchParams.status : 'All';
   const tab = typeof searchParams?.tab === 'string' ? searchParams.tab : 'Active';
   const page = parseInt(searchParams?.page || '1', 10) || 1;
+  const sortBy = typeof searchParams?.sortBy === 'string' ? searchParams.sortBy : undefined;
+  const sortOrder = searchParams?.sortOrder === 'asc' ? 'asc' : 'desc';
 
   // 1. Direct Server-Side Data Fetching from Database via Prisma
   const dataPromise = getEmployeesData({
@@ -35,6 +39,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
     tab,
     page,
     limit: 10,
+    sortBy,
+    sortOrder,
   });
 
   // Fetch unique options for dropdowns
@@ -72,6 +78,8 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
           location,
           tab,
           page: String(page),
+          sortBy,
+          sortOrder,
         }}
       />
     </Suspense>

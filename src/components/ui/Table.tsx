@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from './Button';
 
 /* ==========================================================================
@@ -85,7 +85,7 @@ export function TableHead({
   return (
     <th
       className={`py-3.5 px-4 font-semibold ${alignClass} ${
-        sortable ? 'cursor-pointer select-none hover:text-stone-600 dark:hover:text-stone-300' : ''
+        sortable ? 'group cursor-pointer select-none hover:text-stone-700 dark:hover:text-stone-200 transition-colors' : ''
       } ${className}`}
       onClick={sortable ? onSort : undefined}
       {...props}
@@ -95,11 +95,15 @@ export function TableHead({
           align === 'center' ? 'justify-center w-full' : align === 'right' ? 'justify-end w-full' : ''
         }`}
       >
-        {children}
-        {sortable && sorted && (
-          <span className="text-amber-500 font-bold text-xs">
-            {sorted === 'asc' ? '↑' : '↓'}
-          </span>
+        <span>{children}</span>
+        {sortable && (
+          sorted === 'asc' ? (
+            <ArrowUp className="w-3.5 h-3.5 text-amber-500 stroke-[2.5]" />
+          ) : sorted === 'desc' ? (
+            <ArrowDown className="w-3.5 h-3.5 text-amber-500 stroke-[2.5]" />
+          ) : (
+            <ArrowUpDown className="w-3.5 h-3.5 text-stone-300 dark:text-stone-600 group-hover:text-stone-500 dark:group-hover:text-stone-400 transition-colors" />
+          )
         )}
       </div>
     </th>

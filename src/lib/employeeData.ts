@@ -10,6 +10,8 @@ export interface GetEmployeesParams {
   tab?: string;
   page?: number | string;
   limit?: number | string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface EmployeesResponseData {
@@ -241,13 +243,25 @@ export async function getEmployeesData(
     whereClause.status = params.tab;
   }
 
+  let orderBy: any = { hireDate: 'desc' };
+  if (params.sortBy) {
+    const dir = params.sortOrder === 'asc' ? 'asc' : 'desc';
+    if (params.sortBy === 'salary' || params.sortBy === 'baseSalary' || params.sortBy === 'baseSalaryUSD') {
+      orderBy = { baseSalaryUSD: dir };
+    } else if (params.sortBy === 'hireDate' || params.sortBy === 'dateJoined') {
+      orderBy = { hireDate: dir };
+    } else if (params.sortBy === 'name' || params.sortBy === 'firstName') {
+      orderBy = { firstName: dir };
+    }
+  }
+
   try {
     const [employees, total] = await Promise.all([
       prisma.employee.findMany({
         where: whereClause,
         skip,
         take: limit,
-        orderBy: { hireDate: 'desc' },
+        orderBy,
       }),
       prisma.employee.count({ where: whereClause }),
     ]);

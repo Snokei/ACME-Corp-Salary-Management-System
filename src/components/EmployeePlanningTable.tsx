@@ -438,16 +438,37 @@ export function EmployeePlanningTable({
   return (
     <div className="space-y-4">
       {/* Search, Filter & Bulk Actions Bar with white bg container */}
-      <div className="p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex-1 max-w-xl flex items-center gap-3">
-          <Input
-            placeholder="Search employee by name, ID or role..."
-            shape="pill"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            leftIcon={<Search className="w-4 h-4 text-stone-400" />}
-            containerClassName="w-full max-w-md"
-          />
+      <div className="relative z-20 p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setDebouncedSearch(searchInput);
+            setPage(1);
+          }}
+          className="flex-1 max-w-2xl flex items-center gap-2.5 flex-wrap sm:flex-nowrap"
+        >
+          <div className="flex-1 max-w-md flex items-center gap-2">
+            <Input
+              placeholder="Search employee by name, ID or role..."
+              shape="pill"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              leftIcon={<Search className="w-4 h-4 text-stone-400" />}
+              containerClassName="w-full"
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              shape="pill"
+              onClick={() => {
+                setDebouncedSearch(searchInput);
+                setPage(1);
+              }}
+            >
+              Search
+            </Button>
+          </div>
 
           <SearchableSelect
             name="department"
@@ -460,7 +481,7 @@ export function EmployeePlanningTable({
               setPage(1);
             }}
           />
-        </div>
+        </form>
 
         {/* Bulk Action Button */}
         {isEditable && (
@@ -479,7 +500,7 @@ export function EmployeePlanningTable({
       </div>
 
       {/* Main Employee Planning Table */}
-      <TableContainer>
+      <TableContainer className="relative z-10">
         <Table>
           <TableHeader>
             <tr>

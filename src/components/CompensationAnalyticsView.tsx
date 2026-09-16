@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { PageHeader } from '@/components/PageHeader';
-import { GlassCard } from '@/components/ui';
+import { GlassCard, Select, Button } from '@/components/ui';
 import {
   Users,
   DollarSign,
@@ -204,88 +204,85 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
             )}
           </div>
 
-          {/* Dropdown Filters */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:flex lg:items-end items-end gap-3 w-full md:w-auto">
+          {/* Dropdown Filters - Uniform height and no labels */}
+          <div className="flex items-center gap-2.5 flex-wrap">
             {/* Department */}
-            <div>
-              <label className="block text-[10px] uppercase font-semibold text-stone-400 mb-1">Department</label>
-              <select
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="w-full h-9 text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              >
-                <option value="All">All Departments</option>
-                {data?.filterOptions?.departments?.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              shape="pill"
+              size="md"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              containerClassName="w-auto min-w-[140px]"
+            >
+              <option value="All">All Departments</option>
+              {data?.filterOptions?.departments?.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
 
             {/* Country */}
-            <div>
-              <label className="block text-[10px] uppercase font-semibold text-stone-400 mb-1">Country</label>
-              <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="w-full h-9 text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              >
-                <option value="All">All Countries</option>
-                {data?.filterOptions?.countries?.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              shape="pill"
+              size="md"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              containerClassName="w-auto min-w-[130px]"
+            >
+              <option value="All">All Countries</option>
+              {data?.filterOptions?.countries?.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
 
             {/* Pay Grade */}
-            <div>
-              <label className="block text-[10px] uppercase font-semibold text-stone-400 mb-1">Pay Grade</label>
-              <select
-                value={payGrade}
-                onChange={(e) => setPayGrade(e.target.value)}
-                className="w-full h-9 text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              >
-                <option value="All">All Pay Grades</option>
-                {data?.filterOptions?.payGrades?.map((pg) => (
-                  <option key={pg} value={pg}>
-                    {pg}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              shape="pill"
+              size="md"
+              value={payGrade}
+              onChange={(e) => setPayGrade(e.target.value)}
+              containerClassName="w-auto min-w-[130px]"
+            >
+              <option value="All">All Pay Grades</option>
+              {data?.filterOptions?.payGrades?.map((pg) => (
+                <option key={pg} value={pg}>
+                  {pg}
+                </option>
+              ))}
+            </Select>
 
             {/* Currency */}
-            <div>
-              <label className="block text-[10px] uppercase font-semibold text-stone-400 mb-1">Currency</label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="w-full h-9 text-xs py-1.5 px-3 rounded-xl bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              >
-                <option value="All">All Currencies</option>
-                {data?.filterOptions?.currencies?.map((cur) => (
-                  <option key={cur} value={cur}>
-                    {cur}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              shape="pill"
+              size="md"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              containerClassName="w-auto min-w-[130px]"
+            >
+              <option value="All">All Currencies</option>
+              {data?.filterOptions?.currencies?.map((cur) => (
+                <option key={cur} value={cur}>
+                  {cur}
+                </option>
+              ))}
+            </Select>
 
             {/* Reset Button */}
             {hasActiveFilters && (
-              <div className="flex items-end">
-                <button
-                  onClick={handleResetFilters}
-                  className="h-9 flex items-center justify-center gap-1.5 text-xs px-3.5 rounded-xl bg-stone-200/70 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/40 dark:hover:text-amber-100 transition-colors shrink-0"
-                  title="Reset all filters"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset</span>
-                </button>
-              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                shape="pill"
+                onClick={handleResetFilters}
+                leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
+                className="text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+              >
+                Reset
+              </Button>
             )}
           </div>
         </div>

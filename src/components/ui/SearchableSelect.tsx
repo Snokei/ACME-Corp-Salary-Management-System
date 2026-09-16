@@ -68,7 +68,7 @@ export function SearchableSelect({
   const shapeClass = shape === 'pill' ? 'rounded-full' : 'rounded-xl';
 
   return (
-    <div ref={containerRef} className={`relative min-w-[140px] ${containerClassName}`}>
+    <div ref={containerRef} className={`relative min-w-[140px] ${isOpen ? 'z-40' : 'z-10'} ${containerClassName}`}>
       {/* Hidden input for native form submission */}
       <input type="hidden" name={name} value={value} />
       
@@ -97,7 +97,7 @@ export function SearchableSelect({
 
       {/* Dropdown Options */}
       {isOpen && (
-        <div className="absolute z-[60] w-full mt-1.5 py-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-fade-in">
+        <div className="absolute z-[100] w-full mt-1.5 py-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto animate-fade-in">
           {filteredOptions.length === 0 ? (
             <div className="px-3 py-2 text-xs text-stone-500 text-center">
               No results found

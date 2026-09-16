@@ -6,14 +6,18 @@ interface SalaryBandsPageProps {
   searchParams?: {
     search?: string;
     page?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   };
 }
 
 export default async function SalaryBandsPage({ searchParams }: SalaryBandsPageProps) {
   const search = typeof searchParams?.search === 'string' ? searchParams.search : '';
   const page = parseInt(searchParams?.page || '1', 10) || 1;
+  const sortBy = typeof searchParams?.sortBy === 'string' ? searchParams.sortBy : undefined;
+  const sortOrder = searchParams?.sortOrder === 'desc' ? 'desc' : 'asc';
 
-  const data = await getAllSalaryBands({ search, page, limit: 10 });
+  const data = await getAllSalaryBands({ search, page, limit: 10, sortBy, sortOrder });
 
   return (
     <Suspense
@@ -26,7 +30,7 @@ export default async function SalaryBandsPage({ searchParams }: SalaryBandsPageP
         </div>
       }
     >
-      <SalaryBandsView data={data} searchParams={{ search, page: String(page) }} />
+      <SalaryBandsView data={data} searchParams={{ search, page: String(page), sortBy, sortOrder }} />
     </Suspense>
   );
 }

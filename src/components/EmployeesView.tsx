@@ -31,6 +31,8 @@ export interface EmployeesViewProps {
     location?: string;
     tab?: string;
     page?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
   };
   onSelectEmployee?: (employee: Employee) => void;
 }
@@ -52,6 +54,25 @@ export function EmployeesView({
   const currentRole = searchParams.role || nextSearchParams.get('role') || 'All';
   const currentLocation = searchParams.location || nextSearchParams.get('location') || 'All';
   const currentTab = (searchParams.tab || nextSearchParams.get('tab') || 'Active') as EmployeeStatusTab;
+  const currentSortBy = searchParams.sortBy || nextSearchParams.get('sortBy') || '';
+  const currentSortOrder = (searchParams.sortOrder || nextSearchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
+
+  const handleSort = (field: string) => {
+    const params = new URLSearchParams(nextSearchParams.toString());
+    if (currentSortBy === field) {
+      if (currentSortOrder === 'asc') {
+        params.set('sortOrder', 'desc');
+      } else {
+        params.delete('sortBy');
+        params.delete('sortOrder');
+      }
+    } else {
+      params.set('sortBy', field);
+      params.set('sortOrder', 'asc');
+    }
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   // Client-only UI States (Modals, Selection and Row Highlight)
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
@@ -248,6 +269,9 @@ export function EmployeesView({
         totalCount={total}
         pageSize={10}
         onPageChange={handlePageChange}
+        sortBy={currentSortBy}
+        sortOrder={currentSortOrder}
+        onSort={handleSort}
       />
 
       {/* Employee Detail Drawer */}
