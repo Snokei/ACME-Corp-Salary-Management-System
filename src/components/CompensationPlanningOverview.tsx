@@ -13,6 +13,7 @@ import {
   Trash2,
   ChevronRight,
   Building2,
+  Briefcase
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -168,6 +169,7 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
       <PageHeader
         title="Planning & Budget"
         description="Create fiscal year budgets, allocate compensation pools across departments, plan employee salary increases, and model scenarios."
+        icon={Briefcase}
       >
         <Button
           variant="primary"

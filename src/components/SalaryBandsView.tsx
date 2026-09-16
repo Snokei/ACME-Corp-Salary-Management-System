@@ -6,7 +6,7 @@ import { Button, Input, Table, SearchableSelect } from '@/components/ui';
 import { SalaryBandsModal } from '@/components/SalaryBandsModal';
 import { SalaryBandData } from '@/lib/compaRatioService';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Plus, Search, Edit2, Layers } from 'lucide-react';
+import { Plus, Search, Edit2, Layers, Banknote } from 'lucide-react';
 
 export interface SalaryBandsResponseData {
   bands: SalaryBandData[];
@@ -114,6 +114,7 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
       <PageHeader
         title="Salary Bands"
         description="Manage compensation structures, pay grade salary ranges, and midpoint targets."
+        icon={Banknote}
       >
         <Button
           variant="primary"

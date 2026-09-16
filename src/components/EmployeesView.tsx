@@ -9,7 +9,7 @@ import { EmployeesTable } from '@/components/EmployeesTable';
 import { EmployeeDetailDrawer } from '@/components/EmployeeDetailDrawer';
 import { AddEmployeeModal } from '@/components/AddEmployeeModal';
 import { Button } from '@/components/ui';
-import { Download, Plus, Trash2, X } from 'lucide-react';
+import { Download, Plus, Trash2, Users, X } from 'lucide-react';
 import { Employee } from '@/types';
 import { EmployeeStatusTab } from '@/constants';
 import { EmployeesResponseData } from '@/lib/employeeData';
@@ -173,6 +173,7 @@ export function EmployeesView({
       <PageHeader
         title="People"
         description="Manage organization members, compensation tiers, roles, and status."
+        icon={Users}
       >
         <Button
           variant="secondary"

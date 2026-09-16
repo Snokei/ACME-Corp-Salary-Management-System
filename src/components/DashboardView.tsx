@@ -9,7 +9,7 @@ import {
   DEFAULT_RECENT_SALARIES,
   TimeRange,
 } from "@/constants";
-import { ChevronRight, TrendingUp } from "lucide-react";
+import { ChevronRight, TrendingUp, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -64,6 +64,7 @@ export function DashboardView({
       <PageHeader
         title={`Hello ${CURRENT_USER.name}`}
         description="Compensation insights, attendance tracking, and scheduled talent reviews."
+        icon={LayoutDashboard}
       />
 
       {/* Top Level Metrics */}

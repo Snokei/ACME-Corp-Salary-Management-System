@@ -150,19 +150,9 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
     <div className={`space-y-6 animate-fade-in pb-12 ${isPending ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-150`}>
       {/* Header */}
       <PageHeader
-        title={
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-stone-900 text-amber-400 dark:bg-white dark:text-stone-900 shadow-sm">
-              <BarChart3 className="w-6 h-6" />
-            </div>
-            <div>
-              <span>Compensation Analytics</span>
-              <span className="block text-xs font-normal text-stone-500 dark:text-stone-400 mt-0.5">
-                HR Manager Dashboard & Deep-Dive Compensation Insights
-              </span>
-            </div>
-          </div>
-        }
+        title="Compensation Analytics"
+        description="HR Manager Dashboard & Deep-Dive Compensation Insights"
+        icon={BarChart3}
       >
         {data && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-100 dark:bg-stone-800 text-xs text-stone-600 dark:text-stone-300 font-medium">

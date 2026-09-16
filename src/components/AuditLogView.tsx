@@ -2,6 +2,7 @@
 
 import React, { useTransition, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { PageHeader } from '@/components/PageHeader';
 import { GlassCard, Button, SearchInput, SearchableSelect } from '@/components/ui';
 import { AuditLogDetailDrawer, AuditLogItem } from '@/components/AuditLogDetailDrawer';
 import {
@@ -100,19 +101,11 @@ export function AuditLogView({ logs, pagination, searchParams }: AuditLogViewPro
   return (
     <div className={`space-y-6 pb-12 transition-opacity duration-150 ${isPending ? 'opacity-60 pointer-events-none' : ''}`}>
       {/* Top Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-amber-500" />
-            <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-              Audit Log
-            </h1>
-          </div>
-          <p className="text-sm text-stone-600 dark:text-stone-400 mt-1">
-            Centralized compliance and activity history for HR administrative operations.
-          </p>
-        </div>
-
+      <PageHeader
+        title="Audit Log"
+        description="Centralized compliance and activity history for HR administrative operations."
+        icon={ShieldAlert}
+      >
         <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 bg-white/70 dark:bg-stone-900/70 border border-stone-200/80 dark:border-stone-800 px-3 py-2 rounded-xl backdrop-blur-md">
           {isPending
             ? <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
@@ -120,7 +113,7 @@ export function AuditLogView({ logs, pagination, searchParams }: AuditLogViewPro
           }
           <span>Immutable Server Records</span>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Filter Toolbar — single inline row matching other modules */}
       <GlassCard className="p-4">

@@ -1,28 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import { Button, GlassCard, StatusBadge } from "@/components/ui";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  FileCheck,
+  Lock,
+  Send,
+  Sparkles,
+  Trash2,
+  Users,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  DollarSign,
-  PieChart,
-  TrendingUp,
-  Users,
-  Percent,
-  CheckCircle2,
-  AlertTriangle,
-  Send,
-  XCircle,
-  FileCheck,
-  Building2,
-  Sparkles,
-  AlertCircle,
-  Lock,
-  Trash2,
-} from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import { GlassCard, Button, StatusBadge } from "@/components/ui";
 import { DepartmentAllocationTable } from "./DepartmentAllocationTable";
 import { EmployeePlanningTable } from "./EmployeePlanningTable";
 import { ScenarioPlanningTab } from "./ScenarioPlanningTab";
@@ -56,10 +52,14 @@ interface CompensationPlanDetailViewProps {
   initialPlan: PlanDetailData;
 }
 
-export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDetailViewProps) {
+export function CompensationPlanDetailView({
+  initialPlan,
+}: CompensationPlanDetailViewProps) {
   const router = useRouter();
   const [plan, setPlan] = useState<PlanDetailData>(initialPlan);
-  const [activeTab, setActiveTab] = useState<"employees" | "departments" | "scenarios">("employees");
+  const [activeTab, setActiveTab] = useState<
+    "employees" | "departments" | "scenarios"
+  >("employees");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -79,7 +79,7 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
     if (newStatus === "Finalized") {
       if (
         !confirm(
-          `Finalize plan "${plan.name}"? This will permanently update employee base salaries in the system and generate salary history records!`
+          `Finalize plan "${plan.name}"? This will permanently update employee base salaries in the system and generate salary history records!`,
         )
       ) {
         return;
@@ -102,7 +102,7 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
       toast.success(
         newStatus === "Finalized"
           ? "Plan finalized & employee salaries updated!"
-          : `Plan status updated to ${newStatus}`
+          : `Plan status updated to ${newStatus}`,
       );
       fetchPlanDetails();
     } catch (err: any) {
@@ -138,7 +138,11 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
         throw new Error(data.error || "Failed to delete plan");
       }
 
-      toast.success(isFinalized ? "Plan force deleted (Admin)" : "Compensation plan deleted");
+      toast.success(
+        isFinalized
+          ? "Plan force deleted (Admin)"
+          : "Compensation plan deleted",
+      );
       router.push("/compensation-planning");
     } catch (err: any) {
       toast.error(err.message || "Could not delete plan");
@@ -148,7 +152,11 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
 
   const isEditable = plan.status === "Draft" || plan.status === "Rejected";
   const metrics = plan.metrics;
-  const validation = plan.validation || { isValid: true, errors: [], warnings: [] };
+  const validation = plan.validation || {
+    isValid: true,
+    errors: [],
+    warnings: [],
+  };
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
@@ -274,7 +282,11 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
             onClick={handleDeletePlan}
             disabled={isDeleting || isTransitioning}
             className="text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-            title={plan.status === "Finalized" ? "Force Delete Plan (Admin)" : "Delete Plan"}
+            title={
+              plan.status === "Finalized"
+                ? "Force Delete Plan (Admin)"
+                : "Delete Plan"
+            }
             leftIcon={<Trash2 className="w-3.5 h-3.5" />}
           >
             {plan.status === "Finalized" ? "Force Delete" : "Delete"}
@@ -341,7 +353,9 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
           </div>
           <div
             className={`text-lg font-bold ${
-              metrics.remainingBudgetUSD < 0 ? "text-rose-500" : "text-stone-900 dark:text-white"
+              metrics.remainingBudgetUSD < 0
+                ? "text-rose-500"
+                : "text-stone-900 dark:text-white"
             }`}
           >
             ${(metrics.remainingBudgetUSD || 0).toLocaleString("en-US")}
