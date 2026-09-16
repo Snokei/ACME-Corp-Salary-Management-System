@@ -217,7 +217,7 @@ export function HeaderNav() {
       )}
 
       <Modal isOpen={isProfileOpen} onClose={() => { setIsProfileOpen(false); cancelEditing(); }} maxWidth="sm">
-        <div className="-mt-6 -mx-6 relative">
+        <div className="-mt-5 sm:-mt-6 -mx-5 sm:-mx-6 relative">
           {/* Banner */}
           <div className="h-28 sm:h-32 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-950 dark:from-stone-950 dark:via-stone-900 dark:to-black rounded-t-3xl relative overflow-hidden">
             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[length:12px_12px]" />
@@ -278,7 +278,7 @@ export function HeaderNav() {
             </div>
 
             <div className="mb-6">
-              <h3 className="font-bold text-xl text-stone-900 dark:text-white tracking-tight">{profileData.name}</h3>
+              <h3 className="font-bold text-xl text-stone-900 dark:text-white tracking-tight break-words">{profileData.name}</h3>
               <p className="text-sm font-medium text-amber-600 dark:text-amber-500">{profileData.role}</p>
             </div>
 
@@ -294,7 +294,7 @@ export function HeaderNav() {
                     className="w-full px-4 py-2.5 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl text-sm font-semibold text-stone-900 dark:text-white outline-none transition-all shadow-sm"
                   />
                 ) : (
-                  <div className="w-full px-4 py-2.5 bg-stone-50/50 dark:bg-stone-900/30 border border-transparent rounded-xl text-sm font-semibold text-stone-900 dark:text-stone-100">
+                  <div className="w-full min-w-0 px-4 py-2.5 bg-stone-50/50 dark:bg-stone-900/30 border border-transparent rounded-xl text-sm font-semibold text-stone-900 dark:text-stone-100 break-words">
                     {profileData.name}
                   </div>
                 )}
@@ -310,7 +310,7 @@ export function HeaderNav() {
                     className="w-full px-4 py-2.5 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl text-sm font-semibold text-stone-900 dark:text-white outline-none transition-all shadow-sm"
                   />
                 ) : (
-                  <div className="w-full px-4 py-2.5 bg-stone-50/50 dark:bg-stone-900/30 border border-transparent rounded-xl text-sm font-semibold text-stone-900 dark:text-stone-100">
+                  <div className="w-full min-w-0 px-4 py-2.5 bg-stone-50/50 dark:bg-stone-900/30 border border-transparent rounded-xl text-sm font-semibold text-stone-900 dark:text-stone-100 break-all">
                     {profileData.email}
                   </div>
                 )}
