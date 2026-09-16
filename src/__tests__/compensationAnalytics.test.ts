@@ -6,7 +6,17 @@ import { createSalaryAdjustment } from '@/lib/salaryAdjustmentService';
 describe('Compensation Analytics Service', () => {
   const testTag = `test.analytics.${Date.now()}.${Math.random()}`;
 
+  const cleanTestEmps = async () => {
+    await prisma.employee.deleteMany({
+      where: {
+        email: { contains: '@acme.com' },
+        firstName: { in: ['Alice', 'Bob', 'Charlie', 'Diana', 'Evan', 'TestAdj'] },
+      },
+    });
+  };
+
   beforeEach(async () => {
+    await cleanTestEmps();
     // Create a batch of test employees with specific known salaries across departments, countries, pay grades
     await prisma.employee.createMany({
       data: [
@@ -110,10 +120,7 @@ describe('Compensation Analytics Service', () => {
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await prisma.employee.deleteMany({
-      where: { email: { contains: 'acme.com' }, firstName: { in: ['Alice', 'Bob', 'Charlie', 'Diana', 'Evan'] } },
-    });
+    await cleanTestEmps();
   });
 
   it('1. Calculates correct summary metrics (Count, Avg, Min, Max, Median)', async () => {

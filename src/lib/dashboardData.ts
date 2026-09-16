@@ -60,7 +60,6 @@ export async function getDashboardData() {
       bonusUSD: true,
       country: true,
     },
-    where: { status: 'Active' },
   });
 
   const totalGlobalPayroll = allEmployees.reduce((sum, emp) => sum + emp.baseSalaryUSD, 0);
