@@ -7,7 +7,9 @@ export interface SearchableSelectProps {
   name: string;
   options: string[];
   defaultValue?: string;
+  value?: string;
   placeholder?: string;
+  label?: string;
   className?: string;
   containerClassName?: string;
   shape?: 'pill' | 'rounded';
@@ -18,7 +20,9 @@ export function SearchableSelect({
   name,
   options,
   defaultValue = 'All',
+  value,
   placeholder = 'Select...',
+  label,
   className = '',
   containerClassName = '',
   shape = 'pill',
@@ -26,18 +30,24 @@ export function SearchableSelect({
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [value, setValue] = useState(defaultValue);
+  const [internalValue, setInternalValue] = useState(value !== undefined ? value : defaultValue);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync internal value if defaultValue changes (e.g. form reset)
+  // Sync internal value if controlled value or defaultValue changes
   useEffect(() => {
-    setValue(defaultValue);
-  }, [defaultValue]);
+    if (value !== undefined) {
+      setInternalValue(value);
+    } else {
+      setInternalValue(defaultValue);
+    }
+  }, [value, defaultValue]);
+
+  const activeValue = value !== undefined ? value : internalValue;
 
   // Derive the display value
-  const displayValue = isOpen ? search : (value === 'All' ? placeholder : value);
+  const displayValue = isOpen ? search : (activeValue === 'All' ? placeholder : activeValue);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -56,7 +66,9 @@ export function SearchableSelect({
   );
 
   const handleSelect = (option: string) => {
-    setValue(option);
+    if (value === undefined) {
+      setInternalValue(option);
+    }
     setSearch('');
     setIsOpen(false);
     if (onChange) {
@@ -69,8 +81,13 @@ export function SearchableSelect({
 
   return (
     <div ref={containerRef} className={`relative min-w-[140px] ${isOpen ? 'z-40' : 'z-10'} ${containerClassName}`}>
+      {label && (
+        <label className="block text-[11px] font-semibold text-stone-500 dark:text-stone-400 mb-1">
+          {label}
+        </label>
+      )}
       {/* Hidden input for native form submission */}
-      <input type="hidden" name={name} value={value} />
+      <input type="hidden" name={name} value={activeValue} />
       
       <div 
         className="relative cursor-text"
@@ -83,7 +100,7 @@ export function SearchableSelect({
           ref={inputRef}
           type="text"
           className={`w-full py-2 pl-3 pr-8 text-xs bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-colors ${shapeClass} ${className}`}
-          placeholder={value === 'All' ? placeholder : value}
+          placeholder={activeValue === 'All' ? placeholder : activeValue}
           value={displayValue}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -109,7 +126,7 @@ export function SearchableSelect({
                   key={option}
                   onClick={() => handleSelect(option)}
                   className={`px-3 py-2 text-xs cursor-pointer transition-colors ${
-                    value === option
+                    activeValue === option
                       ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-100 font-medium'
                       : 'text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
                   }`}

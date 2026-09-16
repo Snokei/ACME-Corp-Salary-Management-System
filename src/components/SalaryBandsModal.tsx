@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input, Select } from '@/components/ui';
+import { Modal, Button, Input, SearchableSelect } from '@/components/ui';
 import { SalaryBandData } from '@/lib/compaRatioService';
 import { createSalaryBandAction, updateSalaryBandAction } from '@/actions/salaryBands';
 import toast from 'react-hot-toast';
@@ -144,19 +144,14 @@ export function SalaryBandsModal({
           </div>
 
           <div>
-            <Select
+            <SearchableSelect
+              name="currency"
               label="Currency"
+              options={['USD', 'EUR', 'GBP', 'INR', 'JPY', 'AUD', 'CAD']}
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-            >
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-              <option value="INR">INR (₹)</option>
-              <option value="JPY">JPY (¥)</option>
-              <option value="AUD">AUD ($)</option>
-              <option value="CAD">CAD ($)</option>
-            </Select>
+              shape="rounded"
+              onChange={(val) => setCurrency(val)}
+            />
           </div>
         </div>
 

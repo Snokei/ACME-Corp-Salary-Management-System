@@ -249,6 +249,7 @@ export async function getCompensationAnalysis(
  */
 export async function getAllSalaryBands(options?: {
   search?: string;
+  currency?: string;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -273,6 +274,10 @@ export async function getAllSalaryBands(options?: {
       { payGrade: { contains: s } },
       { currency: { contains: s } },
     ];
+  }
+
+  if (options?.currency && options.currency !== 'All') {
+    where.currency = options.currency;
   }
 
   let orderBy: any = [

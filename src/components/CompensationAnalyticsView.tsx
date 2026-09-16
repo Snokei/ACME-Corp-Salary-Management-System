@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { PageHeader } from '@/components/PageHeader';
-import { GlassCard, Select, Button } from '@/components/ui';
+import { GlassCard, SearchableSelect, Button } from '@/components/ui';
 import {
   Users,
   DollarSign,
@@ -192,7 +192,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
       </PageHeader>
 
       {/* Filter Control Bar */}
-      <GlassCard className="p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800">
+      <GlassCard className="relative z-30 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-stone-800 dark:text-stone-200">
             <Filter className="w-4 h-4 text-amber-500" />
@@ -204,71 +204,51 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
             )}
           </div>
 
-          {/* Dropdown Filters - Uniform height and no labels */}
+          {/* Dropdown Filters - Using SearchableSelect across all filters */}
           <div className="flex items-center gap-2.5 flex-wrap">
             {/* Department */}
-            <Select
-              shape="pill"
-              size="md"
+            <SearchableSelect
+              name="department"
+              options={['All', ...(data?.filterOptions?.departments || [])]}
               value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              containerClassName="w-auto min-w-[140px]"
-            >
-              <option value="All">All Departments</option>
-              {data?.filterOptions?.departments?.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </Select>
+              placeholder="All Departments"
+              shape="pill"
+              containerClassName="w-auto min-w-[150px]"
+              onChange={(val) => setDepartment(val)}
+            />
 
             {/* Country */}
-            <Select
-              shape="pill"
-              size="md"
+            <SearchableSelect
+              name="country"
+              options={['All', ...(data?.filterOptions?.countries || [])]}
               value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              containerClassName="w-auto min-w-[130px]"
-            >
-              <option value="All">All Countries</option>
-              {data?.filterOptions?.countries?.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </Select>
+              placeholder="All Countries"
+              shape="pill"
+              containerClassName="w-auto min-w-[140px]"
+              onChange={(val) => setCountry(val)}
+            />
 
             {/* Pay Grade */}
-            <Select
-              shape="pill"
-              size="md"
+            <SearchableSelect
+              name="payGrade"
+              options={['All', ...(data?.filterOptions?.payGrades || [])]}
               value={payGrade}
-              onChange={(e) => setPayGrade(e.target.value)}
-              containerClassName="w-auto min-w-[130px]"
-            >
-              <option value="All">All Pay Grades</option>
-              {data?.filterOptions?.payGrades?.map((pg) => (
-                <option key={pg} value={pg}>
-                  {pg}
-                </option>
-              ))}
-            </Select>
+              placeholder="All Pay Grades"
+              shape="pill"
+              containerClassName="w-auto min-w-[140px]"
+              onChange={(val) => setPayGrade(val)}
+            />
 
             {/* Currency */}
-            <Select
-              shape="pill"
-              size="md"
+            <SearchableSelect
+              name="currency"
+              options={['All', ...(data?.filterOptions?.currencies || [])]}
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              containerClassName="w-auto min-w-[130px]"
-            >
-              <option value="All">All Currencies</option>
-              {data?.filterOptions?.currencies?.map((cur) => (
-                <option key={cur} value={cur}>
-                  {cur}
-                </option>
-              ))}
-            </Select>
+              placeholder="All Currencies"
+              shape="pill"
+              containerClassName="w-auto min-w-[135px]"
+              onChange={(val) => setCurrency(val)}
+            />
 
             {/* Reset Button */}
             {hasActiveFilters && (
@@ -316,7 +296,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
       {data && (
         <>
           {/* Section 1: Summary Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 relative z-10">
             {/* Total Employees */}
             <GlassCard className="p-4 rounded-2xl flex flex-col justify-between border border-stone-200/80 dark:border-stone-800">
               <div className="flex items-center justify-between">

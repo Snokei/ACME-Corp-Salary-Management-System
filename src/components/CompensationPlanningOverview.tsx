@@ -37,7 +37,7 @@ import {
   TableEmpty,
   Button,
   SearchInput,
-  Select,
+  SearchableSelect,
   StatusBadge,
   GlassCard,
 } from "@/components/ui";
@@ -334,64 +334,55 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
         </GlassCard>
       )}
 
-      {/* Plans Table Section */}
-      <TableContainer>
-        {/* Table Filters Header */}
-        <div className="p-4 border-b border-stone-200/70 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-stone-50/40 dark:bg-stone-900/40">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <h2 className="text-base font-semibold text-stone-900 dark:text-white">
-              Compensation Plans
-            </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
-              {filteredPlans.length} Total
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            {/* Search Input Component */}
-            <div className="w-full sm:w-64">
-              <SearchInput
-                value={search}
-                onChange={setSearch}
-                placeholder="Search plans..."
-              />
-            </div>
-
-            {/* Fiscal Year Filter */}
-            <div className="w-36">
-              <Select
-                value={fiscalYearFilter}
-                onChange={(e) => setFiscalYearFilter(e.target.value)}
-                shape="pill"
-                size="sm"
-              >
-                {fiscalYears.map((fy) => (
-                  <option key={fy} value={fy}>
-                    {fy === "All" ? "All Fiscal Years" : fy}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {/* Status Filter */}
-            <div className="w-36">
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                shape="pill"
-                size="sm"
-              >
-                <option value="All">All Statuses</option>
-                <option value="Draft">Draft</option>
-                <option value="In Review">In Review</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Finalized">Finalized</option>
-              </Select>
-            </div>
-          </div>
+      {/* Plans Filter Bar */}
+      <div className="relative z-30 p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <h2 className="text-base font-semibold text-stone-900 dark:text-white">
+            Compensation Plans
+          </h2>
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+            {filteredPlans.length} Total
+          </span>
         </div>
 
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          {/* Search Input Component */}
+          <div className="w-full sm:w-64">
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Search plans..."
+            />
+          </div>
+
+          {/* Fiscal Year Filter */}
+          <div className="w-40">
+            <SearchableSelect
+              name="fiscalYear"
+              options={fiscalYears}
+              value={fiscalYearFilter}
+              placeholder="All Fiscal Years"
+              shape="pill"
+              onChange={(val) => setFiscalYearFilter(val)}
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div className="w-36">
+            <SearchableSelect
+              name="status"
+              options={["All", "Draft", "In Review", "Approved", "Rejected", "Finalized"]}
+              value={statusFilter}
+              placeholder="All Statuses"
+              shape="pill"
+              onChange={(val) => setStatusFilter(val)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Plans Table Section */}
+      <TableContainer className="relative z-10">
         {/* Plans Table */}
         <Table>
           <TableHeader>

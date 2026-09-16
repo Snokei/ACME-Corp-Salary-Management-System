@@ -5,6 +5,7 @@ import { SalaryBandsView } from '@/components/SalaryBandsView';
 interface SalaryBandsPageProps {
   searchParams?: {
     search?: string;
+    currency?: string;
     page?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
@@ -13,11 +14,12 @@ interface SalaryBandsPageProps {
 
 export default async function SalaryBandsPage({ searchParams }: SalaryBandsPageProps) {
   const search = typeof searchParams?.search === 'string' ? searchParams.search : '';
+  const currency = typeof searchParams?.currency === 'string' ? searchParams.currency : 'All';
   const page = parseInt(searchParams?.page || '1', 10) || 1;
   const sortBy = typeof searchParams?.sortBy === 'string' ? searchParams.sortBy : undefined;
   const sortOrder = searchParams?.sortOrder === 'desc' ? 'desc' : 'asc';
 
-  const data = await getAllSalaryBands({ search, page, limit: 10, sortBy, sortOrder });
+  const data = await getAllSalaryBands({ search, currency, page, limit: 10, sortBy, sortOrder });
 
   return (
     <Suspense
@@ -30,7 +32,7 @@ export default async function SalaryBandsPage({ searchParams }: SalaryBandsPageP
         </div>
       }
     >
-      <SalaryBandsView data={data} searchParams={{ search, page: String(page), sortBy, sortOrder }} />
+      <SalaryBandsView data={data} searchParams={{ search, currency, page: String(page), sortBy, sortOrder }} />
     </Suspense>
   );
 }

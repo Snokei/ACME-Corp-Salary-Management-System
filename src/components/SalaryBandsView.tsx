@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { PageHeader } from '@/components/PageHeader';
-import { Button, Input, Table } from '@/components/ui';
+import { Button, Input, Table, SearchableSelect } from '@/components/ui';
 import { SalaryBandsModal } from '@/components/SalaryBandsModal';
 import { SalaryBandData } from '@/lib/compaRatioService';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -20,6 +20,7 @@ export interface SalaryBandsViewProps {
   initialBands?: SalaryBandData[];
   searchParams?: {
     search?: string;
+    currency?: string;
     page?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
@@ -38,6 +39,7 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
   const pageSize = 10;
 
   const currentSearch = searchParams.search || nextSearchParams.get('search') || '';
+  const currentCurrency = searchParams.currency || nextSearchParams.get('currency') || 'All';
   const sortBy = searchParams.sortBy || nextSearchParams.get('sortBy') || '';
   const sortOrder = (searchParams.sortOrder || nextSearchParams.get('sortOrder') || 'asc') as 'asc' | 'desc';
 
@@ -75,6 +77,17 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  const handleCurrencyChange = (curr: string) => {
+    const params = new URLSearchParams(nextSearchParams.toString());
+    if (curr && curr !== 'All') {
+      params.set('currency', curr);
+    } else {
+      params.delete('currency');
+    }
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(nextSearchParams.toString());
     params.set('page', String(newPage));
@@ -85,9 +98,12 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
     setSearch('');
     const params = new URLSearchParams(nextSearchParams.toString());
     params.delete('search');
+    params.delete('currency');
     params.set('page', '1');
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
+
+  const hasActiveFilters = Boolean(search.trim() || currentCurrency !== 'All');
 
   const handleSuccess = () => {
     router.refresh();
@@ -111,19 +127,32 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
 
       {/* Filter / Search Bar - with white bg container */}
       <form onSubmit={handleSearchSubmit} className="relative z-20 p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
-        <div className="flex-1 max-w-md flex items-center gap-2">
-          <Input
-            placeholder="Search by pay grade or currency..."
+        <div className="flex-1 max-w-xl flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+          <div className="flex-1 max-w-md flex items-center gap-2">
+            <Input
+              placeholder="Search by pay grade or currency..."
+              shape="pill"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              leftIcon={<Search className="w-4 h-4 text-stone-400" />}
+              containerClassName="w-full"
+            />
+            <Button type="submit" variant="primary" size="md" shape="pill">
+              Search
+            </Button>
+          </div>
+
+          <SearchableSelect
+            name="currency"
+            options={['All', 'USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR']}
+            value={currentCurrency}
+            placeholder="All Currencies"
             shape="pill"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            leftIcon={<Search className="w-4 h-4 text-stone-400" />}
-            containerClassName="w-full"
+            containerClassName="w-36"
+            onChange={handleCurrencyChange}
           />
-          <Button type="submit" variant="primary" size="md" shape="pill">
-            Search
-          </Button>
-          {search && (
+
+          {hasActiveFilters && (
             <Button
               type="button"
               variant="ghost"
