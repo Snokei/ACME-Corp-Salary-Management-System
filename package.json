@@ -7,7 +7,7 @@
     "build": "prisma generate && prisma db push --accept-data-loss && npm run db:seed && next build",
     "start": "next start",
     "lint": "next lint",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx prisma/seed.ts && tsx seed-user.ts && tsx prisma/seedBands.ts && tsx seed-statuses.ts",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "test": "vitest run",
