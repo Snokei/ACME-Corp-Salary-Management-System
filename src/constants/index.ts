@@ -4,6 +4,7 @@ export type NavTabId =
   | "salary"
   | "analytics"
   | "planning"
+  | "audit-log"
   | "reviews"
   | "leaves"
   | "payroll"
@@ -21,7 +22,9 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "salary", label: "Salary Bands", href: "/salary-bands" },
   { id: "analytics", label: "Analytics", href: "/compensation-analytics" },
   { id: "planning", label: "Comp Planning", href: "/compensation-planning" },
+  { id: "audit-log", label: "Audit Log", href: "/audit-log" },
 ];
+
 
 export const ALL_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/" },

@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/auditLogService';
 
 export interface SalaryBandData {
+
   id?: string;
   payGrade: string;
   currency: string;
@@ -341,9 +343,19 @@ export async function createSalaryBand(data: {
     );
   }
 
-  return await model.create({
+  const created = await model.create({
     data: validated,
   });
+
+  await createAuditLog({
+    action: 'CREATE',
+    entityType: 'SALARY_BAND',
+    entityId: created.id,
+    description: `Salary Band created for Pay Grade ${created.payGrade} (${created.currency})`,
+    newData: created,
+  });
+
+  return created;
 }
 
 /**
@@ -389,8 +401,20 @@ export async function updateSalaryBand(
     }
   }
 
-  return await model.update({
+  const updated = await model.update({
     where: { id },
     data: validated,
   });
+
+  await createAuditLog({
+    action: 'UPDATE',
+    entityType: 'SALARY_BAND',
+    entityId: updated.id,
+    description: `Salary Band updated for Pay Grade ${updated.payGrade} (${updated.currency})`,
+    previousData: existing,
+    newData: updated,
+  });
+
+  return updated;
 }
+

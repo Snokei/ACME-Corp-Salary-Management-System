@@ -158,16 +158,8 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
     }
   };
 
-  const handleRefresh = async () => {
-    try {
-      const res = await fetch("/api/compensation-planning");
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
-        setPlans(data.data);
-      }
-    } catch (err) {
-      console.error("Failed to refresh plans:", err);
-    }
+  const handleRefresh = () => {
+    router.refresh();
   };
 
   return (

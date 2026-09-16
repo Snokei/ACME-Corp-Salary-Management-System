@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useTransition, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { PageHeader } from '@/components/PageHeader';
 import { GlassCard, SearchableSelect, Button } from '@/components/ui';
 import {
@@ -14,7 +15,6 @@ import {
   Layers,
   Filter,
   RotateCcw,
-  AlertCircle,
   Loader2,
   Building2,
   ArrowUpDown,
@@ -30,16 +30,20 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-  Legend,
   AreaChart,
   Area,
 } from 'recharts';
 import { CompensationAnalyticsResult } from '@/lib/compensationAnalyticsService';
 
 interface CompensationAnalyticsViewProps {
-  initialData?: CompensationAnalyticsResult;
+  data?: CompensationAnalyticsResult;
+  searchParams: {
+    department: string;
+    country: string;
+    payGrade: string;
+    currency: string;
+    period: 'quarter' | 'month';
+  };
 }
 
 const BAND_COLORS = {
@@ -51,61 +55,38 @@ const BAND_COLORS = {
 
 const CHART_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316', '#6366F1'];
 
-export function CompensationAnalyticsView({ initialData }: CompensationAnalyticsViewProps) {
-  const [data, setData] = useState<CompensationAnalyticsResult | null>(initialData || null);
-  const [loading, setLoading] = useState<boolean>(!initialData);
-  const [error, setError] = useState<string | null>(null);
+export function CompensationAnalyticsView({ data, searchParams }: CompensationAnalyticsViewProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
-  // Filters state
-  const [department, setDepartment] = useState<string>('All');
-  const [country, setCountry] = useState<string>('All');
-  const [payGrade, setPayGrade] = useState<string>('All');
-  const [currency, setCurrency] = useState<string>('All');
-  const [period, setPeriod] = useState<'quarter' | 'month'>('quarter');
+  // Read current filter values from server-provided searchParams
+  const department = searchParams.department;
+  const country = searchParams.country;
+  const payGrade = searchParams.payGrade;
+  const currency = searchParams.currency;
+  const period = searchParams.period;
 
-  // Country table sort state
+  // Country table sort — pure client state, no server round-trip needed
   const [countrySortField, setCountrySortField] = useState<'employeeCount' | 'avgSalary' | 'country'>('employeeCount');
   const [countrySortAsc, setCountrySortAsc] = useState<boolean>(false);
 
-  // Fetch analytics data
-  const fetchAnalytics = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (department !== 'All') params.set('department', department);
-      if (country !== 'All') params.set('country', country);
-      if (payGrade !== 'All') params.set('payGrade', payGrade);
-      if (currency !== 'All') params.set('currency', currency);
-      params.set('period', period);
-
-      const res = await fetch(`/api/compensation-analytics?${params.toString()}`);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch analytics: ${res.statusText}`);
-      }
-      const json = await res.json();
-      if (!json.success) {
-        throw new Error(json.error || 'Failed to fetch analytics');
-      }
-      setData(json.data);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // Fetch when filters change
-    fetchAnalytics();
-  }, [department, country, payGrade, currency, period]);
+  // Navigate with updated URL params (triggers server re-render)
+  const pushFilter = useCallback((updates: Record<string, string>) => {
+    const params = new URLSearchParams();
+    const merged = { department, country, payGrade, currency, period, ...updates };
+    if (merged.department !== 'All') params.set('department', merged.department);
+    if (merged.country !== 'All') params.set('country', merged.country);
+    if (merged.payGrade !== 'All') params.set('payGrade', merged.payGrade);
+    if (merged.currency !== 'All') params.set('currency', merged.currency);
+    if (merged.period !== 'quarter') params.set('period', merged.period);
+    startTransition(() => {
+      router.push(`${pathname}${params.toString() ? '?' + params.toString() : ''}`);
+    });
+  }, [department, country, payGrade, currency, period, pathname, router]);
 
   const handleResetFilters = () => {
-    setDepartment('All');
-    setCountry('All');
-    setPayGrade('All');
-    setCurrency('All');
-    setPeriod('quarter');
+    startTransition(() => router.push(pathname));
   };
 
   const hasActiveFilters = department !== 'All' || country !== 'All' || payGrade !== 'All' || currency !== 'All';
@@ -166,7 +147,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
   }, [data?.bandDistribution]);
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
+    <div className={`space-y-6 animate-fade-in pb-12 ${isPending ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-150`}>
       {/* Header */}
       <PageHeader
         title={
@@ -185,7 +166,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
       >
         {data && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-100 dark:bg-stone-800 text-xs text-stone-600 dark:text-stone-300 font-medium">
-            <Users className="w-3.5 h-3.5 text-amber-500" />
+            {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" /> : <Users className="w-3.5 h-3.5 text-amber-500" />}
             <span>Analyzing {data.summary.totalEmployees.toLocaleString()} Active Employees</span>
           </div>
         )}
@@ -204,7 +185,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
             )}
           </div>
 
-          {/* Dropdown Filters - Using SearchableSelect across all filters */}
+          {/* Dropdown Filters — changes push URL params, triggering SSR re-render */}
           <div className="flex items-center gap-2.5 flex-wrap">
             {/* Department */}
             <SearchableSelect
@@ -214,7 +195,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
               placeholder="All Departments"
               shape="pill"
               containerClassName="w-auto min-w-[150px]"
-              onChange={(val) => setDepartment(val)}
+              onChange={(val) => pushFilter({ department: val })}
             />
 
             {/* Country */}
@@ -225,7 +206,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
               placeholder="All Countries"
               shape="pill"
               containerClassName="w-auto min-w-[140px]"
-              onChange={(val) => setCountry(val)}
+              onChange={(val) => pushFilter({ country: val })}
             />
 
             {/* Pay Grade */}
@@ -236,7 +217,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
               placeholder="All Pay Grades"
               shape="pill"
               containerClassName="w-auto min-w-[140px]"
-              onChange={(val) => setPayGrade(val)}
+              onChange={(val) => pushFilter({ payGrade: val })}
             />
 
             {/* Currency */}
@@ -247,7 +228,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
               placeholder="All Currencies"
               shape="pill"
               containerClassName="w-auto min-w-[135px]"
-              onChange={(val) => setCurrency(val)}
+              onChange={(val) => pushFilter({ currency: val })}
             />
 
             {/* Reset Button */}
@@ -268,24 +249,8 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
         </div>
       </GlassCard>
 
-      {/* Error state */}
-      {error && (
-        <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 flex items-center justify-between text-xs text-red-700 dark:text-red-300">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-            <span>{error}</span>
-          </div>
-          <button
-            onClick={fetchAnalytics}
-            className="px-3 py-1 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Loading state skeleton */}
-      {loading && !data && (
+      {/* No-data fallback */}
+      {!data && (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-stone-500">
           <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
           <p className="text-xs font-medium">Calculating compensation analytics across organization...</p>
@@ -861,10 +826,10 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
                 </p>
               </div>
 
-              {/* Period toggle */}
+              {/* Period toggle — updates URL param, triggers SSR re-render */}
               <div className="flex items-center gap-1.5 bg-stone-100 dark:bg-stone-900 p-1 rounded-xl">
                 <button
-                  onClick={() => setPeriod('quarter')}
+                  onClick={() => pushFilter({ period: 'quarter' })}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                     period === 'quarter'
                       ? 'bg-white dark:bg-stone-800 text-stone-900 dark:text-white shadow-sm'
@@ -874,7 +839,7 @@ export function CompensationAnalyticsView({ initialData }: CompensationAnalytics
                   Quarterly
                 </button>
                 <button
-                  onClick={() => setPeriod('month')}
+                  onClick={() => pushFilter({ period: 'month' })}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                     period === 'month'
                       ? 'bg-white dark:bg-stone-800 text-stone-900 dark:text-white shadow-sm'

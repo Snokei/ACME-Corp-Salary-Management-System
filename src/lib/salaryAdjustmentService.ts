@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/auditLogService';
 
 export const SALARY_ADJUSTMENT_REASONS = [
   'Promotion',
@@ -10,6 +11,7 @@ export const SALARY_ADJUSTMENT_REASONS = [
   'Retention',
   'Other',
 ] as const;
+
 
 export type SalaryAdjustmentReason = (typeof SALARY_ADJUSTMENT_REASONS)[number];
 
@@ -143,8 +145,38 @@ export async function createSalaryAdjustment(
     };
   });
 
+  await createAuditLog({
+    action: 'UPDATE',
+    entityType: 'SALARY',
+    entityId: employee.id,
+    userName: validated.createdBy || undefined,
+    description: `Salary adjusted for ${employee.firstName} ${employee.lastName} from $${employee.baseSalaryUSD.toLocaleString()} to $${amountUSD.toLocaleString()} (${validated.reason})`,
+    previousData: {
+      employeeId: employee.employeeId,
+      employeeName: `${employee.firstName} ${employee.lastName}`,
+      baseSalary: employee.baseSalary,
+      baseSalaryUSD: employee.baseSalaryUSD,
+      currency: employee.currency,
+    },
+    newData: {
+      employeeId: employee.employeeId,
+      employeeName: `${employee.firstName} ${employee.lastName}`,
+      baseSalary: validated.amount,
+      baseSalaryUSD: amountUSD,
+      currency,
+      effectiveDate: validated.effectiveDate,
+      reason: validated.reason,
+      notes: validated.notes,
+    },
+    metadata: {
+      salaryHistoryId: result.salaryHistory.id,
+      reason: validated.reason,
+    },
+  });
+
   return result;
 }
+
 
 /**
  * Fetches salary history records for a given employee ordered by effectiveDate descending.

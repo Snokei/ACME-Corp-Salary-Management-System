@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateSalaryBand, SalaryBandError } from '@/lib/compaRatioService';
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/auditLogService';
 
 export async function PUT(
   request: NextRequest,
@@ -25,9 +26,22 @@ export async function DELETE(
 ) {
   try {
     const id = params.id;
+    const existingBand = await prisma.salaryBand.findUnique({ where: { id } });
     await prisma.salaryBand.delete({ where: { id } });
+
+    if (existingBand) {
+      await createAuditLog({
+        action: 'DELETE',
+        entityType: 'SALARY_BAND',
+        entityId: id,
+        description: `Salary Band deleted for Pay Grade ${existingBand.payGrade} (${existingBand.currency})`,
+        previousData: existingBand,
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to delete salary band' }, { status: 500 });
   }
 }
+

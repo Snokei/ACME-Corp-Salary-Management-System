@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getEmployeesData } from '@/lib/employeeData';
+import { createAuditLog } from '@/lib/auditLogService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -51,8 +52,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    await createAuditLog({
+      action: 'CREATE',
+      entityType: 'EMPLOYEE',
+      entityId: newEmployee.id,
+      description: `Employee ${newEmployee.firstName} ${newEmployee.lastName} created (${newEmployee.department} - ${newEmployee.role})`,
+      newData: newEmployee,
+    });
+
     return NextResponse.json({ success: true, employee: newEmployee }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

@@ -2,6 +2,7 @@
 
 import { getEmployeesData, GetEmployeesParams, EmployeesResponseData } from '@/lib/employeeData';
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/auditLogService';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -90,7 +91,16 @@ export async function createEmployeeAction(data: {
       },
     });
 
+    await createAuditLog({
+      action: 'CREATE',
+      entityType: 'EMPLOYEE',
+      entityId: newEmployee.id,
+      description: `Employee ${newEmployee.firstName} ${newEmployee.lastName} created (${newEmployee.department} - ${newEmployee.role})`,
+      newData: newEmployee,
+    });
+
     revalidatePath('/people');
+    revalidatePath('/audit-log');
     revalidatePath('/');
 
     return { success: true, employee: newEmployee };
@@ -120,6 +130,8 @@ export async function updateEmployeeAction(id: string, data: {
   status?: string;
 }) {
   try {
+    const existingEmployee = await prisma.employee.findUnique({ where: { id } });
+
     const updateData: any = { ...data };
     
     if (data.baseSalary !== undefined) {
@@ -139,7 +151,17 @@ export async function updateEmployeeAction(id: string, data: {
       data: updateData,
     });
 
+    await createAuditLog({
+      action: 'UPDATE',
+      entityType: 'EMPLOYEE',
+      entityId: updatedEmployee.id,
+      description: `Employee ${updatedEmployee.firstName} ${updatedEmployee.lastName} updated`,
+      previousData: existingEmployee,
+      newData: updatedEmployee,
+    });
+
     revalidatePath('/people');
+    revalidatePath('/audit-log');
     revalidatePath('/');
 
     return { success: true, employee: updatedEmployee };
@@ -158,13 +180,28 @@ export async function deleteEmployeesAction(ids: string[]) {
       return { success: false, error: 'No employee IDs provided' };
     }
 
+    const employeesToDelete = await prisma.employee.findMany({
+      where: { id: { in: ids } },
+    });
+
     await prisma.employee.deleteMany({
       where: {
         id: { in: ids },
       },
     });
 
+    for (const emp of employeesToDelete) {
+      await createAuditLog({
+        action: 'DELETE',
+        entityType: 'EMPLOYEE',
+        entityId: emp.id,
+        description: `Employee ${emp.firstName} ${emp.lastName} deleted/deactivated`,
+        previousData: emp,
+      });
+    }
+
     revalidatePath('/people');
+    revalidatePath('/audit-log');
     revalidatePath('/');
 
     return { success: true, count: ids.length };
@@ -173,4 +210,5 @@ export async function deleteEmployeesAction(ids: string[]) {
     return { success: false, error: error.message || 'Failed to delete employee(s)' };
   }
 }
+
 

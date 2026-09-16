@@ -131,3 +131,26 @@ model CompensationPlanItem {
   @@index([employeeId])
 }
 
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  userName     String?
+  userEmail    String?
+  action       String
+  entityType   String
+  entityId     String?
+  description  String
+  previousData String?
+  newData      String?
+  metadata     String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+
+

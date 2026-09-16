@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { calculateCompaRatio, getCompensationAnalysis } from '@/lib/compaRatioService';
+import { createAuditLog } from '@/lib/auditLogService';
 
 export type PlanStatus = 'Draft' | 'In Review' | 'Approved' | 'Rejected' | 'Finalized';
+
 
 export interface PlanSummaryMetrics {
   totalBudgetUSD: number;
@@ -386,6 +388,15 @@ export async function createCompensationPlan(data: {
     }
   }
 
+  await createAuditLog({
+    action: 'CREATE',
+    entityType: 'COMPENSATION_PLAN',
+    entityId: newPlan.id,
+    userName: data.createdBy || undefined,
+    description: `Compensation plan "${newPlan.name}" (${newPlan.fiscalYear}) created with budget $${newPlan.totalBudgetUSD.toLocaleString()}`,
+    newData: newPlan,
+  });
+
   return await getCompensationPlanById(newPlan.id);
 }
 
@@ -427,13 +438,23 @@ export async function updateCompensationPlan(
     updateData.totalBudgetUSD = Number(data.totalBudgetUSD);
   }
 
-  await models.plan.update({
+  const updatedPlan = await models.plan.update({
     where: { id },
     data: updateData,
   });
 
+  await createAuditLog({
+    action: 'UPDATE',
+    entityType: 'COMPENSATION_PLAN',
+    entityId: id,
+    description: `Compensation plan "${plan.name}" updated`,
+    previousData: plan,
+    newData: updatedPlan,
+  });
+
   return await getCompensationPlanById(id);
 }
+
 
 /**
  * Deletes a compensation plan if it is in Draft or Rejected status.
@@ -494,15 +515,39 @@ export async function updatePlanStatus(id: string, newStatus: PlanStatus) {
     }
   }
 
+  // Map status transition to Audit Log action name
+  let auditAction = 'UPDATE';
+  if (newStatus === 'In Review') auditAction = 'SUBMIT';
+  else if (newStatus === 'Approved') auditAction = 'APPROVE';
+  else if (newStatus === 'Rejected') auditAction = 'REJECT';
+  else if (newStatus === 'Finalized') auditAction = 'FINALIZE';
+
   // If status is Finalized, trigger salary application to actual employees & write SalaryHistory records!
   if (newStatus === 'Finalized') {
     await finalizeCompensationPlan(id);
+    await createAuditLog({
+      action: 'FINALIZE',
+      entityType: 'COMPENSATION_PLAN',
+      entityId: id,
+      description: `Compensation plan "${plan.name}" (${plan.fiscalYear}) finalized and approved salary increases applied to employees`,
+      previousData: { status: currentStatus },
+      newData: { status: 'Finalized' },
+    });
     return await getCompensationPlanById(id);
   }
 
   await models.plan.update({
     where: { id },
     data: { status: newStatus },
+  });
+
+  await createAuditLog({
+    action: auditAction,
+    entityType: 'COMPENSATION_PLAN',
+    entityId: id,
+    description: `Compensation plan "${plan.name}" status updated from ${currentStatus} to ${newStatus}`,
+    previousData: { status: currentStatus },
+    newData: { status: newStatus },
   });
 
   return await getCompensationPlanById(id);
@@ -612,8 +657,17 @@ export async function updateDepartmentAllocations(
     });
   }
 
+  await createAuditLog({
+    action: 'UPDATE',
+    entityType: 'COMPENSATION_BUDGET',
+    entityId: planId,
+    description: `Department budget allocations updated for plan "${plan.name}"`,
+    newData: allocations,
+  });
+
   return await getDepartmentBudgetSummary(planId);
 }
+
 
 /**
  * Fetches paginated employee planning items with real-time Compa-Ratio derivation.
@@ -798,6 +852,27 @@ export async function updatePlanItem(
     },
   });
 
+  await createAuditLog({
+    action: 'UPDATE',
+    entityType: 'COMPENSATION_PLAN_ITEM',
+    entityId: itemId,
+    description: `Proposed salary updated for ${item.employee?.firstName || 'Employee'} ${item.employee?.lastName || ''} in plan "${plan.name}"`,
+    previousData: {
+      employeeId: item.employeeId,
+      employeeName: `${item.employee?.firstName || ''} ${item.employee?.lastName || ''}`,
+      proposedSalaryUSD: item.proposedSalaryUSD,
+      increaseAmountUSD: item.increaseAmountUSD,
+      increasePercentage: item.increasePercentage,
+    },
+    newData: {
+      employeeId: item.employeeId,
+      employeeName: `${item.employee?.firstName || ''} ${item.employee?.lastName || ''}`,
+      proposedSalaryUSD: proposedSalary,
+      increaseAmountUSD: increaseAmount,
+      increasePercentage: increasePct,
+    },
+  });
+
   return { success: true, proposedSalaryUSD: proposedSalary, increaseAmountUSD: increaseAmount, increasePercentage: increasePct };
 }
 
@@ -847,6 +922,14 @@ export async function bulkUpdatePlanItems(
       },
     });
   }
+
+  await createAuditLog({
+    action: 'UPDATE',
+    entityType: 'COMPENSATION_PLAN_ITEM',
+    entityId: planId,
+    description: `Bulk salary increase (${increasePercentage}%) applied to ${items.length} employee(s) in plan "${plan.name}"`,
+    metadata: { increasePercentage, count: items.length },
+  });
 
   return { success: true, count: items.length };
 }
@@ -901,6 +984,14 @@ export async function addEmployeesToPlan(planId: string, employeeIds?: string[])
         data: newItems.slice(i, i + chunkSize),
       });
     }
+
+    await createAuditLog({
+      action: 'CREATE',
+      entityType: 'COMPENSATION_PLAN_ITEM',
+      entityId: planId,
+      description: `${newItems.length} employee(s) added to compensation plan "${plan.name}"`,
+      metadata: { addedCount: newItems.length },
+    });
   }
 
   return { addedCount: newItems.length };
@@ -921,12 +1012,28 @@ export async function removeEmployeeFromPlan(planId: string, itemId: string) {
     throw new CompensationPlanningError(`Cannot remove employee in "${plan.status}" status`, 400);
   }
 
+  const existingItem = await models.item.findFirst({
+    where: { id: itemId, planId },
+    include: { employee: true },
+  });
+
   await models.item.deleteMany({
     where: { id: itemId, planId },
   });
 
+  if (existingItem) {
+    await createAuditLog({
+      action: 'DELETE',
+      entityType: 'COMPENSATION_PLAN_ITEM',
+      entityId: itemId,
+      description: `Employee ${existingItem.employee?.firstName || ''} ${existingItem.employee?.lastName || ''} removed from plan "${plan.name}"`,
+      previousData: existingItem,
+    });
+  }
+
   return { success: true };
 }
+
 
 /**
  * Calculates scenario simulations (e.g. 3%, 5%, 7% increase) without mutating plan items.

@@ -9,13 +9,21 @@ interface DrawerProps {
   onClose: () => void;
   title?: React.ReactNode;
   children: React.ReactNode;
+  size?: 'md' | 'lg' | 'xl';
 }
+
+const SIZE_CLASSES: Record<string, string> = {
+  md: 'max-w-md',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+};
 
 export function Drawer({
   isOpen,
   onClose,
   title,
   children,
+  size = 'md',
 }: DrawerProps) {
   const [mounted, setMounted] = useState(false);
   const [render, setRender] = useState(isOpen);
@@ -53,7 +61,7 @@ export function Drawer({
       
       {/* Drawer Panel */}
       <div
-        className={`absolute inset-y-0 right-0 w-full max-w-md bg-white dark:bg-stone-900 border-l border-stone-200 dark:border-stone-800 shadow-2xl p-6 transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`absolute inset-y-0 right-0 w-full ${SIZE_CLASSES[size] || SIZE_CLASSES.md} bg-white dark:bg-stone-900 border-l border-stone-200 dark:border-stone-800 shadow-2xl p-6 transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         onTransitionEnd={() => {
           if (!isOpen) setRender(false);
         }}
