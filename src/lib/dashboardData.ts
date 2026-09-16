@@ -2,13 +2,44 @@ import { prisma } from './prisma';
 
 const COLORS = ['#18181B', '#F5C242', '#E2E8F0', '#94A3B8', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
 
+interface DeptGroupResult {
+  department: string;
+  _count: { _all: number };
+}
+
+interface EmpSelectResult {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  baseSalaryUSD: number;
+  gender: string;
+}
+
+interface EmpSimpleResult {
+  hireDate: Date;
+  baseSalaryUSD: number;
+  bonusUSD: number;
+  country: string;
+}
+
+interface DeptAvgResult {
+  department: string;
+  _avg: { baseSalaryUSD: number | null };
+}
+
+interface CountryAvgResult {
+  country: string;
+  _avg: { baseSalaryUSD: number | null };
+}
+
 export async function getDashboardData() {
   // 1. Stats
   const totalEmployees = await prisma.employee.count();
   const activeCount = await prisma.employee.count({ where: { status: 'Active' } });
   
-  // 2. Department Composition
-  const deptGroups = await prisma.employee.groupBy({
+  // 2. Department Composition - use any cast to bypass Prisma's strict typing for groupBy
+  const deptGroups = (await prisma.employee.groupBy({
     by: ['department'],
     _count: {
       _all: true,
@@ -18,7 +49,7 @@ export async function getDashboardData() {
         department: 'desc',
       },
     },
-  });
+  })) as unknown as DeptGroupResult[];
 
   const departmentComposition = deptGroups.map((g, index) => ({
     name: g.department,

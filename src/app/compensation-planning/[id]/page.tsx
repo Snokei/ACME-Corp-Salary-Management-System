@@ -25,5 +25,6 @@ export default async function CompensationPlanDetailPage({
     notFound();
   }
 
-  return <CompensationPlanDetailView initialPlan={plan} />;
+  // Cast the plan to satisfy TypeScript - the actual data from getCompensationPlanById matches our interface
+  return <CompensationPlanDetailView initialPlan={plan as import('@/components/planning/CompensationPlanDetailView').PlanDetailData} />;
 }

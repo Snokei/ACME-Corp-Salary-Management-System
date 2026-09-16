@@ -20,8 +20,15 @@ export async function EmployeeFiltersServer({ searchParams }: Props) {
     prisma.employee.findMany({ select: { country: true }, distinct: ['country'] })
   ]);
 
-  const uniqueRoles = ['All', ...uniqueRolesResult.map(r => r.role).filter(Boolean).sort()];
-  const uniqueLocations = ['All', ...uniqueLocationsResult.map(l => l.country).filter(Boolean).sort()];
+  // Filter out null values and ensure string[] type
+  const uniqueRoles = ['All', ...(uniqueRolesResult as { role: string | null }[])
+    .map((r) => r.role)
+    .filter((r): r is string => r !== null)
+    .sort()];
+  const uniqueLocations = ['All', ...(uniqueLocationsResult as { country: string | null }[])
+    .map((l) => l.country)
+    .filter((l): l is string => l !== null)
+    .sort()];
 
   return (
     <EmployeeFilters

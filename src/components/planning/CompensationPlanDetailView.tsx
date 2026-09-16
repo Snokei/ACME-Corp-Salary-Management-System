@@ -23,15 +23,35 @@ import { DepartmentAllocationTable } from "./DepartmentAllocationTable";
 import { EmployeePlanningTable } from "./EmployeePlanningTable";
 import { ScenarioPlanningTab } from "./ScenarioPlanningTab";
 
-interface PlanDetailData {
+export interface PlanDetailData {
   id: string;
   name: string;
   fiscalYear: string;
   totalBudgetUSD: number;
   status: "Draft" | "In Review" | "Approved" | "Rejected" | "Finalized";
   createdBy: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
+  departments?: {
+    id: string;
+    planId: string;
+    department: string;
+    allocatedBudgetUSD: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
+  items?: {
+    id: string;
+    planId: string;
+    employeeId: string;
+    currentSalaryUSD: number;
+    proposedSalaryUSD: number;
+    increaseAmountUSD: number;
+    increasePercentage: number;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
   metrics: {
     totalBudgetUSD: number;
     allocatedBudgetUSD: number;

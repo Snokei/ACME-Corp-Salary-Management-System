@@ -266,14 +266,22 @@ export async function getEmployeesData(
       prisma.employee.count({ where: whereClause }),
     ]);
 
-    if (employees && employees.length > 0) {
-      const mappedEmployees: Employee[] = employees.map((emp, index) => {
+function getStableAvatar(id: string, name: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash << 5) - hash + id.charCodeAt(i);
+    hash |= 0;
+  }
+  const avatarIndex = Math.abs(hash) % VERIFIED_AVATARS.length;
+  return (
+    VERIFIED_AVATARS[avatarIndex] ||
+    `https://ui-avatars.com/api/?background=f5c242&color=18181b&name=${encodeURIComponent(name)}`
+  );
+}
 
-        const avatarUrl =
-          VERIFIED_AVATARS[index % VERIFIED_AVATARS.length] ||
-          `https://ui-avatars.com/api/?background=f5c242&color=18181b&name=${encodeURIComponent(
-            emp.firstName + ' ' + emp.lastName
-          )}`;
+    if (employees && employees.length > 0) {
+      const mappedEmployees: Employee[] = employees.map((emp) => {
+        const avatarUrl = getStableAvatar(emp.id || emp.employeeId, `${emp.firstName} ${emp.lastName}`);
 
         return {
           id: emp.id,

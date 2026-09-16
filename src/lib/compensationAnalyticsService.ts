@@ -93,6 +93,51 @@ export interface CompensationAnalyticsResult {
   };
 }
 
+/** Returns the median of a list of salary values (0 when empty). */
+function computeMedian(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    return Math.round(((sorted[mid - 1] + sorted[mid]) / 2) * 100) / 100;
+  }
+  return Math.round(sorted[mid] * 100) / 100;
+}
+
+const FILTER_OPTIONS_TTL_MS = 60_000; // 60 seconds
+type FilterOptions = {
+  departments: string[];
+  countries: string[];
+  payGrades: string[];
+  currencies: string[];
+};
+// Module-level cache so filter dropdown options are not re-queried on every analytics load.
+let filterOptionsCache: { data: FilterOptions | null; expiresAt: number } = { data: null, expiresAt: 0 };
+
+async function getFilterOptions(): Promise<FilterOptions> {
+  const now = Date.now();
+  if (filterOptionsCache.data && filterOptionsCache.expiresAt > now) {
+    return filterOptionsCache.data;
+  }
+
+  const [deptGroups, countryGroups, payGradeGroups, currencyGroups] = await Promise.all([
+    prisma.employee.groupBy({ by: ['department'], _count: { _all: true }, orderBy: { department: 'asc' } }),
+    prisma.employee.groupBy({ by: ['country'], _count: { _all: true }, orderBy: { country: 'asc' } }),
+    prisma.employee.groupBy({ by: ['payGrade'], _count: { _all: true }, orderBy: { payGrade: 'asc' } }),
+    prisma.employee.groupBy({ by: ['currency'], _count: { _all: true }, orderBy: { currency: 'asc' } }),
+  ]);
+
+  const data: FilterOptions = {
+    departments: deptGroups.map((g) => g.department),
+    countries: countryGroups.map((g) => g.country),
+    payGrades: payGradeGroups.map((g) => g.payGrade),
+    currencies: currencyGroups.map((g) => g.currency),
+  };
+
+  filterOptionsCache = { data, expiresAt: now + FILTER_OPTIONS_TTL_MS };
+  return data;
+}
+
 /**
  * Calculates organization-wide or filtered compensation analytics using server-side database aggregations.
  */
@@ -107,20 +152,8 @@ export async function getCompensationAnalytics(
   if (payGrade && payGrade !== 'All') where.payGrade = payGrade;
   if (currency && currency !== 'All') where.currency = currency;
 
-  // 1. Filter options for UI dropdowns
-  const [deptGroups, countryGroups, payGradeGroups, currencyGroups] = await Promise.all([
-    prisma.employee.groupBy({ by: ['department'], _count: { _all: true }, orderBy: { department: 'asc' } }),
-    prisma.employee.groupBy({ by: ['country'], _count: { _all: true }, orderBy: { country: 'asc' } }),
-    prisma.employee.groupBy({ by: ['payGrade'], _count: { _all: true }, orderBy: { payGrade: 'asc' } }),
-    prisma.employee.groupBy({ by: ['currency'], _count: { _all: true }, orderBy: { currency: 'asc' } }),
-  ]);
-
-  const filterOptions = {
-    departments: deptGroups.map((g) => g.department),
-    countries: countryGroups.map((g) => g.country),
-    payGrades: payGradeGroups.map((g) => g.payGrade),
-    currencies: currencyGroups.map((g) => g.currency),
-  };
+  // 1. Filter options for UI dropdowns (cached server-side with a short TTL)
+  const filterOptions = await getFilterOptions();
 
   // 2. Total Employees & Summary Metrics
   const totalEmployees = await prisma.employee.count({ where });
@@ -186,14 +219,26 @@ export async function getCompensationAnalytics(
     medianBaseSalary = Math.round(((medianRows[0].baseSalaryUSD + medianRows[1].baseSalaryUSD) / 2) * 100) / 100;
   }
 
-  // 3. Salary Distribution Buckets
-  const [bUnder50k, b50to100k, b100to150k, b150to200k, bOver200k] = await Promise.all([
-    prisma.employee.count({ where: { ...where, baseSalaryUSD: { lt: 50000 } } }),
-    prisma.employee.count({ where: { ...where, baseSalaryUSD: { gte: 50000, lt: 100000 } } }),
-    prisma.employee.count({ where: { ...where, baseSalaryUSD: { gte: 100000, lt: 150000 } } }),
-    prisma.employee.count({ where: { ...where, baseSalaryUSD: { gte: 150000, lt: 200000 } } }),
-    prisma.employee.count({ where: { ...where, baseSalaryUSD: { gte: 200000 } } }),
-  ]);
+  // 3. Salary Distribution Buckets — single fetch, bucket counts computed in-memory
+  // Also reused for department medians and pay-grade band positioning below (no N+1).
+  const employeesForMetrics = await prisma.employee.findMany({
+    where,
+    select: { department: true, payGrade: true, baseSalaryUSD: true },
+  });
+
+  let bUnder50k = 0;
+  let b50to100k = 0;
+  let b100to150k = 0;
+  let b150to200k = 0;
+  let bOver200k = 0;
+  for (const e of employeesForMetrics) {
+    const s = e.baseSalaryUSD ?? 0;
+    if (s < 50000) bUnder50k += 1;
+    else if (s < 100000) b50to100k += 1;
+    else if (s < 150000) b100to150k += 1;
+    else if (s < 200000) b150to200k += 1;
+    else bOver200k += 1;
+  }
 
   const calcPct = (count: number) => Math.round((count / totalEmployees) * 1000) / 10;
 
@@ -205,7 +250,14 @@ export async function getCompensationAnalytics(
     { range: '$200K+', min: 200000, max: null, count: bOver200k, percentage: calcPct(bOver200k) },
   ];
 
-  // 4. Department Compensation
+  // 4. Department Compensation — one query for aggregates + in-memory medians
+  const deptSalaryMap = new Map<string, number[]>();
+  for (const e of employeesForMetrics) {
+    const dep = e.department || 'Unassigned';
+    if (!deptSalaryMap.has(dep)) deptSalaryMap.set(dep, []);
+    deptSalaryMap.get(dep)!.push(e.baseSalaryUSD ?? 0);
+  }
+
   const deptAggregates = await prisma.employee.groupBy({
     by: ['department'],
     where,
@@ -220,38 +272,17 @@ export async function getCompensationAnalytics(
     },
   });
 
-  const departmentCompensation: DepartmentCompensation[] = await Promise.all(
-    deptAggregates.map(async (g) => {
-      const deptWhere = { ...where, department: g.department };
-      const count = g._count._all;
-      const deptMidIndex = Math.floor(count / 2);
-      const deptIsEven = count % 2 === 0;
-
-      const deptMedianRows = await prisma.employee.findMany({
-        where: deptWhere,
-        select: { baseSalaryUSD: true },
-        orderBy: { baseSalaryUSD: 'asc' },
-        skip: deptIsEven ? Math.max(0, deptMidIndex - 1) : deptMidIndex,
-        take: deptIsEven ? 2 : 1,
-      });
-
-      let medianSalary = 0;
-      if (deptMedianRows.length === 1) {
-        medianSalary = deptMedianRows[0].baseSalaryUSD;
-      } else if (deptMedianRows.length === 2) {
-        medianSalary = Math.round(((deptMedianRows[0].baseSalaryUSD + deptMedianRows[1].baseSalaryUSD) / 2) * 100) / 100;
-      }
-
-      return {
-        department: g.department,
-        employeeCount: count,
-        avgSalary: Math.round((g._avg.baseSalaryUSD || 0) * 100) / 100,
-        medianSalary,
-        minSalary: Math.round((g._min.baseSalaryUSD || 0) * 100) / 100,
-        maxSalary: Math.round((g._max.baseSalaryUSD || 0) * 100) / 100,
-      };
-    })
-  );
+  const departmentCompensation: DepartmentCompensation[] = deptAggregates.map((g) => {
+    const count = g._count._all;
+    return {
+      department: g.department,
+      employeeCount: count,
+      avgSalary: Math.round((g._avg.baseSalaryUSD || 0) * 100) / 100,
+      medianSalary: computeMedian(deptSalaryMap.get(g.department) || []),
+      minSalary: Math.round((g._min.baseSalaryUSD || 0) * 100) / 100,
+      maxSalary: Math.round((g._max.baseSalaryUSD || 0) * 100) / 100,
+    };
+  });
 
   // 5. Pay-Grade Analysis & Compa-Ratio / Band Positioning
   const salaryBands = await prisma.salaryBand.findMany({
@@ -273,74 +304,77 @@ export async function getCompensationAnalytics(
     orderBy: { payGrade: 'asc' },
   });
 
+  // Count below/within/above band positioning across all pay grades in a single pass (no N+1).
+  const bandCounts = new Map<string, { below: number; within: number; above: number }>();
+  let totalNoBand = 0;
+  for (const e of employeesForMetrics) {
+    const band = bandMap.get(e.payGrade);
+    if (!band) {
+      totalNoBand += 1;
+      continue;
+    }
+    const salary = e.baseSalaryUSD ?? 0;
+    const counts = bandCounts.get(e.payGrade) || { below: 0, within: 0, above: 0 };
+    if (salary < band.minSalary) counts.below += 1;
+    else if (salary > band.maxSalary) counts.above += 1;
+    else counts.within += 1;
+    bandCounts.set(e.payGrade, counts);
+  }
+
   let totalBelowBand = 0;
   let totalWithinBand = 0;
   let totalAboveBand = 0;
-  let totalNoBand = 0;
+  for (const counts of bandCounts.values()) {
+    totalBelowBand += counts.below;
+    totalWithinBand += counts.within;
+    totalAboveBand += counts.above;
+  }
 
-  const payGradeCompensation: PayGradeCompensation[] = await Promise.all(
-    payGradeAggregates.map(async (g) => {
-      const pg = g.payGrade;
-      const count = g._count._all;
-      const avgSalary = Math.round((g._avg.baseSalaryUSD || 0) * 100) / 100;
-      const minSalary = Math.round((g._min.baseSalaryUSD || 0) * 100) / 100;
-      const maxSalary = Math.round((g._max.baseSalaryUSD || 0) * 100) / 100;
+  const payGradeCompensation: PayGradeCompensation[] = payGradeAggregates.map((g) => {
+    const pg = g.payGrade;
+    const count = g._count._all;
+    const avgSalary = Math.round((g._avg.baseSalaryUSD || 0) * 100) / 100;
+    const minSalary = Math.round((g._min.baseSalaryUSD || 0) * 100) / 100;
+    const maxSalary = Math.round((g._max.baseSalaryUSD || 0) * 100) / 100;
 
-      const band = bandMap.get(pg);
-      if (!band) {
-        totalNoBand += count;
-        return {
-          payGrade: pg,
-          employeeCount: count,
-          avgSalary,
-          minSalary,
-          maxSalary,
-          midpointSalary: null,
-          avgCompaRatio: null,
-          belowBandCount: 0,
-          withinBandCount: 0,
-          aboveBandCount: 0,
-          belowBandPercentage: 0,
-          withinBandPercentage: 0,
-          aboveBandPercentage: 0,
-        };
-      }
-
-      const avgCompaRatio = calculateCompaRatio(avgSalary, band.midpointSalary);
-
-      const [below, within, above] = await Promise.all([
-        prisma.employee.count({
-          where: { ...where, payGrade: pg, baseSalaryUSD: { lt: band.minSalary } },
-        }),
-        prisma.employee.count({
-          where: { ...where, payGrade: pg, baseSalaryUSD: { gte: band.minSalary, lte: band.maxSalary } },
-        }),
-        prisma.employee.count({
-          where: { ...where, payGrade: pg, baseSalaryUSD: { gt: band.maxSalary } },
-        }),
-      ]);
-
-      totalBelowBand += below;
-      totalWithinBand += within;
-      totalAboveBand += above;
-
+    const band = bandMap.get(pg);
+    if (!band) {
       return {
         payGrade: pg,
         employeeCount: count,
         avgSalary,
         minSalary,
         maxSalary,
-        midpointSalary: band.midpointSalary,
-        avgCompaRatio,
-        belowBandCount: below,
-        withinBandCount: within,
-        aboveBandCount: above,
-        belowBandPercentage: count > 0 ? Math.round((below / count) * 1000) / 10 : 0,
-        withinBandPercentage: count > 0 ? Math.round((within / count) * 1000) / 10 : 0,
-        aboveBandPercentage: count > 0 ? Math.round((above / count) * 1000) / 10 : 0,
+        midpointSalary: null,
+        avgCompaRatio: null,
+        belowBandCount: 0,
+        withinBandCount: 0,
+        aboveBandCount: 0,
+        belowBandPercentage: 0,
+        withinBandPercentage: 0,
+        aboveBandPercentage: 0,
       };
-    })
-  );
+    }
+
+    const avgCompaRatio = calculateCompaRatio(avgSalary, band.midpointSalary);
+    const bandCount = bandCounts.get(pg) || { below: 0, within: 0, above: 0 };
+
+    return {
+      payGrade: pg,
+      employeeCount: count,
+      avgSalary,
+      minSalary,
+      maxSalary,
+      midpointSalary: band.midpointSalary,
+      avgCompaRatio,
+      belowBandCount: bandCount.below,
+      withinBandCount: bandCount.within,
+      aboveBandCount: bandCount.above,
+      belowBandPercentage: count > 0 ? Math.round((bandCount.below / count) * 1000) / 10 : 0,
+      withinBandPercentage: count > 0 ? Math.round((bandCount.within / count) * 1000) / 10 : 0,
+      aboveBandPercentage: count > 0 ? Math.round((bandCount.above / count) * 1000) / 10 : 0,
+    };
+  });
 
   // 6. Overall Salary Band Distribution
   const bandDistribution: BandDistribution = {

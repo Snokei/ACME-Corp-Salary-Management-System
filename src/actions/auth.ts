@@ -6,7 +6,10 @@ import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-for-jwt-signing';
+const JWT_SECRET = process.env.JWT_SECRET || '';
+if (!JWT_SECRET) {
+  console.warn('CRITICAL SECURITY WARNING: JWT_SECRET environment variable is not defined.');
+}
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string;

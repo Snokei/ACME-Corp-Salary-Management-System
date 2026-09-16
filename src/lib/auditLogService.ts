@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-
+import { Prisma } from '@prisma/client';
+import { CURRENT_USER } from '@/constants';
 export interface CreateAuditLogParams {
   userId?: string;
   userName?: string;
@@ -65,8 +66,8 @@ function sanitizeData(data: any): any {
 async function resolveCurrentUser() {
   return {
     userId: undefined as string | undefined,
-    userName: 'Valentino Morales',
-    userEmail: 'valentino@acme.com',
+    userName: 'System User',
+    userEmail: 'system@acme.com',
   };
 }
 
@@ -80,8 +81,8 @@ export async function createAuditLog(params: CreateAuditLogParams): Promise<void
     const currentUser = await resolveCurrentUser();
 
     const userId = params.userId || currentUser.userId || 'usr-admin';
-    const userName = params.userName || currentUser.userName || 'Valentino Morales';
-    const userEmail = params.userEmail || currentUser.userEmail || 'valentino@acme.com';
+    const userName = params.userName || currentUser.userName || CURRENT_USER.fullName;
+    const userEmail = params.userEmail || currentUser.userEmail || CURRENT_USER.email || 'valentino@acme.com';
 
     const previousDataSanitized = params.previousData ? sanitizeData(params.previousData) : null;
     const newDataSanitized = params.newData ? sanitizeData(params.newData) : null;
@@ -130,7 +131,7 @@ export async function getAuditLogs(params: GetAuditLogsParams = {}) {
   const limit = Math.max(1, Math.min(100, parseInt(String(params.limit || 10), 10)));
   const skip = (page - 1) * limit;
 
-  const where: any = {};
+  const where: Prisma.AuditLogWhereInput = {};
 
   if (params.action && params.action.toUpperCase() !== 'ALL') {
     where.action = params.action.toUpperCase();
@@ -182,9 +183,9 @@ export async function getAuditLogs(params: GetAuditLogsParams = {}) {
 
   const parsedLogs = logs.map((log: any) => ({
     ...log,
-    previousData: parseJsonField(log.previousData),
-    newData: parseJsonField(log.newData),
-    metadata: parseJsonField(log.metadata),
+    previousData: parseJsonField(log.previousData as string | null),
+    newData: parseJsonField(log.newData as string | null),
+    metadata: parseJsonField(log.metadata as string | null),
   }));
 
   return {
