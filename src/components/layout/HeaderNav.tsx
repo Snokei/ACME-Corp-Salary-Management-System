@@ -18,10 +18,18 @@ export function HeaderNav() {
   const [isLoading, setIsLoading] = useState(true);
   const [newPassword, setNewPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  // Committed profile data - only changes after a successful save.
+  // Drives the header display, avatar alt text and card heading.
   const [profileData, setProfileData] = useState({
     name: CURRENT_USER.name,
     email: "admin@acme.com",
     role: CURRENT_USER.role
+  });
+  // Draft copy - bound to the edit form inputs so typing does not
+  // immediately update the displayed profile data.
+  const [draftData, setDraftData] = useState({
+    name: CURRENT_USER.name,
+    email: "admin@acme.com"
   });
 
   useEffect(() => {
@@ -33,11 +41,28 @@ export function HeaderNav() {
           name: user.name,
           email: user.email,
         }));
+        setDraftData({
+          name: user.name,
+          email: user.email,
+        });
       }
       setIsLoading(false);
     };
     fetchUser();
   }, []);
+
+  const startEditing = () => {
+    // Seed the draft from the committed data so a cancelled edit is discarded.
+    setDraftData({ name: profileData.name, email: profileData.email });
+    setNewPassword("");
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setDraftData({ name: profileData.name, email: profileData.email });
+    setNewPassword("");
+    setIsEditing(false);
+  };
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -49,13 +74,19 @@ export function HeaderNav() {
   }
 
   const handleSave = async () => {
-    if (!profileData.name || !profileData.email) return;
+    if (!draftData.name || !draftData.email) return;
     setIsSaving(true);
     
-    const result = await updateUserAction(profileData.name, profileData.email, newPassword || undefined);
+    const result = await updateUserAction(draftData.name, draftData.email, newPassword || undefined);
     setIsSaving(false);
     
     if (result.success) {
+      // Commit the draft to the displayed profile data only after success.
+      setProfileData(prev => ({
+        ...prev,
+        name: draftData.name,
+        email: draftData.email,
+      }));
       toast.success("Profile updated successfully!");
       setIsEditing(false);
       setNewPassword("");
@@ -185,14 +216,14 @@ export function HeaderNav() {
         </div>
       )}
 
-      <Modal isOpen={isProfileOpen} onClose={() => { setIsProfileOpen(false); setIsEditing(false); }} maxWidth="sm">
+      <Modal isOpen={isProfileOpen} onClose={() => { setIsProfileOpen(false); cancelEditing(); }} maxWidth="sm">
         <div className="-mt-6 -mx-6 relative">
           {/* Banner */}
           <div className="h-28 sm:h-32 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-950 dark:from-stone-950 dark:via-stone-900 dark:to-black rounded-t-3xl relative overflow-hidden">
             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[length:12px_12px]" />
             
             <button 
-              onClick={() => { setIsProfileOpen(false); setIsEditing(false); }}
+              onClick={() => { setIsProfileOpen(false); cancelEditing(); }}
               className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white/70 hover:text-white backdrop-blur-sm transition-all"
             >
               <X className="w-4 h-4" />
@@ -218,7 +249,7 @@ export function HeaderNav() {
               <div className="mb-2">
                 {!isEditing ? (
                   <button 
-                    onClick={() => setIsEditing(true)}
+                    onClick={startEditing}
                     className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-bold text-stone-700 bg-white border border-stone-200 shadow-sm hover:bg-stone-50 dark:text-stone-200 dark:bg-stone-800 dark:border-stone-700 dark:hover:bg-stone-700 rounded-full transition-all"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
@@ -227,7 +258,7 @@ export function HeaderNav() {
                 ) : (
                   <div className="flex gap-2">
                     <button 
-                      onClick={() => setIsEditing(false)}
+                      onClick={cancelEditing}
                       disabled={isSaving}
                       className="p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors disabled:opacity-50"
                     >
@@ -258,8 +289,8 @@ export function HeaderNav() {
                 {isEditing ? (
                   <input 
                     type="text" 
-                    value={profileData.name}
-                    onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                    value={draftData.name}
+                    onChange={(e) => setDraftData({...draftData, name: e.target.value})}
                     className="w-full px-4 py-2.5 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl text-sm font-semibold text-stone-900 dark:text-white outline-none transition-all shadow-sm"
                   />
                 ) : (
@@ -274,8 +305,8 @@ export function HeaderNav() {
                 {isEditing ? (
                   <input 
                     type="email" 
-                    value={profileData.email}
-                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                    value={draftData.email}
+                    onChange={(e) => setDraftData({...draftData, email: e.target.value})}
                     className="w-full px-4 py-2.5 bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl text-sm font-semibold text-stone-900 dark:text-white outline-none transition-all shadow-sm"
                   />
                 ) : (

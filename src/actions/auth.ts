@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 
 const JWT_SECRET = process.env.JWT_SECRET || '';
 if (!JWT_SECRET) {
@@ -109,12 +110,22 @@ export async function updateUserAction(name: string, email: string, newPassword?
       updateData.passwordHash = await bcrypt.hash(newPassword, 10);
     }
     
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData
     });
-    
-    return { success: true };
+
+    // Invalidate cached server payloads that render the user's name so the
+    // dashboard greeting ("Hello <name>") reflects the save immediately.
+    // The Server Action response carries the refreshed RSC payload for the
+    // current route, so the UI updates without a full page reload.
+    revalidatePath('/');
+    revalidatePath('/people');
+
+    return {
+      success: true,
+      user: { name: updatedUser.name, email: updatedUser.email },
+    };
   } catch (e) {
     console.error('Update user error:', e);
     return { success: false, error: 'Failed to update user details.' };

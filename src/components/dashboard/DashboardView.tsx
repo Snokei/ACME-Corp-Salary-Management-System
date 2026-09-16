@@ -11,8 +11,7 @@ import {
 } from "@/constants";
 import { ChevronRight, TrendingUp, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect, ReactNode } from "react";
-import { getCurrentUserAction } from "@/actions/auth";
+import { useState, ReactNode } from "react";
 import {
   Area,
   AreaChart,
@@ -30,27 +29,22 @@ import {
 interface DashboardViewProps {
   onNavigateToPeople?: () => void;
   initialData?: any;
+  currentUser?: { name: string; email: string } | null;
 }
 
 export function DashboardView({
   onNavigateToPeople,
   initialData,
+  currentUser,
 }: DashboardViewProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("Week");
   const [selectedDay, setSelectedDay] = useState<number>(25);
-  const [userName, setUserName] = useState<string>(CURRENT_USER.name);
-  const [isLoadingUser, setIsLoadingUser] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const user = await getCurrentUserAction();
-      if (user) {
-        setUserName(user.name);
-      }
-      setIsLoadingUser(false);
-    };
-    fetchUser();
-  }, []);
+  // The greeting name is server-rendered from the session user and passed down
+  // as a prop. This lets a Server Action (updateUserAction) call
+  // revalidatePath('/') and have the new name appear instantly, instead of
+  // relying on a mount-only client fetch that router.refresh() would not re-run.
+  const displayName = currentUser?.name || CURRENT_USER.name;
 
   const data = initialData || {};
 
@@ -76,16 +70,7 @@ export function DashboardView({
     <div className="space-y-6 animate-fade-in">
       {/* Top Welcome & Metrics Bar */}
       <PageHeader
-        title={
-          isLoadingUser ? (
-            <div className="flex items-center">
-              <span className="mr-2">Hello</span>
-              <div className="w-32 h-8 bg-stone-200/50 dark:bg-stone-700/50 animate-pulse rounded-lg ml-1" />
-            </div>
-          ) : (
-            `Hello ${userName}`
-          )
-        }
+        title={`Hello ${displayName}`}
         description="Compensation insights, attendance tracking, and scheduled talent reviews."
         icon={LayoutDashboard}
       />
