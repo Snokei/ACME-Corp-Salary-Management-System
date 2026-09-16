@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/providers/theme-toggle";
 import { CURRENT_USER, NAV_ITEMS } from "@/constants";
-import { Bell, LogOut, User, Edit2, Check, X, Camera } from "lucide-react";
+import { Bell, LogOut, User, Edit2, Check, X, Camera, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction, updateUserAction, getCurrentUserAction } from "@/actions/auth";
@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 export function HeaderNav() {
   const pathname = usePathname();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [newPassword, setNewPassword] = useState("");
@@ -38,6 +39,11 @@ export function HeaderNav() {
     fetchUser();
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   if (pathname === "/login") {
     return null;
   }
@@ -59,17 +65,18 @@ export function HeaderNav() {
   };
 
   return (
-    <header className="w-full flex items-center justify-between gap-4 py-3 px-0">
+    <header className="w-full flex items-center justify-between gap-4 py-3 px-0 relative z-50">
       {/* Brand Logo */}
-      <Link href="/" className="flex items-center gap-3 group">
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-semibold tracking-tight text-sm shadow-sm group-hover:opacity-90 transition-opacity">
+      <Link href="/" className="flex items-center gap-3 group shrink-0">
+        <div className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-semibold tracking-tight text-sm shadow-sm group-hover:opacity-90 transition-opacity whitespace-nowrap">
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-          <span>ACME Salary Management System</span>
+          <span className="hidden sm:inline">ACME Salary Management System</span>
+          <span className="sm:hidden">ACME</span>
         </div>
       </Link>
 
-      {/* Center Floating Pill Navigation */}
-      <nav className="flex items-center gap-1.5 p-1.5 rounded-full bg-white/70 dark:bg-stone-900/80 backdrop-blur-md border border-stone-200/70 dark:border-stone-800 shadow-sm transition-all">
+      {/* Center Floating Pill Navigation (Desktop) */}
+      <nav className="hidden lg:flex items-center gap-1.5 p-1.5 rounded-full bg-white/70 dark:bg-stone-900/80 backdrop-blur-md border border-stone-200/70 dark:border-stone-800 shadow-sm transition-all">
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.href === "/"
@@ -93,10 +100,22 @@ export function HeaderNav() {
       </nav>
 
       {/* Right Controls & User Profile */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        {/* Mobile Menu Toggle */}
         <button
-          className="p-2 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors relative"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="lg:hidden p-2 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors shrink-0"
+          title="Menu"
+          aria-label="Toggle navigation menu"
+          aria-expanded={isMobileMenuOpen}
+        >
+          {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
+
+        <button
+          className="hidden sm:flex p-2 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors relative shrink-0"
           title="Notifications"
+          aria-label="Notifications"
         >
           <Bell className="w-4 h-4" />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
@@ -106,16 +125,16 @@ export function HeaderNav() {
 
         {/* User Avatar Pill with Hover Dropdown */}
         <div className="relative group">
-          <div className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm cursor-pointer hover:border-amber-400/50 transition-colors">
+          <div className="flex items-center gap-2 pl-2 pr-2 sm:pr-3 py-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm cursor-pointer hover:border-amber-400/50 transition-colors">
             <img
               src={CURRENT_USER.avatar}
               alt={profileData.name}
               className="w-6 h-6 rounded-full object-cover ring-1 ring-amber-400/30"
             />
             {isLoading ? (
-              <div className="w-16 h-3 bg-stone-200/50 dark:bg-stone-700/50 animate-pulse rounded" />
+              <div className="hidden sm:block w-16 h-3 bg-stone-200/50 dark:bg-stone-700/50 animate-pulse rounded" />
             ) : (
-              <span className="text-xs font-medium text-stone-800 dark:text-stone-200">
+              <span className="hidden sm:inline text-xs font-medium text-stone-800 dark:text-stone-200 max-w-[100px] truncate">
                 {profileData.name}
               </span>
             )}
@@ -142,10 +161,34 @@ export function HeaderNav() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden absolute top-full left-0 right-0 mt-2 p-3 bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl border border-stone-200/50 dark:border-stone-800/50 shadow-xl rounded-2xl mx-1 flex flex-col gap-1.5 z-50">
+          {NAV_ITEMS.map((item) => {
+            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? "bg-stone-900 text-white dark:bg-white dark:text-stone-900 font-semibold"
+                    : "text-stone-600 dark:text-stone-400 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/30 dark:hover:text-amber-100"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       <Modal isOpen={isProfileOpen} onClose={() => { setIsProfileOpen(false); setIsEditing(false); }} maxWidth="sm">
         <div className="-mt-6 -mx-6 relative">
           {/* Banner */}
-          <div className="h-32 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-950 dark:from-stone-950 dark:via-stone-900 dark:to-black rounded-t-3xl relative overflow-hidden">
+          <div className="h-28 sm:h-32 bg-gradient-to-br from-stone-900 via-stone-800 to-stone-950 dark:from-stone-950 dark:via-stone-900 dark:to-black rounded-t-3xl relative overflow-hidden">
             <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[length:12px_12px]" />
             
             <button 
@@ -157,17 +200,17 @@ export function HeaderNav() {
           </div>
 
           {/* Avatar & Info */}
-          <div className="px-6 pb-6">
+          <div className="px-4 sm:px-6 pb-6">
             <div className="relative flex justify-between items-end -mt-12 mb-4">
               <div className="relative">
                 <img 
                   src={CURRENT_USER.avatar} 
                   alt="Profile" 
-                  className="w-24 h-24 rounded-full border-4 border-white dark:border-stone-900 shadow-xl object-cover bg-stone-100" 
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white dark:border-stone-900 shadow-xl object-cover bg-stone-100" 
                 />
                 {isEditing && (
-                  <button className="absolute bottom-1 right-1 p-2 rounded-full bg-amber-500 text-white shadow-lg hover:bg-amber-600 transition-colors">
-                    <Camera className="w-4 h-4" />
+                  <button className="absolute bottom-1 right-1 p-1.5 sm:p-2 rounded-full bg-amber-500 text-white shadow-lg hover:bg-amber-600 transition-colors">
+                    <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
                 )}
               </div>
@@ -176,7 +219,7 @@ export function HeaderNav() {
                 {!isEditing ? (
                   <button 
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-stone-700 bg-white border border-stone-200 shadow-sm hover:bg-stone-50 dark:text-stone-200 dark:bg-stone-800 dark:border-stone-700 dark:hover:bg-stone-700 rounded-full transition-all"
+                    className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-bold text-stone-700 bg-white border border-stone-200 shadow-sm hover:bg-stone-50 dark:text-stone-200 dark:bg-stone-800 dark:border-stone-700 dark:hover:bg-stone-700 rounded-full transition-all"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                     Edit Profile
@@ -193,7 +236,7 @@ export function HeaderNav() {
                     <button 
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-stone-900 bg-amber-400 hover:bg-amber-500 rounded-full transition-all shadow-sm disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-bold text-stone-900 bg-amber-400 hover:bg-amber-500 rounded-full transition-all shadow-sm disabled:opacity-50"
                     >
                       <Check className="w-3.5 h-3.5" />
                       {isSaving ? "Saving..." : "Save"}

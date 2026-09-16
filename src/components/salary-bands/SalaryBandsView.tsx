@@ -128,8 +128,8 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
 
       {/* Filter / Search Bar - with white bg container */}
       <form onSubmit={handleSearchSubmit} className="relative z-20 p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
-        <div className="flex-1 max-w-xl flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-          <div className="flex-1 max-w-md flex items-center gap-2">
+        <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 w-full sm:flex-1 sm:max-w-md">
             <Input
               placeholder="Search by pay grade or currency..."
               shape="pill"

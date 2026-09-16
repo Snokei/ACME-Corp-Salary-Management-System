@@ -188,7 +188,7 @@ export function DashboardView({
 
           <Link
             href="/compensation-analytics"
-            className="px-5 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 text-xs font-bold transition-all shadow-sm flex items-center gap-2 shrink-0 group"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 shrink-0 group"
           >
             <span>Explore Compensation Analytics</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

@@ -55,7 +55,7 @@ export function EmployeeFilters({
       className={`relative z-20 p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 ${className}`}
     >
       {/* Left side: Search field */}
-      <div className="flex-1 max-w-md flex items-center gap-2">
+      <div className="w-full sm:flex-1 sm:max-w-md flex items-center gap-2">
         <Input
           name="search"
           shape="pill"
@@ -71,7 +71,7 @@ export function EmployeeFilters({
       </div>
 
       {/* Right side: Dropdowns, Status tabs, Reset */}
-      <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+      <div className="flex items-center gap-2 flex-wrap">
         <SearchableSelect
           name="department"
           options={[...DEPARTMENTS]}
@@ -97,7 +97,8 @@ export function EmployeeFilters({
         />
 
         {/* Status Tabs as Submit Buttons */}
-        <div className="inline-flex p-1 rounded-full bg-stone-100 dark:bg-stone-800/80 border border-stone-200/60 dark:border-stone-700/60">
+        <div className="overflow-x-auto">
+          <div className="inline-flex p-1 rounded-full bg-stone-100 dark:bg-stone-800/80 border border-stone-200/60 dark:border-stone-700/60 whitespace-nowrap">
           {EMPLOYEE_STATUS_TABS.map((tab) => {
             const isSelected = selectedTab === tab;
             return (
@@ -116,6 +117,7 @@ export function EmployeeFilters({
               </button>
             );
           })}
+          </div>
         </div>
 
         {hasActiveFilters && (

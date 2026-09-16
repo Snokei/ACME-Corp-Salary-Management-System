@@ -35,6 +35,17 @@ export function Modal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen || !mounted) return null;
 
   const maxWidthClass =
@@ -47,14 +58,14 @@ export function Modal({
       : 'max-w-lg';
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in">
+    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-xs animate-fade-in overflow-y-auto">
       <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
-        className={`relative z-10 bg-white dark:bg-stone-900 rounded-3xl p-6 w-full border border-stone-200 dark:border-stone-800 shadow-2xl space-y-5 ${maxWidthClass}`}
+        className={`relative z-10 bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-6 w-full border border-stone-200 dark:border-stone-800 shadow-2xl space-y-5 my-auto ${maxWidthClass}`}
       >
         {title && (
           <div className="flex items-center justify-between">
@@ -65,6 +76,7 @@ export function Modal({
               type="button"
               onClick={onClose}
               className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 transition-colors"
+              aria-label="Close modal"
             >
               <X className="w-5 h-5" />
             </button>

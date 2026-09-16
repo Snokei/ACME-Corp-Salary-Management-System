@@ -102,7 +102,7 @@ export function AddEmployeeModal({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input
             label="First Name"
             required
@@ -128,7 +128,7 @@ export function AddEmployeeModal({
           placeholder="jane.doe@acmemail.com"
         />
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select
             label="Department"
             value={formData.department}
@@ -154,7 +154,7 @@ export function AddEmployeeModal({
           </Select>
         </div>
 
-        <div className={initialData ? "block" : "grid grid-cols-2 gap-3"}>
+        <div className={initialData ? "block" : "grid grid-cols-1 sm:grid-cols-2 gap-3"}>
           {!initialData && (
             <Input
               label="Base Salary (USD)"
@@ -179,7 +179,7 @@ export function AddEmployeeModal({
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select
             label="Country"
             value={formData.country}

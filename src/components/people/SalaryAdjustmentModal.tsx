@@ -511,7 +511,7 @@ export function SalaryAdjustmentModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 py-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-1">
               <div>
                 <span className="text-stone-400 block text-[10px] uppercase font-bold">Current Salary</span>
                 <span className="font-bold text-stone-800 dark:text-stone-200 text-sm">

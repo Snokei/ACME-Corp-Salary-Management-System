@@ -214,7 +214,7 @@ export function EmployeeDetailDrawer({
           </div>
 
           {/* Details Grid */}
-          <div className="grid grid-cols-2 gap-3 py-1 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-1 text-xs">
             <div className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-100 dark:border-stone-800">
               <span className="text-stone-400 block text-[10px] uppercase font-semibold">
                 Status

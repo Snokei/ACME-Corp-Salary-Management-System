@@ -193,7 +193,7 @@ export function EmployeeDetailPage({ initialEmployee }: EmployeeDetailPageProps)
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             shape="pill"
@@ -263,7 +263,7 @@ export function EmployeeDetailPage({ initialEmployee }: EmployeeDetailPageProps)
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-center min-w-[220px]">
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-center w-full md:min-w-[220px] md:w-auto">
             <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">
               Total Base Compensation
             </span>

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
 interface DrawerProps {
@@ -13,9 +13,9 @@ interface DrawerProps {
 }
 
 const SIZE_CLASSES: Record<string, string> = {
-  md: 'max-w-md',
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
+  md: 'sm:max-w-md',
+  lg: 'sm:max-w-2xl',
+  xl: 'sm:max-w-4xl',
 };
 
 export function Drawer({
@@ -35,7 +35,14 @@ export function Drawer({
   useEffect(() => {
     if (isOpen) {
       setRender(true);
+      // Prevent body scroll when drawer open
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -59,15 +66,15 @@ export function Drawer({
         aria-hidden="true"
       />
       
-      {/* Drawer Panel */}
+      {/* Drawer Panel — full-width on mobile, capped on sm+ */}
       <div
-        className={`absolute inset-y-0 right-0 w-full ${SIZE_CLASSES[size] || SIZE_CLASSES.md} bg-white dark:bg-stone-900 border-l border-stone-200 dark:border-stone-800 shadow-2xl p-6 transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`absolute inset-y-0 right-0 w-full ${SIZE_CLASSES[size] || SIZE_CLASSES.md} bg-white dark:bg-stone-900 border-l border-stone-200 dark:border-stone-800 shadow-2xl p-4 sm:p-6 transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         onTransitionEnd={() => {
           if (!isOpen) setRender(false);
         }}
       >
         {title && (
-          <div className="flex items-center justify-between mb-6 shrink-0">
+          <div className="flex items-center justify-between mb-5 sm:mb-6 shrink-0">
             <div className="text-lg font-bold text-stone-900 dark:text-white">
               {title}
             </div>
@@ -75,6 +82,7 @@ export function Drawer({
               type="button"
               onClick={onClose}
               className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 transition-colors"
+              aria-label="Close drawer"
             >
               <X className="w-5 h-5" />
             </button>

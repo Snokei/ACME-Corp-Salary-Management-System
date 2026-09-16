@@ -124,7 +124,7 @@ export function SalaryBandsModal({
       maxWidth="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <Input
               label="Pay Grade"

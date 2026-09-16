@@ -103,7 +103,7 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
         />
 
         {/* Fiscal Year & Total Budget Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Fiscal Year"
             value={fiscalYear}

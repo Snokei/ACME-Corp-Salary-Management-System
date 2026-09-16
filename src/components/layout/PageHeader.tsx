@@ -17,16 +17,16 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div
-      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 ${className}`}
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pt-2 ${className}`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         {Icon && (
-          <div className="p-2.5 rounded-2xl bg-stone-900 text-amber-400 dark:bg-white dark:text-stone-900 shadow-sm shrink-0">
-            <Icon className="w-6 h-6" />
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-stone-900 text-amber-400 dark:bg-white dark:text-stone-900 shadow-sm shrink-0">
+            <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         )}
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-white">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-stone-900 dark:text-white truncate">
             {title}
           </h1>
           {description && (
@@ -38,7 +38,7 @@ export function PageHeader({
       </div>
 
       {children && (
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap shrink-0">
           {children}
         </div>
       )}
