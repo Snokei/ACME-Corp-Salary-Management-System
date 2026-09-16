@@ -1,7 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/layout/PageHeader";
-import { StatusBadge } from "@/components/ui";
+import { Avatar, StatusBadge } from "@/components/ui";
 import {
   CURRENT_USER,
   DEFAULT_CHART_DATA,
@@ -424,9 +424,10 @@ export function DashboardView({
                   className="p-3 flex items-center justify-between gap-3 bg-stone-50/70 dark:bg-stone-800/50 rounded-2xl border border-stone-200/50 dark:border-stone-700/50 hover:border-amber-400/40 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <img
+                    <Avatar
                       src={item.avatar}
                       alt={item.name}
+                      size={36}
                       className="w-9 h-9 rounded-full object-cover ring-1 ring-amber-400/30"
                     />
                     <div>

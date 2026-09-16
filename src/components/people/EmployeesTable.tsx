@@ -18,6 +18,7 @@ import {
   StatusBadge,
   Button,
   Checkbox,
+  Avatar,
 } from '@/components/ui';
 import { MapPin, Edit2, Users, Eye } from 'lucide-react';
 import { getEmployeeAvatar, formatDateSafe } from '@/lib/employeeUtils';
@@ -169,15 +170,11 @@ export function EmployeesTable({
                       href={`/people/${encodeURIComponent(emp.employeeId || emp.id)}`}
                       className="flex items-center gap-3 group/link cursor-pointer"
                     >
-                      <img
+                      <Avatar
                         src={avatar}
+                        fallbackSrc={fallbackAvatar}
                         alt={`${emp.firstName} ${emp.lastName}`}
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== fallbackAvatar) {
-                            target.src = fallbackAvatar;
-                          }
-                        }}
+                        size={32}
                         className="w-8 h-8 rounded-full object-cover ring-2 ring-amber-400/40 group-hover/link:ring-amber-400 transition-all duration-200 shrink-0 bg-stone-100 dark:bg-stone-800"
                       />
                       <div className="min-w-0">

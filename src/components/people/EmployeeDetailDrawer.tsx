@@ -3,7 +3,7 @@
 import { getSalaryHistoryAction } from "@/actions/salaryAdjustments";
 import { getCompensationAnalysisAction } from "@/actions/salaryBands";
 import { SalaryAdjustmentModal } from "@/components/people/SalaryAdjustmentModal";
-import { Button, Drawer } from "@/components/ui";
+import { Avatar, Button, Drawer } from "@/components/ui";
 import { CompensationAnalysisResult } from "@/lib/compaRatioService";
 import { Employee } from "@/types";
 import {
@@ -188,15 +188,11 @@ export function EmployeeDetailDrawer({
           {/* Header Profile */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <img
+              <Avatar
                 src={avatar}
+                fallbackSrc={fallbackAvatar}
                 alt={`${currentEmp.firstName} ${currentEmp.lastName}`}
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  if (target.src !== fallbackAvatar) {
-                    target.src = fallbackAvatar;
-                  }
-                }}
+                size={56}
                 className="w-14 h-14 rounded-2xl object-cover ring-2 ring-amber-400 shrink-0 bg-stone-100 dark:bg-stone-800"
               />
               <div>

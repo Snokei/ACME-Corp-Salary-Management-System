@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Employee } from '@/types';
-import { Button, StatusBadge } from '@/components/ui';
+import { Avatar, Button, StatusBadge } from '@/components/ui';
 import { SalaryAdjustmentModal } from '@/components/people/SalaryAdjustmentModal';
 import { AddEmployeeModal } from '@/components/people/AddEmployeeModal';
 import { getSalaryHistoryAction } from '@/actions/salaryAdjustments';
@@ -220,15 +220,12 @@ export function EmployeeDetailPage({ initialEmployee }: EmployeeDetailPageProps)
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start sm:items-center gap-5">
-            <img
+            <Avatar
               src={avatar}
+              fallbackSrc={fallbackAvatar}
               alt={`${employee.firstName} ${employee.lastName}`}
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src !== fallbackAvatar) {
-                  target.src = fallbackAvatar;
-                }
-              }}
+              size={96}
+              priority
               className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl object-cover ring-4 ring-amber-400/60 shadow-md shrink-0 bg-stone-100 dark:bg-stone-800"
             />
             <div className="space-y-1.5">

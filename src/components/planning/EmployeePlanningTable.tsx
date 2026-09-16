@@ -27,6 +27,7 @@ import {
   SearchableSelect,
   Modal,
   Input,
+  Avatar,
 } from "@/components/ui";
 
 interface EmployeeItem {
@@ -154,9 +155,10 @@ const EmployeePlanningRow = memo(function EmployeePlanningRow({
       {/* Employee Info */}
       <TableCell className="py-3 px-4">
         <div className="flex items-center gap-3">
-          <img
+          <Avatar
             src={item.avatarUrl}
             alt={item.fullName}
+            size={32}
             className="w-8 h-8 rounded-full object-cover ring-1 ring-stone-200 dark:ring-stone-800"
           />
           <div>

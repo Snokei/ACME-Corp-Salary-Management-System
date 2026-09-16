@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction, updateUserAction, getCurrentUserAction } from "@/actions/auth";
 import { Modal } from "@/components/ui/Modal";
+import { Avatar } from "@/components/ui";
 import toast from "react-hot-toast";
 
 export function HeaderNav() {
@@ -157,9 +158,11 @@ export function HeaderNav() {
         {/* User Avatar Pill with Hover Dropdown */}
         <div className="relative group">
           <div className="flex items-center gap-2 pl-2 pr-2 sm:pr-3 py-1 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 shadow-sm cursor-pointer hover:border-amber-400/50 transition-colors">
-            <img
+            <Avatar
               src={CURRENT_USER.avatar}
               alt={profileData.name}
+              size={24}
+              priority
               className="w-6 h-6 rounded-full object-cover ring-1 ring-amber-400/30"
             />
             {isLoading ? (
@@ -234,10 +237,11 @@ export function HeaderNav() {
           <div className="px-4 sm:px-6 pb-6">
             <div className="relative flex justify-between items-end -mt-12 mb-4">
               <div className="relative">
-                <img 
-                  src={CURRENT_USER.avatar} 
-                  alt="Profile" 
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white dark:border-stone-900 shadow-xl object-cover bg-stone-100" 
+                <Avatar
+                  src={CURRENT_USER.avatar}
+                  alt="Profile"
+                  size={96}
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white dark:border-stone-900 shadow-xl object-cover bg-stone-100"
                 />
                 {isEditing && (
                   <button className="absolute bottom-1 right-1 p-1.5 sm:p-2 rounded-full bg-amber-500 text-white shadow-lg hover:bg-amber-600 transition-colors">

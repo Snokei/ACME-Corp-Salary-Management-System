@@ -14,4 +14,5 @@ export * from './FilterSkeleton';
 export * from './TableSkeleton';
 export * from './MetricsSkeleton';
 export * from './AnalyticsChartsSkeleton';
+export * from './Avatar';
  
