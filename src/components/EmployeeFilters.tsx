@@ -52,7 +52,7 @@ export function EmployeeFilters({
     <form
       ref={formRef}
       action={filterEmployeesAction}
-      className={`flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 ${className}`}
+      className={`p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 ${className}`}
     >
       {/* Left side: Search field */}
       <div className="flex-1 max-w-md flex items-center gap-2">

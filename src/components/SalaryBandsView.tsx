@@ -88,8 +88,8 @@ export function SalaryBandsView({ data, initialBands, searchParams = {} }: Salar
         </Button>
       </PageHeader>
 
-      {/* Filter / Search Bar - Aligned with People module design */}
-      <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
+      {/* Filter / Search Bar - with white bg container */}
+      <form onSubmit={handleSearchSubmit} className="p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
         <div className="flex-1 max-w-md flex items-center gap-2">
           <Input
             placeholder="Search by pay grade or currency..."

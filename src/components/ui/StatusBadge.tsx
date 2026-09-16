@@ -27,15 +27,35 @@ export function StatusBadge({
 
   const normalized = (status || '').toLowerCase();
 
-  if (normalized.includes('active') || normalized.includes('on time') || normalized.includes('paid')) {
+  if (
+    normalized.includes('active') ||
+    normalized.includes('on time') ||
+    normalized.includes('paid') ||
+    normalized === 'approved'
+  ) {
     badgeStyles = 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20';
     dotColor = 'bg-emerald-500';
-  } else if (normalized.includes('leave') || normalized.includes('pending')) {
+  } else if (
+    normalized.includes('leave') ||
+    normalized.includes('pending') ||
+    normalized.includes('in review')
+  ) {
     badgeStyles = 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20';
     dotColor = 'bg-amber-500';
-  } else if (normalized.includes('contract') || normalized.includes('remote') || normalized.includes('full time')) {
+  } else if (
+    normalized.includes('contract') ||
+    normalized.includes('remote') ||
+    normalized.includes('full time') ||
+    normalized.includes('finalized')
+  ) {
     badgeStyles = 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20';
     dotColor = 'bg-blue-500';
+  } else if (normalized.includes('rejected') || normalized.includes('inactive')) {
+    badgeStyles = 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20';
+    dotColor = 'bg-rose-500';
+  } else if (normalized.includes('draft')) {
+    badgeStyles = 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300 border border-stone-200 dark:border-stone-700';
+    dotColor = 'bg-stone-400';
   }
 
   return (

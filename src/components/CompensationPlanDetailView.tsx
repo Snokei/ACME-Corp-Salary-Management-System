@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -17,13 +17,12 @@ import {
   FileCheck,
   Building2,
   Sparkles,
-  RefreshCw,
-  Sliders,
   AlertCircle,
   Lock,
   Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { GlassCard, Button, StatusBadge } from "@/components/ui";
 import { DepartmentAllocationTable } from "./DepartmentAllocationTable";
 import { EmployeePlanningTable } from "./EmployeePlanningTable";
 import { ScenarioPlanningTab } from "./ScenarioPlanningTab";
@@ -57,19 +56,12 @@ interface CompensationPlanDetailViewProps {
   initialPlan: PlanDetailData;
 }
 
-const STATUS_BADGES: Record<string, { label: string; class: string }> = {
-  Draft: { label: "Draft", class: "bg-stone-100 text-stone-700 border-stone-300 dark:bg-stone-800 dark:text-stone-300 dark:border-stone-700" },
-  "In Review": { label: "In Review", class: "bg-amber-500/10 text-amber-700 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-700" },
-  Approved: { label: "Approved", class: "bg-emerald-500/10 text-emerald-700 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-700" },
-  Rejected: { label: "Rejected", class: "bg-rose-500/10 text-rose-700 border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-700" },
-  Finalized: { label: "Finalized & Applied", class: "bg-blue-500/10 text-blue-700 border-blue-300 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-700" },
-};
-
 export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDetailViewProps) {
   const router = useRouter();
   const [plan, setPlan] = useState<PlanDetailData>(initialPlan);
   const [activeTab, setActiveTab] = useState<"employees" | "departments" | "scenarios">("employees");
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchPlanDetails = async () => {
     try {
@@ -120,8 +112,6 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
     }
   };
 
-  const [isDeleting, setIsDeleting] = useState(false);
-
   const handleDeletePlan = async () => {
     const isFinalized = plan.status === "Finalized";
     const isNonDraft = plan.status !== "Draft" && plan.status !== "Rejected";
@@ -161,7 +151,7 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
   const validation = plan.validation || { isValid: true, errors: [], warnings: [] };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 pb-12 animate-fade-in">
       {/* Top Navigation & Breadcrumbs */}
       <div className="flex items-center justify-between">
         <Link
@@ -174,16 +164,10 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
       </div>
 
       {/* Header View & Status Workflow Actions */}
-      <div className="p-6 rounded-3xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-800/80 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+      <GlassCard className="p-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                STATUS_BADGES[plan.status]?.class || ""
-              }`}
-            >
-              {STATUS_BADGES[plan.status]?.label || plan.status}
-            </span>
+            <StatusBadge status={plan.status} />
             <span className="text-xs font-mono font-semibold text-stone-500">
               {plan.fiscalYear}
             </span>
@@ -192,93 +176,111 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
             </span>
           </div>
 
-          <h1 className="text-2xl lg:text-3xl font-extrabold text-stone-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl lg:text-3xl font-semibold text-stone-900 dark:text-white tracking-tight">
             {plan.name}
           </h1>
         </div>
 
         {/* Workflow Transition Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {plan.status === "Draft" && (
-            <button
+            <Button
+              variant="primary"
+              size="sm"
+              shape="pill"
               onClick={() => handleStatusChange("In Review")}
-              disabled={isTransitioning || !validation.isValid}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs shadow-md transition-all disabled:opacity-40"
+              isLoading={isTransitioning}
+              disabled={!validation.isValid}
+              leftIcon={<Send className="w-4 h-4" />}
             >
-              <Send className="w-4 h-4" />
-              <span>Submit for Review</span>
-            </button>
+              Submit for Review
+            </Button>
           )}
 
           {plan.status === "In Review" && (
             <>
-              <button
+              <Button
+                variant="primary"
+                size="sm"
+                shape="pill"
                 onClick={() => handleStatusChange("Approved")}
-                disabled={isTransitioning || !validation.isValid}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-40"
+                isLoading={isTransitioning}
+                disabled={!validation.isValid}
+                leftIcon={<CheckCircle2 className="w-4 h-4 text-emerald-400" />}
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Approve Plan</span>
-              </button>
-              <button
+                Approve Plan
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                shape="pill"
                 onClick={() => handleStatusChange("Rejected")}
-                disabled={isTransitioning}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-all"
+                isLoading={isTransitioning}
+                leftIcon={<XCircle className="w-4 h-4" />}
               >
-                <XCircle className="w-4 h-4" />
-                <span>Reject</span>
-              </button>
+                Reject
+              </Button>
             </>
           )}
 
           {plan.status === "Approved" && (
             <>
-              <button
+              <Button
+                variant="primary"
+                size="sm"
+                shape="pill"
                 onClick={() => handleStatusChange("Finalized")}
-                disabled={isTransitioning || !validation.isValid}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all disabled:opacity-40"
+                isLoading={isTransitioning}
+                disabled={!validation.isValid}
+                leftIcon={<FileCheck className="w-4 h-4 text-blue-400" />}
               >
-                <FileCheck className="w-4 h-4" />
-                <span>Finalize Plan & Apply Salaries</span>
-              </button>
-              <button
+                Finalize Plan & Apply Salaries
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                shape="pill"
                 onClick={() => handleStatusChange("Draft")}
                 disabled={isTransitioning}
-                className="px-4 py-2.5 rounded-2xl border border-stone-300 dark:border-stone-700 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
               >
                 Revert to Draft
-              </button>
+              </Button>
             </>
           )}
 
           {plan.status === "Rejected" && (
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
+              shape="pill"
               onClick={() => handleStatusChange("Draft")}
               disabled={isTransitioning}
-              className="px-4 py-2.5 rounded-2xl border border-stone-300 dark:border-stone-700 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               Revert to Draft
-            </button>
+            </Button>
           )}
 
           {plan.status === "Finalized" && (
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 text-xs font-semibold">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 text-xs font-medium">
               <Lock className="w-4 h-4 text-emerald-500" />
               <span>Plan Finalized & Applied</span>
             </div>
           )}
 
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            shape="pill"
             onClick={handleDeletePlan}
             disabled={isDeleting || isTransitioning}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-stone-200 dark:border-stone-800 text-stone-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold transition-colors disabled:opacity-40"
+            className="text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
             title={plan.status === "Finalized" ? "Force Delete Plan (Admin)" : "Delete Plan"}
+            leftIcon={<Trash2 className="w-3.5 h-3.5" />}
           >
-            <Trash2 className="w-4 h-4" />
-            <span>{plan.status === "Finalized" ? "Force Delete (Admin)" : "Delete Plan"}</span>
-          </button>
+            {plan.status === "Finalized" ? "Force Delete" : "Delete"}
+          </Button>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Validation Alert Banner */}
       {(!validation.isValid || validation.warnings.length > 0) && (
@@ -306,111 +308,105 @@ export function CompensationPlanDetailView({ initialPlan }: CompensationPlanDeta
 
       {/* Summary KPI Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-        <div className="p-4 rounded-2xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-800/80 shadow-sm">
+        <GlassCard className="p-4 rounded-2xl">
           <div className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1">
             Total Budget
           </div>
-          <div className="text-lg font-extrabold text-stone-900 dark:text-white font-mono">
-            ${(metrics.totalBudgetUSD || 0).toLocaleString('en-US')}
+          <div className="text-lg font-bold text-stone-900 dark:text-white">
+            ${(metrics.totalBudgetUSD || 0).toLocaleString("en-US")}
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-800/80 shadow-sm">
+        <GlassCard className="p-4 rounded-2xl">
           <div className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1">
             Allocated Budget
           </div>
-          <div className="text-lg font-extrabold text-blue-600 dark:text-blue-400 font-mono">
-            ${(metrics.allocatedBudgetUSD || 0).toLocaleString('en-US')}
+          <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+            ${(metrics.allocatedBudgetUSD || 0).toLocaleString("en-US")}
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-800/80 shadow-sm">
+        <GlassCard className="p-4 rounded-2xl">
           <div className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1">
             Planned Increase
           </div>
-          <div className="text-lg font-extrabold text-amber-600 dark:text-amber-400 font-mono">
-            ${(metrics.plannedIncreaseUSD || 0).toLocaleString('en-US')}
+          <div className="text-lg font-bold text-amber-600 dark:text-amber-400">
+            ${(metrics.plannedIncreaseUSD || 0).toLocaleString("en-US")}
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-800/80 shadow-sm">
+        <GlassCard className="p-4 rounded-2xl">
           <div className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1">
             Remaining Budget
           </div>
           <div
-            className={`text-lg font-extrabold font-mono ${
+            className={`text-lg font-bold ${
               metrics.remainingBudgetUSD < 0 ? "text-rose-500" : "text-stone-900 dark:text-white"
             }`}
           >
-            ${(metrics.remainingBudgetUSD || 0).toLocaleString('en-US')}
+            ${(metrics.remainingBudgetUSD || 0).toLocaleString("en-US")}
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-800/80 shadow-sm">
+        <GlassCard className="p-4 rounded-2xl">
           <div className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1">
             Budget Utilization
           </div>
-          <div className="text-lg font-extrabold text-purple-600 dark:text-purple-400 font-mono">
+          <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
             {metrics.utilizationPercentage || 0}%
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-800/80 shadow-sm">
+        <GlassCard className="p-4 rounded-2xl">
           <div className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1">
             Employees
           </div>
-          <div className="text-lg font-extrabold text-stone-900 dark:text-white font-mono">
-            {(metrics.employeesCount || 0).toLocaleString('en-US')}
+          <div className="text-lg font-bold text-stone-900 dark:text-white">
+            {(metrics.employeesCount || 0).toLocaleString("en-US")}
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-800/80 shadow-sm">
+        <GlassCard className="p-4 rounded-2xl">
           <div className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider mb-1">
             Avg Increase
           </div>
-          <div className="text-lg font-extrabold text-amber-500 font-mono">
+          <div className="text-lg font-bold text-amber-500">
             {metrics.averageIncreasePercentage || 0}%
           </div>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2">
-        <button
+      <div className="flex items-center gap-2 border-b border-stone-200/80 dark:border-stone-800 pb-2">
+        <Button
+          variant={activeTab === "employees" ? "primary" : "ghost"}
+          size="sm"
+          shape="pill"
           onClick={() => setActiveTab("employees")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-            activeTab === "employees"
-              ? "bg-stone-900 text-white dark:bg-amber-500 dark:text-stone-950 shadow-md"
-              : "text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
-          }`}
+          leftIcon={<Users className="w-4 h-4" />}
         >
-          <Users className="w-4 h-4" />
-          <span>Employee Salary Planning</span>
-        </button>
+          Employee Salary Planning
+        </Button>
 
-        <button
+        <Button
+          variant={activeTab === "departments" ? "primary" : "ghost"}
+          size="sm"
+          shape="pill"
           onClick={() => setActiveTab("departments")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-            activeTab === "departments"
-              ? "bg-stone-900 text-white dark:bg-amber-500 dark:text-stone-950 shadow-md"
-              : "text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
-          }`}
+          leftIcon={<Building2 className="w-4 h-4" />}
         >
-          <Building2 className="w-4 h-4" />
-          <span>Department Budget Allocation</span>
-        </button>
+          Department Budget Allocation
+        </Button>
 
-        <button
+        <Button
+          variant={activeTab === "scenarios" ? "primary" : "ghost"}
+          size="sm"
+          shape="pill"
           onClick={() => setActiveTab("scenarios")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-            activeTab === "scenarios"
-              ? "bg-stone-900 text-white dark:bg-amber-500 dark:text-stone-950 shadow-md"
-              : "text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800"
-          }`}
+          leftIcon={<Sparkles className="w-4 h-4" />}
         >
-          <Sparkles className="w-4 h-4" />
-          <span>Scenario Planning</span>
-        </button>
+          Scenario Planning
+        </Button>
       </div>
 
       {/* Tab Panels */}
