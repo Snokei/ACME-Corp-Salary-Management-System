@@ -3,6 +3,7 @@ export type NavTabId =
   | "people"
   | "salary"
   | "analytics"
+  | "planning"
   | "reviews"
   | "leaves"
   | "payroll"
@@ -19,6 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "people", label: "People", href: "/people" },
   { id: "salary", label: "Salary Bands", href: "/salary-bands" },
   { id: "analytics", label: "Analytics", href: "/compensation-analytics" },
+  { id: "planning", label: "Comp Planning", href: "/compensation-planning" },
 ];
 
 export const ALL_NAV_ITEMS: NavItem[] = [

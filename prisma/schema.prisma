@@ -31,7 +31,8 @@ model Employee {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  salaryHistories   SalaryHistory[]
+  salaryHistories        SalaryHistory[]
+  compensationPlanItems  CompensationPlanItem[]
 
   @@index([department])
   @@index([country])
@@ -80,3 +81,53 @@ model SalaryBand {
   @@unique([payGrade, currency])
   @@index([payGrade])
 }
+
+model CompensationPlan {
+  id             String                       @id @default(uuid())
+  name           String
+  fiscalYear     String
+  totalBudgetUSD Float
+  status         String                       @default("Draft")
+  createdBy      String                       @default("Valentino Morales")
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+  departments    CompensationPlanDepartment[]
+  items          CompensationPlanItem[]
+
+  @@index([fiscalYear])
+  @@index([status])
+}
+
+model CompensationPlanDepartment {
+  id                 String           @id @default(uuid())
+  planId             String
+  plan               CompensationPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  department         String
+  allocatedBudgetUSD Float
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@unique([planId, department])
+  @@index([planId])
+  @@index([department])
+}
+
+model CompensationPlanItem {
+  id                 String           @id @default(uuid())
+  planId             String
+  plan               CompensationPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  employeeId         String
+  employee           Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  currentSalaryUSD   Float
+  proposedSalaryUSD  Float
+  increaseAmountUSD  Float
+  increasePercentage Float            @default(0)
+  status             String           @default("Proposed")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@unique([planId, employeeId])
+  @@index([planId])
+  @@index([employeeId])
+}
+
