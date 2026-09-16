@@ -15,7 +15,7 @@ export function HeaderNav() {
   }
 
   return (
-    <header className="w-full flex items-center justify-between gap-4 py-3 px-2">
+    <header className="w-full flex items-center justify-between gap-4 py-3 px-0">
       {/* Brand Logo */}
       <Link href="/" className="flex items-center gap-3 group">
         <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-semibold tracking-tight text-sm shadow-sm group-hover:opacity-90 transition-opacity">

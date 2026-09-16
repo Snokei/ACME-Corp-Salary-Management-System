@@ -14,9 +14,5 @@ export default async function CompensationAnalyticsPage() {
     console.error('Failed to pre-fetch compensation analytics server-side:', error);
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <CompensationAnalyticsView initialData={initialData} />
-    </div>
-  );
+  return <CompensationAnalyticsView initialData={initialData} />;
 }

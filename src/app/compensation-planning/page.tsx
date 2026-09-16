@@ -16,9 +16,5 @@ export default async function CompensationPlanningPage() {
     console.error("Failed to load initial compensation plans server-side:", error);
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <CompensationPlanningOverview initialPlans={initialPlans} />
-    </div>
-  );
+  return <CompensationPlanningOverview initialPlans={initialPlans} />;
 }
