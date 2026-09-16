@@ -1,6 +1,6 @@
 "use client";
 
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { StatusBadge } from "@/components/ui";
 import {
   CURRENT_USER,

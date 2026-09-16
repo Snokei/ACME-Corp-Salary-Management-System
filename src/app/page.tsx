@@ -1,4 +1,4 @@
-import { DashboardView } from "@/components/DashboardView";
+import { DashboardView } from "@/components/dashboard/DashboardView";
 import { getDashboardData } from "@/lib/dashboardData";
 
 export const metadata = {

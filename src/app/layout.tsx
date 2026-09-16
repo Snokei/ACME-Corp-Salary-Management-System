@@ -1,6 +1,6 @@
-import { HeaderNav } from "@/components/HeaderNav";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ToastProvider } from "@/components/ToastProvider";
+import { HeaderNav } from "@/components/layout/HeaderNav";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 import type { Metadata } from "next";
 import "./globals.css";
 

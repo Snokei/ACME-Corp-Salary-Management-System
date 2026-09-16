@@ -1,6 +1,9 @@
 import { Suspense } from 'react';
-import { getAllSalaryBands } from '@/lib/compaRatioService';
-import { SalaryBandsView } from '@/components/SalaryBandsView';
+import { TableSkeleton } from '@/components/ui';
+import { SalaryBandsProvider } from '@/components/salary-bands/SalaryBandsProvider';
+import { SalaryBandsHeader } from '@/components/salary-bands/SalaryBandsHeader';
+import { SalaryBandsFilters } from '@/components/salary-bands/SalaryBandsFilters';
+import { SalaryBandsDataFetcher } from '@/components/salary-bands/SalaryBandsDataFetcher';
 
 export const metadata = {
   title: "Salary Bands - ACME Salary Management System",
@@ -17,27 +20,19 @@ interface SalaryBandsPageProps {
   };
 }
 
-export default async function SalaryBandsPage({ searchParams }: SalaryBandsPageProps) {
-  const search = typeof searchParams?.search === 'string' ? searchParams.search : '';
-  const currency = typeof searchParams?.currency === 'string' ? searchParams.currency : 'All';
-  const page = parseInt(searchParams?.page || '1', 10) || 1;
-  const sortBy = typeof searchParams?.sortBy === 'string' ? searchParams.sortBy : undefined;
-  const sortOrder = searchParams?.sortOrder === 'desc' ? 'desc' : 'asc';
-
-  const data = await getAllSalaryBands({ search, currency, page, limit: 10, sortBy, sortOrder });
-
+export default function SalaryBandsPage({ searchParams = {} }: SalaryBandsPageProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-3 text-stone-500 text-sm">
-            <span className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></span>
-            <span>Loading Salary Bands...</span>
-          </div>
-        </div>
-      }
-    >
-      <SalaryBandsView data={data} searchParams={{ search, currency, page: String(page), sortBy, sortOrder }} />
-    </Suspense>
+    <SalaryBandsProvider>
+      <div className="space-y-6 animate-fade-in">
+        {/* Instant UI Shell */}
+        <SalaryBandsHeader />
+        <SalaryBandsFilters />
+
+        {/* Streaming Data Payload */}
+        <Suspense fallback={<TableSkeleton />}>
+          <SalaryBandsDataFetcher searchParams={searchParams} />
+        </Suspense>
+      </div>
+    </SalaryBandsProvider>
   );
 }

@@ -26,7 +26,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import toast from "react-hot-toast";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeader } from "@/components/layout/PageHeader";
 import {
   TableContainer,
   Table,
@@ -43,6 +43,7 @@ import {
   GlassCard,
 } from "@/components/ui";
 import { CreatePlanModal } from "./CreatePlanModal";
+import { usePlanningContext } from "./PlanningProvider";
 
 interface PlanItem {
   id: string;
@@ -71,7 +72,7 @@ interface CompensationPlanningOverviewProps {
 export function CompensationPlanningOverview({ initialPlans = [] }: CompensationPlanningOverviewProps) {
   const router = useRouter();
   const [plans, setPlans] = useState<PlanItem[]>(initialPlans);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isModalOpen, setIsModalOpen } = usePlanningContext();
   const [search, setSearch] = useState("");
   const [fiscalYearFilter, setFiscalYearFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -165,23 +166,6 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
-      {/* Unified PageHeader */}
-      <PageHeader
-        title="Planning & Budget"
-        description="Create fiscal year budgets, allocate compensation pools across departments, plan employee salary increases, and model scenarios."
-        icon={Briefcase}
-      >
-        <Button
-          variant="primary"
-          shape="pill"
-          size="md"
-          onClick={() => setIsModalOpen(true)}
-          leftIcon={<Plus className="w-4 h-4" />}
-        >
-          Create Compensation Plan
-        </Button>
-      </PageHeader>
-
       {/* KPI Overview Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {/* Card 1: Total Budget */}

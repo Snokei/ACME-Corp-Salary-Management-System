@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/providers/theme-toggle";
 import { CURRENT_USER, NAV_ITEMS } from "@/constants";
 import { Bell, LogOut, User } from "lucide-react";
 import Link from "next/link";

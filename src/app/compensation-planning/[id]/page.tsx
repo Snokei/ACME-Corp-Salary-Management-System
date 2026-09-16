@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { CompensationPlanDetailView } from "@/components/CompensationPlanDetailView";
+import { CompensationPlanDetailView } from "@/components/planning/CompensationPlanDetailView";
 import { getCompensationPlanById } from "@/lib/compensationPlanningService";
 
 export const metadata = {

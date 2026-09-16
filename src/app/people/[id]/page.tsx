@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { getEmployeeById } from '@/lib/employeeData';
-import { EmployeeDetailPage } from '@/components/EmployeeDetailPage';
+import { EmployeeDetailPage } from '@/components/people/EmployeeDetailPage';
 import { ArrowLeft, UserX } from 'lucide-react';
 import { Button } from '@/components/ui';
 

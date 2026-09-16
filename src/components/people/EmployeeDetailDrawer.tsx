@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Employee } from '@/types';
 import { Drawer, Button } from '@/components/ui';
-import { SalaryAdjustmentModal } from '@/components/SalaryAdjustmentModal';
+import { SalaryAdjustmentModal } from '@/components/people/SalaryAdjustmentModal';
 import { getSalaryHistoryAction } from '@/actions/salaryAdjustments';
 import { getCompensationAnalysisAction } from '@/actions/salaryBands';
 import { CompensationAnalysisResult } from '@/lib/compaRatioService';

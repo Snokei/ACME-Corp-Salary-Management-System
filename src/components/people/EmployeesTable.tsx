@@ -1,5 +1,8 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Employee } from '@/types';
 import {
   TableContainer,
@@ -17,63 +20,90 @@ import {
   Checkbox,
 } from '@/components/ui';
 import { MapPin, Edit2, Users, Eye } from 'lucide-react';
+import { getEmployeeAvatar, formatDateSafe } from '@/lib/employeeUtils';
+import { useEmployeesContext } from '@/components/people/EmployeesProvider';
 
 export interface EmployeesTableProps {
   employees: Employee[];
-  loading?: boolean;
-  checkedIds?: Set<string>;
-  onToggleSelectAll?: () => void;
-  onToggleRowCheck?: (id: string, e: React.MouseEvent) => void;
-  onViewDetails?: (employee: Employee, e: React.MouseEvent) => void;
-  onEditDetails?: (employee: Employee, e: React.MouseEvent) => void;
-
-  // Pagination props
   page: number;
   totalPages: number;
   totalCount: number;
   pageSize?: number;
-  onPageChange: (page: number) => void;
-
-  // Sorting props
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  onSort?: (field: string) => void;
-
-  className?: string;
 }
-
-import { getEmployeeAvatar, formatDateSafe, formatSalaryUSD } from '@/lib/employeeUtils';
 
 export function EmployeesTable({
   employees,
-  loading = false,
-  checkedIds = new Set(),
-  onToggleSelectAll,
-  onToggleRowCheck,
-  onViewDetails,
-  onEditDetails,
   page,
   totalPages,
   totalCount,
   pageSize = 10,
-  onPageChange,
-  sortBy = '',
-  sortOrder = 'desc',
-  onSort,
-  className = '',
 }: EmployeesTableProps) {
-  const isAllChecked =
-    employees.length > 0 && checkedIds.size === employees.length;
+  const router = useRouter();
+  const pathname = usePathname();
+  const nextSearchParams = useSearchParams();
+  const { checkedIds, setCheckedIds, setModalState, filteredEmployeesRef } = useEmployeesContext();
+
+  // Keep ref up to date for CSV exports
+  useEffect(() => {
+    filteredEmployeesRef.current = employees;
+  }, [employees, filteredEmployeesRef]);
+
+  const sortBy = nextSearchParams.get('sortBy') || '';
+  const sortOrder = (nextSearchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
+
+  const onSort = (field: string) => {
+    const params = new URLSearchParams(nextSearchParams.toString());
+    if (sortBy === field) {
+      if (sortOrder === 'asc') {
+        params.set('sortOrder', 'desc');
+      } else {
+        params.delete('sortBy');
+        params.delete('sortOrder');
+      }
+    } else {
+      params.set('sortBy', field);
+      params.set('sortOrder', 'asc');
+    }
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const onPageChange = (newPage: number) => {
+    const params = new URLSearchParams(nextSearchParams.toString());
+    params.set('page', String(newPage));
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const onToggleSelectAll = () => {
+    if (checkedIds.size === employees.length) {
+      setCheckedIds(new Set());
+    } else {
+      setCheckedIds(new Set(employees.map((e) => e.id)));
+    }
+  };
+
+  const onToggleRowCheck = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = new Set(checkedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setCheckedIds(next);
+  };
+
+  const isAllChecked = employees.length > 0 && checkedIds.size === employees.length;
 
   return (
-    <TableContainer className={`relative z-10 ${className}`}>
+    <TableContainer className="relative z-10">
       <Table>
         <TableHeader>
           <tr>
             <TableHead className="w-12 text-center" align="center">
               <Checkbox
                 checked={isAllChecked}
-                onChange={() => onToggleSelectAll && onToggleSelectAll()}
+                onChange={onToggleSelectAll}
                 ariaLabel="Select all employees"
                 size="sm"
               />
@@ -81,7 +111,7 @@ export function EmployeesTable({
             <TableHead
               sortable
               sorted={sortBy === 'name' ? sortOrder : false}
-              onSort={() => onSort && onSort('name')}
+              onSort={() => onSort('name')}
             >
               Name
             </TableHead>
@@ -91,14 +121,14 @@ export function EmployeesTable({
             <TableHead
               sortable
               sorted={sortBy === 'salary' ? sortOrder : false}
-              onSort={() => onSort && onSort('salary')}
+              onSort={() => onSort('salary')}
             >
               Salary
             </TableHead>
             <TableHead
               sortable
               sorted={sortBy === 'hireDate' ? sortOrder : false}
-              onSort={() => onSort && onSort('hireDate')}
+              onSort={() => onSort('hireDate')}
             >
               Date Joined
             </TableHead>
@@ -108,9 +138,7 @@ export function EmployeesTable({
         </TableHeader>
 
         <TableBody>
-          {loading ? (
-            <TableLoading colSpan={9} message="Loading employee directory..." />
-          ) : employees.length === 0 ? (
+          {employees.length === 0 ? (
             <TableEmpty
               colSpan={9}
               icon={<Users className="w-8 h-8 text-stone-300 dark:text-stone-600 mb-1" />}
@@ -126,33 +154,16 @@ export function EmployeesTable({
               )}`;
 
               return (
-                <TableRow
-                  key={emp.id}
-                  className="group"
-                >
-                  {/* Row Checkbox with custom small yellow check tick */}
-                  <TableCell
-                    align="center"
-                    onClick={(e) => {
-                      if (onToggleRowCheck) {
-                        e.stopPropagation();
-                        onToggleRowCheck(emp.id, e);
-                      }
-                    }}
-                  >
+                <TableRow key={emp.id} className="group">
+                  <TableCell align="center" onClick={(e) => onToggleRowCheck(emp.id, e)}>
                     <Checkbox
                       checked={isChecked}
-                      onChange={(_, e) => {
-                        if (onToggleRowCheck) {
-                          onToggleRowCheck(emp.id, e);
-                        }
-                      }}
+                      onChange={(_, e) => onToggleRowCheck(emp.id, e)}
                       ariaLabel={`Select ${emp.firstName} ${emp.lastName}`}
                       size="sm"
                     />
                   </TableCell>
 
-                  {/* Name & Avatar with Amber Accent Ring + resilient fallback */}
                   <TableCell>
                     <Link
                       href={`/people/${encodeURIComponent(emp.employeeId || emp.id)}`}
@@ -180,19 +191,16 @@ export function EmployeesTable({
                     </Link>
                   </TableCell>
 
-                  {/* Job Title */}
                   <TableCell className="text-stone-700 dark:text-stone-300 font-medium">
                     {emp.role}
                   </TableCell>
 
-                  {/* Department */}
                   <TableCell>
                     <span className="inline-block px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-[11px] font-medium whitespace-nowrap group-hover:bg-amber-100/70 dark:group-hover:bg-amber-950/40 transition-colors">
                       {emp.department}
                     </span>
                   </TableCell>
 
-                  {/* Location */}
                   <TableCell className="text-stone-600 dark:text-stone-400">
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                       <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0 group-hover:text-amber-500 transition-colors" />
@@ -200,23 +208,19 @@ export function EmployeesTable({
                     </span>
                   </TableCell>
 
-                  {/* Salary */}
                   <TableCell className="font-semibold text-stone-900 dark:text-stone-100 whitespace-nowrap">
                     ${(emp.baseSalaryUSD ?? emp.baseSalary ?? 0).toLocaleString('en-US')}{' '}
                     <span className="text-[10px] font-normal text-stone-400">USD</span>
                   </TableCell>
 
-                  {/* Date Joined */}
                   <TableCell className="text-stone-500 dark:text-stone-400 text-[11px] whitespace-nowrap">
                     {formatDateSafe(emp.hireDate)}
                   </TableCell>
 
-                  {/* Status */}
                   <TableCell>
                     <StatusBadge status={emp.status || 'Active'} />
                   </TableCell>
 
-                  {/* Actions */}
                   <TableCell align="center">
                     <div className="flex items-center justify-center gap-1">
                       <Button
@@ -228,9 +232,7 @@ export function EmployeesTable({
                         className="hover:bg-amber-300/40 dark:hover:bg-amber-500/20 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 font-medium"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (onViewDetails) {
-                            onViewDetails(emp, e);
-                          }
+                          router.push(`/people/${encodeURIComponent(emp.employeeId || emp.id)}`);
                         }}
                       >
                         <Eye className="w-4 h-4" />
@@ -244,9 +246,7 @@ export function EmployeesTable({
                         className="hover:bg-amber-300/40 dark:hover:bg-amber-500/20 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 font-medium"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (onEditDetails) {
-                            onEditDetails(emp, e);
-                          }
+                          setModalState({ type: 'edit', employee: emp });
                         }}
                       >
                         <Edit2 className="w-4 h-4" />

@@ -1,130 +1,45 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import toast from 'react-hot-toast';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
-import { EmployeeFilters } from '@/components/EmployeeFilters';
-import { EmployeesTable } from '@/components/EmployeesTable';
-import { EmployeeDetailDrawer } from '@/components/EmployeeDetailDrawer';
-import { AddEmployeeModal } from '@/components/AddEmployeeModal';
+import React, { useState } from 'react';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui';
-import { Download, Plus, Trash2, Users, X } from 'lucide-react';
-import { Employee } from '@/types';
-import { EmployeeStatusTab } from '@/constants';
-import { EmployeesResponseData } from '@/lib/employeeData';
-import {
-  exportEmployeesToCSV,
-  buildPaginationUrl,
-} from '@/lib/employeeUtils';
-import { deleteEmployeesAction } from '@/actions/employees';
+import { Plus, Download, Trash2, X, Users } from 'lucide-react';
+
+import { EmployeeDetailDrawer } from './EmployeeDetailDrawer';
+import { AddEmployeeModal } from './AddEmployeeModal';
+import { useEmployeesContext } from '@/components/people/EmployeesProvider';
+import { exportEmployeesToCSV } from '@/lib/employeeUtils';
+import toast from 'react-hot-toast';
 import { showConfirmDeleteToast } from '@/lib/toastUtils';
+import { deleteEmployeesAction } from '@/actions/employees';
+import { useRouter } from 'next/navigation';
 
 export interface EmployeesViewProps {
-  data: EmployeesResponseData;
-  uniqueRoles: string[];
-  uniqueLocations: string[];
-  searchParams?: {
-    search?: string;
-    department?: string;
-    role?: string;
-    location?: string;
-    tab?: string;
-    page?: string;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  };
-  onSelectEmployee?: (employee: Employee) => void;
+  children: React.ReactNode;
+  filtersNode?: React.ReactNode;
 }
 
 export function EmployeesView({
-  data,
-  uniqueRoles,
-  uniqueLocations,
-  searchParams = {},
-  onSelectEmployee,
+  children,
+  filtersNode,
 }: EmployeesViewProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const nextSearchParams = useSearchParams();
-
-  const { employees, total, page, totalPages } = data;
-  const currentSearch = searchParams.search || nextSearchParams.get('search') || '';
-  const currentDept = searchParams.department || nextSearchParams.get('department') || 'All';
-  const currentRole = searchParams.role || nextSearchParams.get('role') || 'All';
-  const currentLocation = searchParams.location || nextSearchParams.get('location') || 'All';
-  const currentTab = (searchParams.tab || nextSearchParams.get('tab') || 'Active') as EmployeeStatusTab;
-  const currentSortBy = searchParams.sortBy || nextSearchParams.get('sortBy') || '';
-  const currentSortOrder = (searchParams.sortOrder || nextSearchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
-
-  const handleSort = (field: string) => {
-    const params = new URLSearchParams(nextSearchParams.toString());
-    if (currentSortBy === field) {
-      if (currentSortOrder === 'asc') {
-        params.set('sortOrder', 'desc');
-      } else {
-        params.delete('sortBy');
-        params.delete('sortOrder');
-      }
-    } else {
-      params.set('sortBy', field);
-      params.set('sortOrder', 'asc');
-    }
-    params.set('page', '1');
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  };
-
-  // Client-only UI States (Modals, Selection and Row Highlight)
-  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
-  const [modalState, setModalState] = useState<{ type: 'add' | 'edit' | 'view' | null; employee: Employee | null }>({ type: null, employee: null });
+  const { modalState, setModalState, checkedIds, setCheckedIds, filteredEmployeesRef } = useEmployeesContext();
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const filteredEmployees = employees;
-
-  // Page navigation via URL searchParams
-  const handlePageChange = (newPage: number) => {
-    const targetUrl = buildPaginationUrl(pathname, nextSearchParams, newPage);
-    router.push(targetUrl, { scroll: false });
-  };
-
-  // Checkbox toggles
-  const toggleSelectAll = () => {
-    if (checkedIds.size === filteredEmployees.length) {
-      setCheckedIds(new Set());
-    } else {
-      setCheckedIds(new Set(filteredEmployees.map((e) => e.id)));
-    }
-  };
-
-  const toggleRowCheck = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const next = new Set(checkedIds);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    setCheckedIds(next);
-  };
-
-  const handleViewDetails = (employee: Employee, e: React.MouseEvent) => {
-    e.stopPropagation();
-    router.push(`/people/${encodeURIComponent(employee.employeeId || employee.id)}`);
-  };
 
   // CSV Export handlers
   const handleExportCSV = () => {
     const toExport =
       checkedIds.size > 0
-        ? filteredEmployees.filter((e) => checkedIds.has(e.id))
-        : filteredEmployees;
+        ? filteredEmployeesRef.current.filter((e) => checkedIds.has(e.id))
+        : filteredEmployeesRef.current;
     exportEmployeesToCSV(toExport);
     toast.success(`Exported ${toExport.length} employees to CSV`);
     setCheckedIds(new Set());
   };
 
   const handleExportSelectedCSV = () => {
-    const selectedEmployees = filteredEmployees.filter((e) => checkedIds.has(e.id));
+    const selectedEmployees = filteredEmployeesRef.current.filter((e) => checkedIds.has(e.id));
     exportEmployeesToCSV(selectedEmployees, `ACME_Selected_Employees_${checkedIds.size}.csv`);
     toast.success(`Exported ${selectedEmployees.length} selected employees to CSV`);
     setCheckedIds(new Set());
@@ -194,16 +109,8 @@ export function EmployeesView({
         </Button>
       </PageHeader>
 
-      {/* Server Action Filter Form - No Local State */}
-      <EmployeeFilters
-        search={currentSearch}
-        selectedTab={currentTab}
-        department={currentDept}
-        role={currentRole}
-        location={currentLocation}
-        uniqueRoles={uniqueRoles}
-        uniqueLocations={uniqueLocations}
-      />
+      {/* Server Action Filter Form passed as node */}
+      {filtersNode}
 
       {/* Bulk Selection Actions Toolbar */}
       {checkedIds.size > 0 && (
@@ -253,27 +160,8 @@ export function EmployeesView({
         </div>
       )}
 
-      {/* Server-Rendered Employees Table */}
-      <EmployeesTable
-        employees={filteredEmployees}
-        loading={false}
-        checkedIds={checkedIds}
-        onToggleSelectAll={toggleSelectAll}
-        onToggleRowCheck={toggleRowCheck}
-        onViewDetails={handleViewDetails}
-        onEditDetails={(emp, e) => {
-          e.stopPropagation();
-          setModalState({ type: 'edit', employee: emp });
-        }}
-        page={page}
-        totalPages={totalPages}
-        totalCount={total}
-        pageSize={10}
-        onPageChange={handlePageChange}
-        sortBy={currentSortBy}
-        sortOrder={currentSortOrder}
-        onSort={handleSort}
-      />
+      {/* Server-Rendered Data Payload */}
+      {children}
 
       {/* Employee Detail Drawer */}
       <EmployeeDetailDrawer

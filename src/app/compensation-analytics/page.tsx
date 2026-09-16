@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
-import { CompensationAnalyticsView } from '@/components/CompensationAnalyticsView';
-import { getCompensationAnalytics } from '@/lib/compensationAnalyticsService';
+import { AnalyticsDataFetcher } from '@/components/analytics/AnalyticsDataFetcher';
+import { FilterSkeleton } from '@/components/ui';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { BarChart3 } from 'lucide-react';
 
 export const metadata = {
   title: 'Compensation Analytics - ACME Salary Management System',
@@ -13,45 +15,29 @@ interface CompensationAnalyticsPageProps {
     country?: string;
     payGrade?: string;
     currency?: string;
-    period?: string;
+    period?: 'quarter' | 'month';
   };
 }
 
-export default async function CompensationAnalyticsPage({ searchParams }: CompensationAnalyticsPageProps) {
-  const department = searchParams?.department || 'All';
-  const country = searchParams?.country || 'All';
-  const payGrade = searchParams?.payGrade || 'All';
-  const currency = searchParams?.currency || 'All';
-  const period = (searchParams?.period === 'month' ? 'month' : 'quarter') as 'quarter' | 'month';
-
-  let data;
-  try {
-    data = await getCompensationAnalytics({
-      department: department !== 'All' ? department : undefined,
-      country: country !== 'All' ? country : undefined,
-      payGrade: payGrade !== 'All' ? payGrade : undefined,
-      currency: currency !== 'All' ? currency : undefined,
-      period,
-    });
-  } catch (error) {
-    console.error('Failed to load compensation analytics server-side:', error);
-  }
-
+export default function CompensationAnalyticsPage({ searchParams }: CompensationAnalyticsPageProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-3 text-stone-500 text-sm">
-            <span className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></span>
-            <span>Loading Analytics...</span>
-          </div>
-        </div>
-      }
-    >
-      <CompensationAnalyticsView
-        data={data}
-        searchParams={{ department, country, payGrade, currency, period }}
+    <div className="space-y-6">
+      <PageHeader
+        title="Compensation Analytics"
+        description="HR Manager Dashboard & Deep-Dive Compensation Insights"
+        icon={BarChart3}
       />
-    </Suspense>
+      
+      <Suspense
+        fallback={
+          <div className="space-y-6">
+            <FilterSkeleton />
+            <div className="w-full h-[600px] rounded-3xl border border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-900/50 animate-pulse" />
+          </div>
+        }
+      >
+        <AnalyticsDataFetcher searchParams={searchParams || {}} />
+      </Suspense>
+    </div>
   );
 }

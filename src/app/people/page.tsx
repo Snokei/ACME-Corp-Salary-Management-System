@@ -1,6 +1,9 @@
-import { Suspense } from 'react';
-import { EmployeesView } from '@/components/EmployeesView';
-import { getEmployeesData } from '@/lib/employeeData';
+import { EmployeeFiltersServer } from "@/components/people/EmployeeFiltersServer";
+import { FilterSkeleton, TableSkeleton } from "@/components/ui";
+import { EmployeesDataFetcher } from "@/components/people/EmployeesDataFetcher";
+import { EmployeesProvider } from "@/components/people/EmployeesProvider";
+import { EmployeesView } from "@/components/people/EmployeesView";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "People - ACME Salary Management System",
@@ -17,76 +20,24 @@ interface PeoplePageProps {
     tab?: string;
     page?: string;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
   };
 }
 
-import { prisma } from '@/lib/prisma';
-
-export default async function PeoplePage({ searchParams }: PeoplePageProps) {
-  const search = typeof searchParams?.search === 'string' ? searchParams.search : '';
-  const department = typeof searchParams?.department === 'string' ? searchParams.department : 'All';
-  const role = typeof searchParams?.role === 'string' ? searchParams.role : 'All';
-  const location = typeof searchParams?.location === 'string' ? searchParams.location : 'All';
-  const status = typeof searchParams?.status === 'string' ? searchParams.status : 'All';
-  const tab = typeof searchParams?.tab === 'string' ? searchParams.tab : 'Active';
-  const page = parseInt(searchParams?.page || '1', 10) || 1;
-  const sortBy = typeof searchParams?.sortBy === 'string' ? searchParams.sortBy : undefined;
-  const sortOrder = searchParams?.sortOrder === 'asc' ? 'asc' : 'desc';
-
-  // 1. Direct Server-Side Data Fetching from Database via Prisma
-  const dataPromise = getEmployeesData({
-    search,
-    department,
-    role,
-    location,
-    status,
-    tab,
-    page,
-    limit: 10,
-    sortBy,
-    sortOrder,
-  });
-
-  // Fetch unique options for dropdowns
-  const uniqueRolesPromise = prisma.employee.findMany({ select: { role: true }, distinct: ['role'] });
-  const uniqueLocationsPromise = prisma.employee.findMany({ select: { country: true }, distinct: ['country'] });
-
-  const [data, uniqueRolesResult, uniqueLocationsResult] = await Promise.all([
-    dataPromise,
-    uniqueRolesPromise,
-    uniqueLocationsPromise
-  ]);
-
-  const uniqueRoles = ['All', ...uniqueRolesResult.map(r => r.role).filter(Boolean).sort()];
-  const uniqueLocations = ['All', ...uniqueLocationsResult.map(l => l.country).filter(Boolean).sort()];
-
+export default function PeoplePage({ searchParams }: PeoplePageProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-3 text-stone-500 text-sm">
-            <span className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></span>
-            <span>Loading People Directory...</span>
-          </div>
-        </div>
-      }
-    >
+    <EmployeesProvider>
       <EmployeesView
-        data={data}
-        uniqueRoles={uniqueRoles}
-        uniqueLocations={uniqueLocations}
-        searchParams={{
-          search,
-          department,
-          role,
-          location,
-          tab,
-          page: String(page),
-          sortBy,
-          sortOrder,
-        }}
-      />
-    </Suspense>
+        filtersNode={
+          <Suspense fallback={<FilterSkeleton />}>
+            <EmployeeFiltersServer searchParams={searchParams || {}} />
+          </Suspense>
+        }
+      >
+        <Suspense fallback={<TableSkeleton />}>
+          <EmployeesDataFetcher searchParams={searchParams || {}} />
+        </Suspense>
+      </EmployeesView>
+    </EmployeesProvider>
   );
 }

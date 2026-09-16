@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { PageHeader } from '@/components/PageHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { GlassCard, SearchableSelect, Button } from '@/components/ui';
 import {
   Users,
@@ -148,19 +148,13 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
 
   return (
     <div className={`space-y-6 animate-fade-in pb-12 ${isPending ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-150`}>
-      {/* Header */}
-      <PageHeader
-        title="Compensation Analytics"
-        description="HR Manager Dashboard & Deep-Dive Compensation Insights"
-        icon={BarChart3}
-      >
-        {data && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-100 dark:bg-stone-800 text-xs text-stone-600 dark:text-stone-300 font-medium">
-            {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" /> : <Users className="w-3.5 h-3.5 text-amber-500" />}
-            <span>Analyzing {data.summary.totalEmployees.toLocaleString()} Active Employees</span>
-          </div>
-        )}
-      </PageHeader>
+      {/* Dynamic Data Badge */}
+      {data && (
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400 font-medium w-fit">
+          {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />}
+          <span>Analyzing {data.summary.totalEmployees.toLocaleString()} Active Employees</span>
+        </div>
+      )}
 
       {/* Filter Control Bar */}
       <GlassCard className="relative z-30 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800">

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PageHeader } from '@/components/PageHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button, Input, Table, SearchableSelect } from '@/components/ui';
-import { SalaryBandsModal } from '@/components/SalaryBandsModal';
+import { SalaryBandsModal } from '@/components/salary-bands/SalaryBandsModal';
 import { SalaryBandData } from '@/lib/compaRatioService';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Plus, Search, Edit2, Layers, Banknote } from 'lucide-react';
