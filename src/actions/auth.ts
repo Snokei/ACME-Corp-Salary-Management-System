@@ -61,3 +61,59 @@ export async function logoutAction() {
   cookies().delete('auth_token');
   redirect('/login');
 }
+
+async function getCurrentUserId() {
+  const token = cookies().get('auth_token')?.value;
+  if (!token) return null;
+  try {
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await import('jose').then((m) => m.jwtVerify(token, secret));
+    return payload.id as string;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function getCurrentUserAction() {
+  const userId = await getCurrentUserId();
+  if (!userId) return null;
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return null;
+    return {
+      name: user.name,
+      email: user.email,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function updateUserAction(name: string, email: string, newPassword?: string) {
+  const userId = await getCurrentUserId();
+  if (!userId) return { success: false, error: 'Unauthorized' };
+  
+  try {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing && existing.id !== userId) {
+      return { success: false, error: 'Email is already in use.' };
+    }
+    
+    const updateData: any = { name, email };
+    
+    if (newPassword) {
+      if (newPassword.length < 6) return { success: false, error: 'Password must be at least 6 characters.' };
+      updateData.passwordHash = await bcrypt.hash(newPassword, 10);
+    }
+    
+    await prisma.user.update({
+      where: { id: userId },
+      data: updateData
+    });
+    
+    return { success: true };
+  } catch (e) {
+    console.error('Update user error:', e);
+    return { success: false, error: 'Failed to update user details.' };
+  }
+}

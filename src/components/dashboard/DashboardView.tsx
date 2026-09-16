@@ -11,7 +11,8 @@ import {
 } from "@/constants";
 import { ChevronRight, TrendingUp, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, ReactNode } from "react";
+import { getCurrentUserAction } from "@/actions/auth";
 import {
   Area,
   AreaChart,
@@ -37,6 +38,19 @@ export function DashboardView({
 }: DashboardViewProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("Week");
   const [selectedDay, setSelectedDay] = useState<number>(25);
+  const [userName, setUserName] = useState<string>(CURRENT_USER.name);
+  const [isLoadingUser, setIsLoadingUser] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getCurrentUserAction();
+      if (user) {
+        setUserName(user.name);
+      }
+      setIsLoadingUser(false);
+    };
+    fetchUser();
+  }, []);
 
   const data = initialData || {};
 
@@ -62,7 +76,16 @@ export function DashboardView({
     <div className="space-y-6 animate-fade-in">
       {/* Top Welcome & Metrics Bar */}
       <PageHeader
-        title={`Hello ${CURRENT_USER.name}`}
+        title={
+          isLoadingUser ? (
+            <div className="flex items-center">
+              <span className="mr-2">Hello</span>
+              <div className="w-32 h-8 bg-stone-200/50 dark:bg-stone-700/50 animate-pulse rounded-lg ml-1" />
+            </div>
+          ) : (
+            `Hello ${userName}`
+          )
+        }
         description="Compensation insights, attendance tracking, and scheduled talent reviews."
         icon={LayoutDashboard}
       />

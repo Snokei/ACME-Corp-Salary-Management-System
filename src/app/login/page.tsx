@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 
-
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@acme.com");
@@ -114,14 +113,6 @@ export default function LoginPage() {
                   required
                   disabled={isLoading}
                 />
-                <div className="flex justify-end">
-                  <a
-                    href="#"
-                    className="text-[11px] font-medium text-amber-600 dark:text-amber-400 hover:underline"
-                  >
-                    Forgot password?
-                  </a>
-                </div>
               </div>
 
               <Button

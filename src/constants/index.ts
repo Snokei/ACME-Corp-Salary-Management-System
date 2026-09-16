@@ -42,7 +42,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
 export const CURRENT_USER = {
   name: "Valentino",
   fullName: "Valentino Morales",
-  role: "Lead Designer",
+  role: "Admin / HR",
   avatar:
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&h=80&q=80",
 };
