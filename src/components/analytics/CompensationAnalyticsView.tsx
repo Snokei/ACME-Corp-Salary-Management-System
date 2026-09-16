@@ -1,39 +1,36 @@
 "use client";
 
-import React, { useState, useTransition, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { GlassCard, SearchableSelect, Button } from '@/components/ui';
+import { Button, GlassCard, SearchableSelect } from "@/components/ui";
+import { CompensationAnalyticsResult } from "@/lib/compensationAnalyticsService";
 import {
-  Users,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  BarChart3,
-  Globe,
-  Award,
-  Layers,
-  Filter,
-  RotateCcw,
-  Loader2,
-  Building2,
   ArrowUpDown,
-} from 'lucide-react';
+  Award,
+  Building2,
+  DollarSign,
+  Globe,
+  Layers,
+  Loader2,
+  RotateCcw,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useCallback, useState, useTransition } from "react";
 import {
-  BarChart,
+  Area,
+  AreaChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
-} from 'recharts';
-import { CompensationAnalyticsResult } from '@/lib/compensationAnalyticsService';
+} from "recharts";
 
 interface CompensationAnalyticsViewProps {
   data?: CompensationAnalyticsResult;
@@ -42,20 +39,32 @@ interface CompensationAnalyticsViewProps {
     country: string;
     payGrade: string;
     currency: string;
-    period: 'quarter' | 'month';
+    period: "quarter" | "month";
   };
 }
 
 const BAND_COLORS = {
-  Below: '#EF4444', // Red
-  Within: '#10B981', // Green
-  Above: '#F59E0B', // Amber / Orange
-  NoBand: '#94A3B8', // Gray
+  Below: "#EF4444", // Red
+  Within: "#10B981", // Green
+  Above: "#F59E0B", // Amber / Orange
+  NoBand: "#94A3B8", // Gray
 };
 
-const CHART_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316', '#6366F1'];
+const CHART_COLORS = [
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+  "#8B5CF6",
+  "#EC4899",
+  "#06B6D4",
+  "#F97316",
+  "#6366F1",
+];
 
-export function CompensationAnalyticsView({ data, searchParams }: CompensationAnalyticsViewProps) {
+export function CompensationAnalyticsView({
+  data,
+  searchParams,
+}: CompensationAnalyticsViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
@@ -68,33 +77,52 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
   const period = searchParams.period;
 
   // Country table sort — pure client state, no server round-trip needed
-  const [countrySortField, setCountrySortField] = useState<'employeeCount' | 'avgSalary' | 'country'>('employeeCount');
+  const [countrySortField, setCountrySortField] = useState<
+    "employeeCount" | "avgSalary" | "country"
+  >("employeeCount");
   const [countrySortAsc, setCountrySortAsc] = useState<boolean>(false);
 
   // Navigate with updated URL params (triggers server re-render)
-  const pushFilter = useCallback((updates: Record<string, string>) => {
-    const params = new URLSearchParams();
-    const merged = { department, country, payGrade, currency, period, ...updates };
-    if (merged.department !== 'All') params.set('department', merged.department);
-    if (merged.country !== 'All') params.set('country', merged.country);
-    if (merged.payGrade !== 'All') params.set('payGrade', merged.payGrade);
-    if (merged.currency !== 'All') params.set('currency', merged.currency);
-    if (merged.period !== 'quarter') params.set('period', merged.period);
-    startTransition(() => {
-      router.push(`${pathname}${params.toString() ? '?' + params.toString() : ''}`);
-    });
-  }, [department, country, payGrade, currency, period, pathname, router]);
+  const pushFilter = useCallback(
+    (updates: Record<string, string>) => {
+      const params = new URLSearchParams();
+      const merged = {
+        department,
+        country,
+        payGrade,
+        currency,
+        period,
+        ...updates,
+      };
+      if (merged.department !== "All")
+        params.set("department", merged.department);
+      if (merged.country !== "All") params.set("country", merged.country);
+      if (merged.payGrade !== "All") params.set("payGrade", merged.payGrade);
+      if (merged.currency !== "All") params.set("currency", merged.currency);
+      if (merged.period !== "quarter") params.set("period", merged.period);
+      startTransition(() => {
+        router.push(
+          `${pathname}${params.toString() ? "?" + params.toString() : ""}`,
+        );
+      });
+    },
+    [department, country, payGrade, currency, period, pathname, router],
+  );
 
   const handleResetFilters = () => {
     startTransition(() => router.push(pathname));
   };
 
-  const hasActiveFilters = department !== 'All' || country !== 'All' || payGrade !== 'All' || currency !== 'All';
+  const hasActiveFilters =
+    department !== "All" ||
+    country !== "All" ||
+    payGrade !== "All" ||
+    currency !== "All";
 
   const formatUSD = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       maximumFractionDigits: 0,
     }).format(amount);
   };
@@ -116,19 +144,23 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
     return list.sort((a, b) => {
       let valA: any = a[countrySortField];
       let valB: any = b[countrySortField];
-      if (typeof valA === 'string') {
-        return countrySortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      if (typeof valA === "string") {
+        return countrySortAsc
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
       }
       return countrySortAsc ? valA - valB : valB - valA;
     });
   }, [data?.countryCompensation, countrySortField, countrySortAsc]);
 
-  const toggleCountrySort = (field: 'employeeCount' | 'avgSalary' | 'country') => {
+  const toggleCountrySort = (
+    field: "employeeCount" | "avgSalary" | "country",
+  ) => {
     if (countrySortField === field) {
       setCountrySortAsc(!countrySortAsc);
     } else {
       setCountrySortField(field);
-      setCountrySortAsc(field === 'country'); // default asc for string, desc for numbers
+      setCountrySortAsc(field === "country"); // default asc for string, desc for numbers
     }
   };
 
@@ -137,25 +169,41 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
     if (!data?.bandDistribution) return [];
     const bd = data.bandDistribution;
     return [
-      { name: 'Within Band', value: bd.within.count, percentage: bd.within.percentage, color: BAND_COLORS.Within },
-      { name: 'Below Band', value: bd.below.count, percentage: bd.below.percentage, color: BAND_COLORS.Below },
-      { name: 'Above Band', value: bd.above.count, percentage: bd.above.percentage, color: BAND_COLORS.Above },
+      {
+        name: "Within Band",
+        value: bd.within.count,
+        percentage: bd.within.percentage,
+        color: BAND_COLORS.Within,
+      },
+      {
+        name: "Below Band",
+        value: bd.below.count,
+        percentage: bd.below.percentage,
+        color: BAND_COLORS.Below,
+      },
+      {
+        name: "Above Band",
+        value: bd.above.count,
+        percentage: bd.above.percentage,
+        color: BAND_COLORS.Above,
+      },
       ...(bd.noBand.count > 0
-        ? [{ name: 'No Matching Band', value: bd.noBand.count, percentage: bd.noBand.percentage, color: BAND_COLORS.NoBand }]
+        ? [
+            {
+              name: "No Matching Band",
+              value: bd.noBand.count,
+              percentage: bd.noBand.percentage,
+              color: BAND_COLORS.NoBand,
+            },
+          ]
         : []),
     ].filter((item) => item.value > 0);
   }, [data?.bandDistribution]);
 
   return (
-    <div className={`space-y-6 animate-fade-in pb-12 ${isPending ? 'opacity-60 pointer-events-none' : ''} transition-opacity duration-150`}>
-      {/* Dynamic Data Badge */}
-      {data && (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400 font-medium w-fit">
-          {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />}
-          <span>Analyzing {data.summary.totalEmployees.toLocaleString()} Active Employees</span>
-        </div>
-      )}
-
+    <div
+      className={`space-y-6 animate-fade-in pb-12 ${isPending ? "opacity-60 pointer-events-none" : ""} transition-opacity duration-150`}
+    >
       {/* Filter Control Bar */}
       <GlassCard className="relative z-30 p-4 rounded-2xl border border-stone-200/80 dark:border-stone-800">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -164,7 +212,7 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
             {/* Department */}
             <SearchableSelect
               name="department"
-              options={['All', ...(data?.filterOptions?.departments || [])]}
+              options={["All", ...(data?.filterOptions?.departments || [])]}
               value={department}
               placeholder="All Departments"
               shape="pill"
@@ -175,7 +223,7 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
             {/* Country */}
             <SearchableSelect
               name="country"
-              options={['All', ...(data?.filterOptions?.countries || [])]}
+              options={["All", ...(data?.filterOptions?.countries || [])]}
               value={country}
               placeholder="All Countries"
               shape="pill"
@@ -186,7 +234,7 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
             {/* Pay Grade */}
             <SearchableSelect
               name="payGrade"
-              options={['All', ...(data?.filterOptions?.payGrades || [])]}
+              options={["All", ...(data?.filterOptions?.payGrades || [])]}
               value={payGrade}
               placeholder="All Pay Grades"
               shape="pill"
@@ -197,7 +245,7 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
             {/* Currency */}
             <SearchableSelect
               name="currency"
-              options={['All', ...(data?.filterOptions?.currencies || [])]}
+              options={["All", ...(data?.filterOptions?.currencies || [])]}
               value={currency}
               placeholder="All Currencies"
               shape="pill"
@@ -227,7 +275,9 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
       {!data && (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-stone-500">
           <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-          <p className="text-xs font-medium">Calculating compensation analytics across organization...</p>
+          <p className="text-xs font-medium">
+            Calculating compensation analytics across organization...
+          </p>
         </div>
       )}
 
@@ -239,7 +289,9 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
             {/* Total Employees */}
             <GlassCard className="p-4 rounded-2xl flex flex-col justify-between border border-stone-200/80 dark:border-stone-800">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">Total Employees</span>
+                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                  Total Employees
+                </span>
                 <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
                   <Users className="w-4 h-4" />
                 </div>
@@ -248,14 +300,18 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                 <span className="text-2xl font-bold text-stone-900 dark:text-white">
                   {data.summary.totalEmployees.toLocaleString()}
                 </span>
-                <span className="block text-[11px] text-stone-400 mt-0.5">Matching current filters</span>
+                <span className="block text-[11px] text-stone-400 mt-0.5">
+                  Matching current filters
+                </span>
               </div>
             </GlassCard>
 
             {/* Average Base Salary */}
             <GlassCard className="p-4 rounded-2xl flex flex-col justify-between border border-stone-200/80 dark:border-stone-800">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">Average Base Salary</span>
+                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                  Average Base Salary
+                </span>
                 <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
                   <DollarSign className="w-4 h-4" />
                 </div>
@@ -264,14 +320,18 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                 <span className="text-2xl font-bold text-stone-900 dark:text-white">
                   {formatUSD(data.summary.averageBaseSalary)}
                 </span>
-                <span className="block text-[11px] text-stone-400 mt-0.5">Annual base salary (USD)</span>
+                <span className="block text-[11px] text-stone-400 mt-0.5">
+                  Annual base salary (USD)
+                </span>
               </div>
             </GlassCard>
 
             {/* Median Base Salary */}
             <GlassCard className="p-4 rounded-2xl flex flex-col justify-between border border-stone-200/80 dark:border-stone-800">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">Median Base Salary</span>
+                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                  Median Base Salary
+                </span>
                 <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
                   <TrendingUp className="w-4 h-4" />
                 </div>
@@ -280,14 +340,18 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                 <span className="text-2xl font-bold text-stone-900 dark:text-white">
                   {formatUSD(data.summary.medianBaseSalary)}
                 </span>
-                <span className="block text-[11px] text-stone-400 mt-0.5">50th percentile (USD)</span>
+                <span className="block text-[11px] text-stone-400 mt-0.5">
+                  50th percentile (USD)
+                </span>
               </div>
             </GlassCard>
 
             {/* Minimum Base Salary */}
             <GlassCard className="p-4 rounded-2xl flex flex-col justify-between border border-stone-200/80 dark:border-stone-800">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">Minimum Salary</span>
+                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                  Minimum Salary
+                </span>
                 <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
                   <TrendingDown className="w-4 h-4" />
                 </div>
@@ -296,14 +360,18 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                 <span className="text-2xl font-bold text-stone-900 dark:text-white">
                   {formatUSD(data.summary.minBaseSalary)}
                 </span>
-                <span className="block text-[11px] text-stone-400 mt-0.5">Lowest compensation (USD)</span>
+                <span className="block text-[11px] text-stone-400 mt-0.5">
+                  Lowest compensation (USD)
+                </span>
               </div>
             </GlassCard>
 
             {/* Maximum Base Salary */}
             <GlassCard className="p-4 rounded-2xl flex flex-col justify-between border border-stone-200/80 dark:border-stone-800">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">Maximum Salary</span>
+                <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                  Maximum Salary
+                </span>
                 <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
                   <Award className="w-4 h-4" />
                 </div>
@@ -312,7 +380,9 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                 <span className="text-2xl font-bold text-stone-900 dark:text-white">
                   {formatUSD(data.summary.maxBaseSalary)}
                 </span>
-                <span className="block text-[11px] text-stone-400 mt-0.5">Highest compensation (USD)</span>
+                <span className="block text-[11px] text-stone-400 mt-0.5">
+                  Highest compensation (USD)
+                </span>
               </div>
             </GlassCard>
           </div>
@@ -324,7 +394,9 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-stone-900 dark:text-white">Salary Distribution (USD)</h3>
+                    <h3 className="text-sm font-semibold text-stone-900 dark:text-white">
+                      Salary Distribution (USD)
+                    </h3>
                     <p className="text-xs text-stone-500 dark:text-stone-400">
                       Employee count & share by annual base salary bracket
                     </p>
@@ -333,19 +405,47 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
 
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.salaryDistribution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150, 150, 150, 0.15)" />
-                      <XAxis dataKey="range" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <BarChart
+                      data={data.salaryDistribution}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(150, 150, 150, 0.15)"
+                      />
+                      <XAxis
+                        dataKey="range"
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const d = payload[0].payload;
                             return (
                               <div className="bg-stone-900 text-white text-xs p-2.5 rounded-xl shadow-xl border border-stone-800 space-y-1">
-                                <p className="font-semibold text-amber-400">{d.range}</p>
-                                <p>Employees: <span className="font-semibold">{d.count.toLocaleString()}</span></p>
-                                <p>Share: <span className="font-semibold">{d.percentage}%</span></p>
+                                <p className="font-semibold text-amber-400">
+                                  {d.range}
+                                </p>
+                                <p>
+                                  Employees:{" "}
+                                  <span className="font-semibold">
+                                    {d.count.toLocaleString()}
+                                  </span>
+                                </p>
+                                <p>
+                                  Share:{" "}
+                                  <span className="font-semibold">
+                                    {d.percentage}%
+                                  </span>
+                                </p>
                               </div>
                             );
                           }
@@ -354,7 +454,10 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                       />
                       <Bar dataKey="count" radius={[8, 8, 0, 0]}>
                         {data.salaryDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={CHART_COLORS[index % CHART_COLORS.length]}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -365,10 +468,19 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
               {/* Bucket summary badges */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-4 pt-3 border-t border-stone-100 dark:border-stone-800/60 text-center">
                 {data.salaryDistribution.map((b) => (
-                  <div key={b.range} className="p-2 rounded-xl bg-stone-50 dark:bg-stone-900/60">
-                    <span className="block text-[10px] text-stone-400 font-medium truncate">{b.range}</span>
-                    <span className="text-xs font-bold text-stone-800 dark:text-stone-200">{b.count.toLocaleString()}</span>
-                    <span className="block text-[10px] text-stone-500 dark:text-stone-400">{b.percentage}%</span>
+                  <div
+                    key={b.range}
+                    className="p-2 rounded-xl bg-stone-50 dark:bg-stone-900/60"
+                  >
+                    <span className="block text-[10px] text-stone-400 font-medium truncate">
+                      {b.range}
+                    </span>
+                    <span className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                      {b.count.toLocaleString()}
+                    </span>
+                    <span className="block text-[10px] text-stone-500 dark:text-stone-400">
+                      {b.percentage}%
+                    </span>
                   </div>
                 ))}
               </div>
@@ -379,8 +491,12 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <h3 className="text-sm font-semibold text-stone-900 dark:text-white">Salary Band Positioning</h3>
-                    <p className="text-xs text-stone-500 dark:text-stone-400">Positioning relative to pay grade midpoints</p>
+                    <h3 className="text-sm font-semibold text-stone-900 dark:text-white">
+                      Salary Band Positioning
+                    </h3>
+                    <p className="text-xs text-stone-500 dark:text-stone-400">
+                      Positioning relative to pay grade midpoints
+                    </p>
                   </div>
                   <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600">
                     <Layers className="w-4 h-4" />
@@ -399,7 +515,10 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                           dataKey="value"
                         >
                           {bandPieData.map((entry, index) => (
-                            <Cell key={`pie-cell-${index}`} fill={entry.color} />
+                            <Cell
+                              key={`pie-cell-${index}`}
+                              fill={entry.color}
+                            />
                           ))}
                         </Pie>
                         <Tooltip
@@ -408,9 +527,24 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                               const d = payload[0].payload;
                               return (
                                 <div className="bg-stone-900 text-white text-xs p-2.5 rounded-xl shadow-xl border border-stone-800 space-y-1">
-                                  <p className="font-semibold" style={{ color: d.color }}>{d.name}</p>
-                                  <p>Employees: <span className="font-semibold">{d.value.toLocaleString()}</span></p>
-                                  <p>Share: <span className="font-semibold">{d.percentage}%</span></p>
+                                  <p
+                                    className="font-semibold"
+                                    style={{ color: d.color }}
+                                  >
+                                    {d.name}
+                                  </p>
+                                  <p>
+                                    Employees:{" "}
+                                    <span className="font-semibold">
+                                      {d.value.toLocaleString()}
+                                    </span>
+                                  </p>
+                                  <p>
+                                    Share:{" "}
+                                    <span className="font-semibold">
+                                      {d.percentage}%
+                                    </span>
+                                  </p>
                                 </div>
                               );
                             }
@@ -420,7 +554,9 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <p className="text-xs text-stone-400">No salary band positioning data available.</p>
+                    <p className="text-xs text-stone-400">
+                      No salary band positioning data available.
+                    </p>
                   )}
                 </div>
               </div>
@@ -429,31 +565,49 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
               <div className="space-y-2 mt-2 pt-3 border-t border-stone-100 dark:border-stone-800/60">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BAND_COLORS.Below }}></span>
-                    <span className="text-stone-600 dark:text-stone-300">Below Band</span>
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: BAND_COLORS.Below }}
+                    ></span>
+                    <span className="text-stone-600 dark:text-stone-300">
+                      Below Band
+                    </span>
                   </div>
                   <div className="font-semibold text-stone-800 dark:text-stone-200">
-                    {data.bandDistribution.below.count.toLocaleString()} ({data.bandDistribution.below.percentage}%)
+                    {data.bandDistribution.below.count.toLocaleString()} (
+                    {data.bandDistribution.below.percentage}%)
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BAND_COLORS.Within }}></span>
-                    <span className="text-stone-600 dark:text-stone-300">Within Band</span>
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: BAND_COLORS.Within }}
+                    ></span>
+                    <span className="text-stone-600 dark:text-stone-300">
+                      Within Band
+                    </span>
                   </div>
                   <div className="font-semibold text-stone-800 dark:text-stone-200">
-                    {data.bandDistribution.within.count.toLocaleString()} ({data.bandDistribution.within.percentage}%)
+                    {data.bandDistribution.within.count.toLocaleString()} (
+                    {data.bandDistribution.within.percentage}%)
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BAND_COLORS.Above }}></span>
-                    <span className="text-stone-600 dark:text-stone-300">Above Band</span>
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: BAND_COLORS.Above }}
+                    ></span>
+                    <span className="text-stone-600 dark:text-stone-300">
+                      Above Band
+                    </span>
                   </div>
                   <div className="font-semibold text-stone-800 dark:text-stone-200">
-                    {data.bandDistribution.above.count.toLocaleString()} ({data.bandDistribution.above.percentage}%)
+                    {data.bandDistribution.above.count.toLocaleString()} (
+                    {data.bandDistribution.above.percentage}%)
                   </div>
                 </div>
               </div>
@@ -469,7 +623,8 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                   Department Compensation Analysis
                 </h3>
                 <p className="text-xs text-stone-500 dark:text-stone-400">
-                  Headcount, average, median, min, and max salary (USD) by department
+                  Headcount, average, median, min, and max salary (USD) by
+                  department
                 </p>
               </div>
             </div>
@@ -478,27 +633,69 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
               {/* Horizontal Bar Chart for Dept Avg Salary */}
               <div className="lg:col-span-1 h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={data.departmentCompensation} layout="vertical" margin={{ top: 0, right: 10, left: 25, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(150, 150, 150, 0.15)" />
-                    <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={formatShortUSD} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="department" type="category" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={85} />
+                  <BarChart
+                    data={data.departmentCompensation}
+                    layout="vertical"
+                    margin={{ top: 0, right: 10, left: 25, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      horizontal={false}
+                      stroke="rgba(150, 150, 150, 0.15)"
+                    />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={formatShortUSD}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      dataKey="department"
+                      type="category"
+                      tick={{ fontSize: 10 }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={85}
+                    />
                     <Tooltip
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const d = payload[0].payload;
                           return (
                             <div className="bg-stone-900 text-white text-xs p-2.5 rounded-xl shadow-xl border border-stone-800 space-y-1">
-                              <p className="font-semibold text-amber-400">{d.department}</p>
-                              <p>Avg Salary: <span className="font-semibold">{formatUSD(d.avgSalary)}</span></p>
-                              <p>Median Salary: <span className="font-semibold">{formatUSD(d.medianSalary)}</span></p>
-                              <p>Employees: <span className="font-semibold">{d.employeeCount.toLocaleString()}</span></p>
+                              <p className="font-semibold text-amber-400">
+                                {d.department}
+                              </p>
+                              <p>
+                                Avg Salary:{" "}
+                                <span className="font-semibold">
+                                  {formatUSD(d.avgSalary)}
+                                </span>
+                              </p>
+                              <p>
+                                Median Salary:{" "}
+                                <span className="font-semibold">
+                                  {formatUSD(d.medianSalary)}
+                                </span>
+                              </p>
+                              <p>
+                                Employees:{" "}
+                                <span className="font-semibold">
+                                  {d.employeeCount.toLocaleString()}
+                                </span>
+                              </p>
                             </div>
                           );
                         }
                         return null;
                       }}
                     />
-                    <Bar dataKey="avgSalary" fill="#3B82F6" radius={[0, 6, 6, 0]} />
+                    <Bar
+                      dataKey="avgSalary"
+                      fill="#3B82F6"
+                      radius={[0, 6, 6, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -513,14 +710,21 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                       <th className="py-2.5 px-3 text-right">Avg Salary USD</th>
                       <th className="py-2.5 px-3 text-right">Median USD</th>
                       <th className="py-2.5 px-3 text-right">Min USD</th>
-                      <th className="py-2.5 px-3 text-right rounded-r-xl">Max USD</th>
+                      <th className="py-2.5 px-3 text-right rounded-r-xl">
+                        Max USD
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60">
                     {data.departmentCompensation.length > 0 ? (
                       data.departmentCompensation.map((dept) => (
-                        <tr key={dept.department} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors">
-                          <td className="py-2.5 px-3 font-medium text-stone-900 dark:text-white">{dept.department}</td>
+                        <tr
+                          key={dept.department}
+                          className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors"
+                        >
+                          <td className="py-2.5 px-3 font-medium text-stone-900 dark:text-white">
+                            {dept.department}
+                          </td>
                           <td className="py-2.5 px-3 text-right text-stone-600 dark:text-stone-300 font-mono">
                             {dept.employeeCount.toLocaleString()}
                           </td>
@@ -540,7 +744,10 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={6} className="py-4 text-center text-stone-400">
+                        <td
+                          colSpan={6}
+                          className="py-4 text-center text-stone-400"
+                        >
                           No department data available.
                         </td>
                       </tr>
@@ -560,7 +767,8 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                   Pay-Grade & Compa-Ratio Analysis
                 </h3>
                 <p className="text-xs text-stone-500 dark:text-stone-400">
-                  Average salary, compa-ratio, and band status breakdown by pay grade
+                  Average salary, compa-ratio, and band status breakdown by pay
+                  grade
                 </p>
               </div>
             </div>
@@ -574,28 +782,41 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                     <th className="py-2.5 px-3 text-right">Midpoint USD</th>
                     <th className="py-2.5 px-3 text-right">Avg Base Salary</th>
                     <th className="py-2.5 px-3 text-center">Avg Compa-Ratio</th>
-                    <th className="py-2.5 px-3 text-right text-red-600 dark:text-red-400">Below Band</th>
-                    <th className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400">Within Band</th>
-                    <th className="py-2.5 px-3 text-right text-amber-600 dark:text-amber-400 rounded-r-xl">Above Band</th>
+                    <th className="py-2.5 px-3 text-right text-red-600 dark:text-red-400">
+                      Below Band
+                    </th>
+                    <th className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400">
+                      Within Band
+                    </th>
+                    <th className="py-2.5 px-3 text-right text-amber-600 dark:text-amber-400 rounded-r-xl">
+                      Above Band
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60">
                   {data.payGradeCompensation.length > 0 ? (
                     data.payGradeCompensation.map((pg) => {
                       const compa = pg.avgCompaRatio;
-                      let compaBadgeColor = 'bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300';
+                      let compaBadgeColor =
+                        "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300";
                       if (compa !== null) {
                         if (compa >= 95 && compa <= 105) {
-                          compaBadgeColor = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+                          compaBadgeColor =
+                            "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300";
                         } else if (compa < 95) {
-                          compaBadgeColor = 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300';
+                          compaBadgeColor =
+                            "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300";
                         } else {
-                          compaBadgeColor = 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
+                          compaBadgeColor =
+                            "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300";
                         }
                       }
 
                       return (
-                        <tr key={pg.payGrade} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors">
+                        <tr
+                          key={pg.payGrade}
+                          className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors"
+                        >
                           <td className="py-2.5 px-3 font-semibold text-stone-900 dark:text-white">
                             <span className="px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-800 font-mono">
                               {pg.payGrade}
@@ -605,35 +826,47 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                             {pg.employeeCount.toLocaleString()}
                           </td>
                           <td className="py-2.5 px-3 text-right text-stone-500 dark:text-stone-400 font-mono">
-                            {pg.midpointSalary ? formatUSD(pg.midpointSalary) : 'N/A'}
+                            {pg.midpointSalary
+                              ? formatUSD(pg.midpointSalary)
+                              : "N/A"}
                           </td>
                           <td className="py-2.5 px-3 text-right font-semibold text-stone-900 dark:text-stone-100 font-mono">
                             {formatUSD(pg.avgSalary)}
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             {compa !== null ? (
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono ${compaBadgeColor}`}>
+                              <span
+                                className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold font-mono ${compaBadgeColor}`}
+                              >
                                 {compa}%
                               </span>
                             ) : (
-                              <span className="text-stone-400 font-mono">N/A</span>
+                              <span className="text-stone-400 font-mono">
+                                N/A
+                              </span>
                             )}
                           </td>
                           <td className="py-2.5 px-3 text-right font-mono font-medium text-red-600 dark:text-red-400">
-                            {pg.belowBandCount.toLocaleString()} ({pg.belowBandPercentage}%)
+                            {pg.belowBandCount.toLocaleString()} (
+                            {pg.belowBandPercentage}%)
                           </td>
                           <td className="py-2.5 px-3 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
-                            {pg.withinBandCount.toLocaleString()} ({pg.withinBandPercentage}%)
+                            {pg.withinBandCount.toLocaleString()} (
+                            {pg.withinBandPercentage}%)
                           </td>
                           <td className="py-2.5 px-3 text-right font-mono font-medium text-amber-600 dark:text-amber-400">
-                            {pg.aboveBandCount.toLocaleString()} ({pg.aboveBandPercentage}%)
+                            {pg.aboveBandCount.toLocaleString()} (
+                            {pg.aboveBandPercentage}%)
                           </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan={8} className="py-4 text-center text-stone-400">
+                      <td
+                        colSpan={8}
+                        className="py-4 text-center text-stone-400"
+                      >
                         No pay-grade data available.
                       </td>
                     </tr>
@@ -652,38 +885,39 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                   Country & Location Compensation (USD)
                 </h3>
                 <p className="text-xs text-stone-500 dark:text-stone-400">
-                  Cross-location comparison normalized using employee baseSalaryUSD
+                  Cross-location comparison normalized using employee
+                  baseSalaryUSD
                 </p>
               </div>
 
               <div className="flex items-center gap-2 text-xs text-stone-500">
                 <span>Sort by:</span>
                 <button
-                  onClick={() => toggleCountrySort('employeeCount')}
+                  onClick={() => toggleCountrySort("employeeCount")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    countrySortField === 'employeeCount'
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
+                    countrySortField === "employeeCount"
+                      ? "bg-amber-500 text-white"
+                      : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300"
                   }`}
                 >
                   Headcount
                 </button>
                 <button
-                  onClick={() => toggleCountrySort('avgSalary')}
+                  onClick={() => toggleCountrySort("avgSalary")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    countrySortField === 'avgSalary'
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
+                    countrySortField === "avgSalary"
+                      ? "bg-amber-500 text-white"
+                      : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300"
                   }`}
                 >
                   Avg Salary
                 </button>
                 <button
-                  onClick={() => toggleCountrySort('country')}
+                  onClick={() => toggleCountrySort("country")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    countrySortField === 'country'
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
+                    countrySortField === "country"
+                      ? "bg-amber-500 text-white"
+                      : "bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300"
                   }`}
                 >
                   Country Name
@@ -695,26 +929,59 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
               {/* Bar Chart by Country */}
               <div className="lg:col-span-1 h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sortedCountryCompensation} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150, 150, 150, 0.15)" />
-                    <XAxis dataKey="country" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10 }} tickFormatter={formatShortUSD} axisLine={false} tickLine={false} />
+                  <BarChart
+                    data={sortedCountryCompensation}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="rgba(150, 150, 150, 0.15)"
+                    />
+                    <XAxis
+                      dataKey="country"
+                      tick={{ fontSize: 10 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={formatShortUSD}
+                      axisLine={false}
+                      tickLine={false}
+                    />
                     <Tooltip
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           const d = payload[0].payload;
                           return (
                             <div className="bg-stone-900 text-white text-xs p-2.5 rounded-xl shadow-xl border border-stone-800 space-y-1">
-                              <p className="font-semibold text-amber-400">{d.country}</p>
-                              <p>Avg Salary: <span className="font-semibold">{formatUSD(d.avgSalary)}</span></p>
-                              <p>Employees: <span className="font-semibold">{d.employeeCount.toLocaleString()}</span></p>
+                              <p className="font-semibold text-amber-400">
+                                {d.country}
+                              </p>
+                              <p>
+                                Avg Salary:{" "}
+                                <span className="font-semibold">
+                                  {formatUSD(d.avgSalary)}
+                                </span>
+                              </p>
+                              <p>
+                                Employees:{" "}
+                                <span className="font-semibold">
+                                  {d.employeeCount.toLocaleString()}
+                                </span>
+                              </p>
                             </div>
                           );
                         }
                         return null;
                       }}
                     />
-                    <Bar dataKey="avgSalary" fill="#10B981" radius={[6, 6, 0, 0]} />
+                    <Bar
+                      dataKey="avgSalary"
+                      fill="#10B981"
+                      radius={[6, 6, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -726,7 +993,7 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                     <tr>
                       <th
                         className="py-2.5 px-3 cursor-pointer rounded-l-xl hover:text-stone-900 dark:hover:text-white"
-                        onClick={() => toggleCountrySort('country')}
+                        onClick={() => toggleCountrySort("country")}
                       >
                         <div className="flex items-center gap-1">
                           <span>Country</span>
@@ -735,7 +1002,7 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                       </th>
                       <th
                         className="py-2.5 px-3 text-right cursor-pointer hover:text-stone-900 dark:hover:text-white"
-                        onClick={() => toggleCountrySort('employeeCount')}
+                        onClick={() => toggleCountrySort("employeeCount")}
                       >
                         <div className="flex items-center justify-end gap-1">
                           <span>Employees</span>
@@ -744,7 +1011,7 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                       </th>
                       <th
                         className="py-2.5 px-3 text-right cursor-pointer hover:text-stone-900 dark:hover:text-white"
-                        onClick={() => toggleCountrySort('avgSalary')}
+                        onClick={() => toggleCountrySort("avgSalary")}
                       >
                         <div className="flex items-center justify-end gap-1">
                           <span>Avg Salary USD</span>
@@ -752,14 +1019,21 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                         </div>
                       </th>
                       <th className="py-2.5 px-3 text-right">Min USD</th>
-                      <th className="py-2.5 px-3 text-right rounded-r-xl">Max USD</th>
+                      <th className="py-2.5 px-3 text-right rounded-r-xl">
+                        Max USD
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60">
                     {sortedCountryCompensation.length > 0 ? (
                       sortedCountryCompensation.map((c) => (
-                        <tr key={c.country} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors">
-                          <td className="py-2.5 px-3 font-medium text-stone-900 dark:text-white">{c.country}</td>
+                        <tr
+                          key={c.country}
+                          className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors"
+                        >
+                          <td className="py-2.5 px-3 font-medium text-stone-900 dark:text-white">
+                            {c.country}
+                          </td>
                           <td className="py-2.5 px-3 text-right text-stone-600 dark:text-stone-300 font-mono">
                             {c.employeeCount.toLocaleString()}
                           </td>
@@ -776,7 +1050,10 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="py-4 text-center text-stone-400">
+                        <td
+                          colSpan={5}
+                          className="py-4 text-center text-stone-400"
+                        >
                           No country data available.
                         </td>
                       </tr>
@@ -796,28 +1073,29 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                   Salary Adjustment Trends Over Time
                 </h3>
                 <p className="text-xs text-stone-500 dark:text-stone-400">
-                  Historical salary adjustments recorded from the Salary Adjustment Workflow
+                  Historical salary adjustments recorded from the Salary
+                  Adjustment Workflow
                 </p>
               </div>
 
               {/* Period toggle — updates URL param, triggers SSR re-render */}
               <div className="flex items-center gap-1.5 bg-stone-100 dark:bg-stone-900 p-1 rounded-xl">
                 <button
-                  onClick={() => pushFilter({ period: 'quarter' })}
+                  onClick={() => pushFilter({ period: "quarter" })}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                    period === 'quarter'
-                      ? 'bg-white dark:bg-stone-800 text-stone-900 dark:text-white shadow-sm'
-                      : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
+                    period === "quarter"
+                      ? "bg-white dark:bg-stone-800 text-stone-900 dark:text-white shadow-sm"
+                      : "text-stone-500 hover:text-stone-900 dark:hover:text-white"
                   }`}
                 >
                   Quarterly
                 </button>
                 <button
-                  onClick={() => pushFilter({ period: 'month' })}
+                  onClick={() => pushFilter({ period: "month" })}
                   className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                    period === 'month'
-                      ? 'bg-white dark:bg-stone-800 text-stone-900 dark:text-white shadow-sm'
-                      : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
+                    period === "month"
+                      ? "bg-white dark:bg-stone-800 text-stone-900 dark:text-white shadow-sm"
+                      : "text-stone-500 hover:text-stone-900 dark:hover:text-white"
                   }`}
                 >
                   Monthly
@@ -830,31 +1108,85 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                 {/* Trend Chart */}
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data.adjustmentTrends} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <AreaChart
+                      data={data.adjustmentTrends}
+                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                    >
                       <defs>
-                        <linearGradient id="colorTotalChange" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                        <linearGradient
+                          id="colorTotalChange"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#10B981"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#10B981"
+                            stopOpacity={0}
+                          />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(150, 150, 150, 0.15)" />
-                      <XAxis dataKey="period" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11 }} tickFormatter={formatShortUSD} axisLine={false} tickLine={false} />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(150, 150, 150, 0.15)"
+                      />
+                      <XAxis
+                        dataKey="period"
+                        tick={{ fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11 }}
+                        tickFormatter={formatShortUSD}
+                        axisLine={false}
+                        tickLine={false}
+                      />
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const d = payload[0].payload;
                             return (
                               <div className="bg-stone-900 text-white text-xs p-3 rounded-xl shadow-xl border border-stone-800 space-y-1.5">
-                                <p className="font-semibold text-amber-400">{d.period}</p>
-                                <p>Adjustments Count: <span className="font-semibold">{d.adjustmentsCount}</span></p>
-                                <p>Net Salary Change: <span className="font-semibold font-mono">{formatUSD(d.totalChangeUSD)}</span></p>
-                                <p>Avg Adjustment: <span className="font-semibold font-mono">{formatUSD(d.avgChangeUSD)}</span></p>
+                                <p className="font-semibold text-amber-400">
+                                  {d.period}
+                                </p>
+                                <p>
+                                  Adjustments Count:{" "}
+                                  <span className="font-semibold">
+                                    {d.adjustmentsCount}
+                                  </span>
+                                </p>
+                                <p>
+                                  Net Salary Change:{" "}
+                                  <span className="font-semibold font-mono">
+                                    {formatUSD(d.totalChangeUSD)}
+                                  </span>
+                                </p>
+                                <p>
+                                  Avg Adjustment:{" "}
+                                  <span className="font-semibold font-mono">
+                                    {formatUSD(d.avgChangeUSD)}
+                                  </span>
+                                </p>
                                 {d.increaseCount > 0 && (
-                                  <p className="text-emerald-400">Increases: {d.increaseCount} ({formatUSD(d.totalIncreasesUSD)})</p>
+                                  <p className="text-emerald-400">
+                                    Increases: {d.increaseCount} (
+                                    {formatUSD(d.totalIncreasesUSD)})
+                                  </p>
                                 )}
                                 {d.decreaseCount > 0 && (
-                                  <p className="text-red-400">Decreases: {d.decreaseCount} ({formatUSD(d.totalDecreasesUSD)})</p>
+                                  <p className="text-red-400">
+                                    Decreases: {d.decreaseCount} (
+                                    {formatUSD(d.totalDecreasesUSD)})
+                                  </p>
                                 )}
                               </div>
                             );
@@ -881,16 +1213,29 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
                       <tr>
                         <th className="py-2.5 px-3 rounded-l-xl">Period</th>
                         <th className="py-2.5 px-3 text-right">Adjustments</th>
-                        <th className="py-2.5 px-3 text-right">Total Net Increase</th>
-                        <th className="py-2.5 px-3 text-right">Average Adjustment</th>
-                        <th className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400">Increases</th>
-                        <th className="py-2.5 px-3 text-right text-red-600 dark:text-red-400 rounded-r-xl">Decreases</th>
+                        <th className="py-2.5 px-3 text-right">
+                          Total Net Increase
+                        </th>
+                        <th className="py-2.5 px-3 text-right">
+                          Average Adjustment
+                        </th>
+                        <th className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400">
+                          Increases
+                        </th>
+                        <th className="py-2.5 px-3 text-right text-red-600 dark:text-red-400 rounded-r-xl">
+                          Decreases
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-100 dark:divide-stone-800/60">
                       {data.adjustmentTrends.map((t) => (
-                        <tr key={t.period} className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors">
-                          <td className="py-2.5 px-3 font-semibold text-stone-900 dark:text-white font-mono">{t.period}</td>
+                        <tr
+                          key={t.period}
+                          className="hover:bg-stone-50/50 dark:hover:bg-stone-800/30 transition-colors"
+                        >
+                          <td className="py-2.5 px-3 font-semibold text-stone-900 dark:text-white font-mono">
+                            {t.period}
+                          </td>
                           <td className="py-2.5 px-3 text-right text-stone-600 dark:text-stone-300 font-mono">
                             {t.adjustmentsCount}
                           </td>
@@ -914,9 +1259,12 @@ export function CompensationAnalyticsView({ data, searchParams }: CompensationAn
               </div>
             ) : (
               <div className="py-12 flex flex-col items-center justify-center text-center text-stone-400">
-                <p className="text-xs">No salary history adjustments have been recorded yet.</p>
+                <p className="text-xs">
+                  No salary history adjustments have been recorded yet.
+                </p>
                 <p className="text-[11px] text-stone-500 mt-1">
-                  Adjustments created via the Salary Adjustment Workflow on employee pages will appear here.
+                  Adjustments created via the Salary Adjustment Workflow on
+                  employee pages will appear here.
                 </p>
               </div>
             )}

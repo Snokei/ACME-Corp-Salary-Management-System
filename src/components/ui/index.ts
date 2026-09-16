@@ -12,4 +12,6 @@ export * from './SearchableSelect';
 export * from './Drawer';  
 export * from './FilterSkeleton';
 export * from './TableSkeleton';
+export * from './MetricsSkeleton';
+export * from './AnalyticsChartsSkeleton';
  

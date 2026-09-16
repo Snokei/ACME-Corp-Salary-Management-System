@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { AnalyticsDataFetcher } from '@/components/analytics/AnalyticsDataFetcher';
-import { FilterSkeleton } from '@/components/ui';
+import { FilterSkeleton, MetricsSkeleton, TableSkeleton, AnalyticsChartsSkeleton } from '@/components/ui';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { BarChart3 } from 'lucide-react';
 
@@ -32,7 +32,9 @@ export default function CompensationAnalyticsPage({ searchParams }: Compensation
         fallback={
           <div className="space-y-6">
             <FilterSkeleton />
-            <div className="w-full h-[600px] rounded-3xl border border-stone-200/50 dark:border-stone-800/50 bg-white/50 dark:bg-stone-900/50 animate-pulse" />
+            <MetricsSkeleton count={5} />
+            <AnalyticsChartsSkeleton />
+            <TableSkeleton />
           </div>
         }
       >
