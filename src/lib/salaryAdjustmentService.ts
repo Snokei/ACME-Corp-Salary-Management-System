@@ -121,6 +121,7 @@ export async function createSalaryAdjustment(
         amount: validated.amount,
         currency,
         amountUSD,
+        previousAmountUSD: employee.baseSalaryUSD,
         effectiveDate: validated.effectiveDate,
         reason: validated.reason,
         notes: validated.notes,

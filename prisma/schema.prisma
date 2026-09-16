@@ -48,6 +48,7 @@ model SalaryHistory {
   amount        Float
   currency      String   @default("USD")
   amountUSD     Float
+  previousAmountUSD Float?
   effectiveDate DateTime
   reason        String
   notes         String?
