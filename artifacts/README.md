@@ -11,6 +11,7 @@ These artifacts explain how ACME Salary Management System was framed, designed, 
 | [`architecture.md`](./architecture.md) | System architecture and data/request flow |
 | [`tradeoffs.md`](./tradeoffs.md) | Major design and technology trade-offs |
 | [`performance.md`](./performance.md) | Scale and performance considerations for 10k employees |
+| [`testing.md`](./testing.md) | What unit tests cover and why |
 | [`ai_workflow.md`](./ai_workflow.md) | How AI tools were used intentionally |
 | [`optimization_report.md`](./optimization_report.md) | Known optimizations and follow-up improvements |
 

@@ -101,6 +101,7 @@ Thinking, design, and trade-offs for reviewers:
 | Architecture | [`artifacts/architecture.md`](./artifacts/architecture.md) |
 | Trade-offs | [`artifacts/tradeoffs.md`](./artifacts/tradeoffs.md) |
 | Performance | [`artifacts/performance.md`](./artifacts/performance.md) |
+| Testing | [`artifacts/testing.md`](./artifacts/testing.md) |
 | AI workflow | [`artifacts/ai_workflow.md`](./artifacts/ai_workflow.md) |
 
 ## Scripts
