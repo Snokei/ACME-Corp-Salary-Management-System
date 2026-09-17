@@ -30,7 +30,7 @@ This project uses the **Prisma / Postgres integration** on Vercel. These are man
 
 After pushing code that uses PostgreSQL, **Redeploy**. The build runs `prisma db push` + seed (~10k employees) into your Vercel Postgres.
 
-> Video demo: add your walkthrough link here when ready.
+> **Video demo:** [Watch on Google Drive](https://drive.google.com/file/d/17IXIJIGACWAUo-E96QJjMRGakoR0SHe4/view?usp=sharing)
 
 ## What it does
 
