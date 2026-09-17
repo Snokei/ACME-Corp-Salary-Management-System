@@ -48,7 +48,28 @@ Plain Excel-replacement CRUD fails the second job. The product therefore centers
 
 Bands, planning, and audit are **not** random extras — they support the assessment’s “answer questions about how the org pays people” with structure, foresight, and accountability.
 
-## 5. Product principles
+## 5. Visual design research (Dribbble & Pinterest)
+
+UI was **not** invented from a blank Tailwind default. Before building components I researched HR / analytics / dashboard references on:
+
+- **[Dribbble](https://dribbble.com)** — modern SaaS dashboards, pill navigation, metric cards, soft glass panels  
+- **[Pinterest](https://www.pinterest.com)** — mood boards for warm neutrals, typography hierarchy, and ops-console layouts  
+
+From those references I extracted a **single theme system** and rebuilt reusable UI to match it, rather than one-off page styles:
+
+| Theme signal | How it shows up in the app |
+|--------------|----------------------------|
+| Warm stone + amber accent | Backgrounds (`#FBF9F5` / dark stone), amber CTAs and active states |
+| Glass / soft panels | Shared `GlassCard` and translucent borders (`bg-white/70`, blur) |
+| Pill chrome | Nav pills, filter pills, rounded buttons (`shape="pill"`) |
+| Dense HR ops layout | Tables + drawers/modals, not a marketing landing page |
+| Light / dark | Theme provider + toggle so the same components work in both modes |
+
+Reusable building blocks live under `src/components/ui/` (`Button`, `Input`, `Modal`, `Drawer`, `Table`, `GlassCard`, skeletons, etc.). Feature screens compose those primitives so the product stays **theme-consistent** across Dashboard, People, Bands, Analytics, and Planning.
+
+AI helped **implement** components to that theme; choosing the visual direction from Dribbble/Pinterest and locking the token set was a **human design decision**.
+
+## 6. Product principles
 
 1. **History over overwrite** — salary changes create `SalaryHistory`; prior values remain.
 2. **USD normalization** — local currency stored; analytics/planning use USD for cross-country sense.
@@ -56,8 +77,9 @@ Bands, planning, and audit are **not** random extras — they support the assess
 4. **Evidence, not AI decisions** — scenarios and metrics inform HR; no auto-approve raises.
 5. **Thin pages, fat services** — business rules live in `src/lib/*` with Vitest coverage on money math.
 6. **Fail-soft audit** — logging must not break the primary mutation path.
+7. **Theme-first UI** — shared primitives follow one visual system derived from design research.
 
-## 6. Success criteria (assessment + shipped product)
+## 7. Success criteria (assessment + shipped product)
 
 An HR Manager can:
 
@@ -71,6 +93,6 @@ An HR Manager can:
 8. Rely on unit tests for core calculation domains.
 9. Use a seeded dataset of ~10,000 employees on a deployed app.
 
-## 7. Evolution note
+## 8. Evolution note
 
 Commit history shows incremental growth: UI shell → people/auth → salary history → bands → analytics → planning → SSR/skeletons → deploy hardening → docs. That matches intentional scope growth from **manage** → **analyze** → **plan** → **account**.

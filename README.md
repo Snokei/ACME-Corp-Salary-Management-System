@@ -106,6 +106,8 @@ Thinking, design, and trade-offs for reviewers:
 | Performance | [`artifacts/performance.md`](./artifacts/performance.md) |
 | Testing | [`artifacts/testing.md`](./artifacts/testing.md) |
 | AI workflow | [`artifacts/ai_workflow.md`](./artifacts/ai_workflow.md) |
+| AI feature plan (Analytics) | [`artifacts/ai_plan_compensation_analytics.md`](./artifacts/ai_plan_compensation_analytics.md) |
+| AI walkthrough (Salary Bands) | [`artifacts/ai_walkthrough_salary_bands.md`](./artifacts/ai_walkthrough_salary_bands.md) |
 
 ## Scripts
 

@@ -215,6 +215,7 @@ npm run test:watch   # Vitest watch
 
 ## UI / product character
 
+- Visual direction researched on **Dribbble** and **Pinterest** (HR/SaaS dashboards), then locked into a **theme-based** component set under `src/components/ui/`
 - Warm stone + amber visual language, glass-style cards, pill navigation
 - Dark mode supported (default HTML class includes dark)
 - Responsive layout with mobile nav

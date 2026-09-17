@@ -13,6 +13,8 @@ These artifacts explain how ACME Salary Management System was framed, designed, 
 | [`performance.md`](./performance.md) | Scale and performance considerations for 10k employees |
 | [`testing.md`](./testing.md) | What unit tests cover and why |
 | [`ai_workflow.md`](./ai_workflow.md) | How AI tools were used intentionally |
+| [`ai_plan_compensation_analytics.md`](./ai_plan_compensation_analytics.md) | Example AI implementation plan (Analytics feature) |
+| [`ai_walkthrough_salary_bands.md`](./ai_walkthrough_salary_bands.md) | Walkthrough: Salary Bands & Compa-Ratio |
 | [`optimization_report.md`](./optimization_report.md) | Known optimizations and follow-up improvements |
 
 There is no required Incubyte format — this set is structured so reviewers can quickly see **thinking → decisions → shipped system**.

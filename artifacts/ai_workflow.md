@@ -65,11 +65,19 @@ Representative instruction styles used with agents (condensed):
 
 > Write assessment artifacts from what the repo actually ships (see PRODUCT_OVERVIEW). Be explicit about out-of-scope and trade-offs.
 
+### Full feature brief (example)
+
+For larger features, AI was given a structured **implementation plan** (schema → service → API → UI → tests → verification), not a one-line ask.  
+Concrete examples:
+
+- Analytics **plan before build:** [`ai_plan_compensation_analytics.md`](./ai_plan_compensation_analytics.md)
+- Salary Bands **walkthrough after build:** [`ai_walkthrough_salary_bands.md`](./ai_walkthrough_salary_bands.md)
+
 ## 5. Where AI helped most
 
 | Area | AI contribution | Human gate |
 |------|-----------------|------------|
-| UI volume (tables, drawers, skeletons) | Fast scaffolding | Visual/UX consistency |
+| UI volume (tables, drawers, skeletons) | Fast scaffolding to match the Dribbble/Pinterest-inspired theme | Visual consistency vs references |
 | Prisma models & seed shape | Boilerplate | Indexes, USD fields, uniqueness |
 | Analytics/planning services | First draft logic | Edge cases, N+1 awareness, tests |
 | Vitest suites | Case generation | Determinism, naming, assertions |
@@ -87,7 +95,7 @@ Representative instruction styles used with agents (condensed):
 
 - **Incremental commits** show evolution, not a single dump.
 - **Unit tests** lock formulas AI might get subtly wrong.
-- **Artifacts** (this file + requirements/design/architecture/tradeoffs/performance) show the decision trail.
+- **Artifacts** (this file + requirements/design/architecture/tradeoffs/performance + [AI feature plans](./ai_plan_compensation_analytics.md)) show the decision trail.
 - **PRODUCT_OVERVIEW** documents the shipped system without aspirational vaporware.
 
 ## 8. Interview talking points
