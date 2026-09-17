@@ -6,7 +6,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  // Use DATABASE_URL in env (local + Vercel). Example: file:./dev.db
+  // Relative to the prisma/ directory. On Vercel set: DATABASE_URL="file:./dev.db"
   url      = env("DATABASE_URL")
 }
 

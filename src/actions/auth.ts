@@ -65,21 +65,30 @@ export async function loginAction(formData: FormData) {
     return { success: true };
   } catch (error) {
     console.error('Login error:', error);
-    const message = error instanceof Error ? error.message : '';
-    // Surface DB path / missing-file errors clearly on production demos
+    const message = error instanceof Error ? error.message : String(error);
+    // Help diagnose production misconfig (SQLite path / wrong DATABASE_URL / etc.)
     if (
       message.includes('Unable to open') ||
       message.includes('does not exist') ||
       message.includes('SQLITE') ||
       message.includes('P1001') ||
-      message.includes('P1003')
+      message.includes('P1003') ||
+      message.includes('P1012') ||
+      message.includes('the URL must start with the protocol') ||
+      message.includes('Error validating datasource') ||
+      message.includes('postgres') ||
+      message.includes('PrismaClientInitializationError')
     ) {
       return {
         success: false,
-        error: 'Database unavailable on server. Ensure DATABASE_URL and seeded prisma/dev.db are deployed.',
+        error:
+          'Database unavailable. On Vercel set DATABASE_URL to file:./dev.db (not Postgres) and redeploy so the build can seed SQLite.',
       };
     }
-    return { success: false, error: 'An unexpected error occurred.' };
+    return {
+      success: false,
+      error: `Login failed: ${message.slice(0, 180)}`,
+    };
   }
 }
 
