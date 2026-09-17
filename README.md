@@ -53,7 +53,7 @@ Full shipped feature list: [`PRODUCT_OVERVIEW.md`](./PRODUCT_OVERVIEW.md)
 | UI | Tailwind CSS, Lucide, Recharts |
 | Database | SQLite via Prisma |
 | Auth | JWT (`jose`) + bcrypt, HTTP-only cookie |
-| Tests | Vitest |
+| Tests | Vitest (unit) + Playwright (E2E) |
 
 ## Quick start (local)
 
@@ -74,7 +74,9 @@ npm run db:seed          # ~10,000 employees + admin user + bands
 npm run dev              # http://localhost:3000
 
 # Tests
-npm test
+npm test                 # Vitest unit tests
+npm run test:e2e         # Playwright E2E smoke (starts local server)
+# BASE_URL=https://acme-corp-salary-management-system.vercel.app npm run test:e2e
 ```
 
 ## Project structure
@@ -84,7 +86,8 @@ src/app/           # Pages + API routes
 src/components/    # UI by domain
 src/lib/           # Domain services (analytics, planning, bands, …)
 src/actions/       # Server Actions (auth, mutations)
-src/__tests__/     # Unit tests
+src/__tests__/     # Unit tests (Vitest)
+e2e/               # Browser E2E tests (Playwright)
 prisma/            # Schema + seed
 artifacts/         # Assessment thinking docs
 ```

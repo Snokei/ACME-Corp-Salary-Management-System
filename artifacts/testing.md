@@ -1,9 +1,11 @@
 # ACME Salary Management — Test Coverage
 
-> Unit tests for core compensation logic. Run with `npm test` (Vitest).  
+> Unit tests (Vitest) + browser E2E smoke tests (Playwright).  
 > Assessment goal: meaningful, fast, deterministic tests — not UI snapshot spam.
 
 ## Summary
+
+### Unit tests (Vitest) — `npm test`
 
 | Suite | File | Tests | What it protects |
 |-------|------|------:|------------------|
@@ -12,7 +14,15 @@
 | Compensation analytics | `src/__tests__/compensationAnalytics.test.ts` | 10 | Org-level “how we pay” answers |
 | Compensation planning | `src/__tests__/compensationPlanning.test.ts` | 11 | Budget plans, scenarios, finalize |
 
-**Total: 46 tests** (all targeting `src/lib/*` business logic).
+**Total: 46 unit tests** (targeting `src/lib/*` business logic).
+
+### E2E smoke (Playwright) — `npm run test:e2e`
+
+| Spec | File | What it covers |
+|------|------|----------------|
+| Auth + navigation smoke | `e2e/smoke.spec.ts` | Login redirect, admin login, People / Salary Bands / Analytics navigation, bad password |
+
+These hit the real Next.js app in Chromium (starts `npm run dev` automatically unless `BASE_URL` is set).
 
 ---
 
@@ -112,8 +122,8 @@
 
 ## What we deliberately did **not** over-test
 
-- Presentational React components / CSS  
-- Full browser E2E flows (optional for demos; not required for this unit-test bar)  
+- Presentational React components / CSS snapshot suites  
+- Exhaustive E2E coverage of every modal (smoke paths only)  
 - Every API route as HTTP (services are tested directly — faster and clearer)
 
 ---
@@ -121,8 +131,17 @@
 ## How to run
 
 ```bash
-npm test          # once
+npm test              # Vitest unit tests (46)
 npm run test:watch
+
+# Playwright E2E — needs .env with DATABASE_URL + JWT_SECRET and a seeded admin user
+npx playwright install chromium   # once
+npm run test:e2e                  # starts npm run dev automatically
+npm run test:e2e:ui               # interactive Playwright UI
+npm run test:e2e:headed           # watch the browser
+
+# Against the deployed demo instead of local:
+# BASE_URL=https://acme-corp-salary-management-system.vercel.app npm run test:e2e
 ```
 
-Tests should stay **fast**, **deterministic**, and readable so reviewers (and future changes) can trust the money paths.
+Tests should stay **fast**, **deterministic**, and readable so reviewers (and future changes) can trust the money paths and critical UI flows.
