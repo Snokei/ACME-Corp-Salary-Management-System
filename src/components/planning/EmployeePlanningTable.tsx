@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import {
   Users,
   Percent,
@@ -22,8 +22,6 @@ import {
   TableEmpty,
   TablePagination,
   Button,
-  SearchInput,
-  Select,
   SearchableSelect,
   Modal,
   Input,
@@ -114,23 +112,24 @@ const EmployeePlanningRow = memo(function EmployeePlanningRow({
   onUpdateItem,
   onRemoveItem,
 }: EmployeePlanningRowProps) {
-  const [pct, setPct] = useState(String(item.increasePercentage));
-  const [salary, setSalary] = useState(String(item.proposedSalaryUSD));
+  const [draft, setDraft] = useState({
+    pct: String(item.increasePercentage),
+    salary: String(item.proposedSalaryUSD),
+  });
 
-  // Sync state if server updates row item
   useEffect(() => {
-    setPct(String(item.increasePercentage));
+    setDraft((prev) => ({ ...prev, pct: String(item.increasePercentage) }));
   }, [item.increasePercentage]);
 
   useEffect(() => {
-    setSalary(String(item.proposedSalaryUSD));
+    setDraft((prev) => ({ ...prev, salary: String(item.proposedSalaryUSD) }));
   }, [item.proposedSalaryUSD]);
 
   const handlePctBlur = () => {
-    const num = parseFloat(pct);
+    const num = parseFloat(draft.pct);
     if (isNaN(num) || num < 0) {
       toast.error("Increase percentage must be a non-negative number");
-      setPct(String(item.increasePercentage));
+      setDraft((prev) => ({ ...prev, pct: String(item.increasePercentage) }));
       return;
     }
     if (num !== item.increasePercentage) {
@@ -139,10 +138,10 @@ const EmployeePlanningRow = memo(function EmployeePlanningRow({
   };
 
   const handleSalaryBlur = () => {
-    const num = parseFloat(salary);
+    const num = parseFloat(draft.salary);
     if (isNaN(num) || num < item.currentSalaryUSD) {
       toast.error("Proposed salary cannot be less than current salary");
-      setSalary(String(item.proposedSalaryUSD));
+      setDraft((prev) => ({ ...prev, salary: String(item.proposedSalaryUSD) }));
       return;
     }
     if (num !== item.proposedSalaryUSD) {
@@ -212,8 +211,8 @@ const EmployeePlanningRow = memo(function EmployeePlanningRow({
               min="0"
               max="100"
               step="0.5"
-              value={pct}
-              onChange={(e) => setPct(e.target.value)}
+              value={draft.pct}
+              onChange={(e) => setDraft((prev) => ({ ...prev, pct: e.target.value }))}
               onBlur={handlePctBlur}
               onKeyDown={(e) => {
                 if (e.key === "Enter") e.currentTarget.blur();
@@ -243,8 +242,8 @@ const EmployeePlanningRow = memo(function EmployeePlanningRow({
               type="number"
               min={item.currentSalaryUSD}
               step="100"
-              value={salary}
-              onChange={(e) => setSalary(e.target.value)}
+              value={draft.salary}
+              onChange={(e) => setDraft((prev) => ({ ...prev, salary: e.target.value }))}
               onBlur={handleSalaryBlur}
               onKeyDown={(e) => {
                 if (e.key === "Enter") e.currentTarget.blur();
@@ -286,54 +285,62 @@ export function EmployeePlanningTable({
   onRefreshPlan,
 }: EmployeePlanningTableProps) {
   const [items, setItems] = useState<EmployeeItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [department, setDepartment] = useState("All");
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Bulk update state
-  const [bulkPct, setBulkPct] = useState("5.0");
-  const [isBulkApplying, setIsBulkApplying] = useState(false);
-  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [query, setQuery] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+    searchInput: "",
+    debouncedSearch: "",
+    department: "All",
+    isLoading: true,
+  });
+  const [bulk, setBulk] = useState({
+    pct: "5.0",
+    isApplying: false,
+    showModal: false,
+  });
 
   // Debounce search input by 300ms to eliminate network storm
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-      setPage(1);
+      setQuery((prev) => ({
+        ...prev,
+        debouncedSearch: prev.searchInput,
+        page: 1,
+      }));
     }, 300);
     return () => clearTimeout(handler);
-  }, [searchInput]);
+  }, [query.searchInput]);
 
   const fetchItems = useCallback(async () => {
-    setIsLoading(true);
+    setQuery((prev) => ({ ...prev, isLoading: true }));
     try {
       const params = new URLSearchParams({
-        page: String(page),
-        limit: String(limit),
+        page: String(query.page),
+        limit: String(query.limit),
       });
-      if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
-      if (department !== "All") params.set("department", department);
+      if (query.debouncedSearch.trim()) params.set("search", query.debouncedSearch.trim());
+      if (query.department !== "All") params.set("department", query.department);
 
       const res = await fetch(`/api/compensation-planning/${planId}/items?${params.toString()}`);
       const data = await res.json();
 
       if (data.success && data.data) {
         setItems(data.data.items || []);
-        setTotal(data.data.total || 0);
-        setTotalPages(data.data.totalPages || 1);
+        setQuery((prev) => ({
+          ...prev,
+          total: data.data.total || 0,
+          totalPages: data.data.totalPages || 1,
+        }));
       }
     } catch (err) {
       console.error("Failed to fetch employee planning items:", err);
       toast.error("Failed to load employee planning table");
     } finally {
-      setIsLoading(false);
+      setQuery((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [planId, page, limit, debouncedSearch, department]);
+  }, [planId, query.page, query.limit, query.debouncedSearch, query.department]);
 
   useEffect(() => {
     fetchItems();
@@ -364,7 +371,6 @@ export function EmployeePlanningTable({
           throw new Error(data.error || "Failed to update employee salary proposal");
         }
 
-        // Optimistically update the single item row
         if (data.data) {
           setItems((prev) =>
             prev.map((item) => (item.id === itemId ? { ...item, ...data.data } : item))
@@ -373,8 +379,9 @@ export function EmployeePlanningTable({
           fetchItems();
         }
         onRefreshPlan();
-      } catch (err: any) {
-        toast.error(err.message || "Failed to update item");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to update item";
+        toast.error(message);
         fetchItems();
       }
     },
@@ -396,27 +403,28 @@ export function EmployeePlanningTable({
         toast.success("Employee removed from plan");
         fetchItems();
         onRefreshPlan();
-      } catch (err: any) {
-        toast.error(err.message || "Could not remove employee");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Could not remove employee";
+        toast.error(message);
       }
     },
     [planId, fetchItems, onRefreshPlan]
   );
 
   const handleApplyBulkIncrease = async () => {
-    const pctNum = parseFloat(bulkPct);
+    const pctNum = parseFloat(bulk.pct);
     if (isNaN(pctNum) || pctNum < 0) {
       toast.error("Please enter a valid percentage increase");
       return;
     }
 
-    setIsBulkApplying(true);
+    setBulk((prev) => ({ ...prev, isApplying: true }));
     try {
       const res = await fetch(`/api/compensation-planning/${planId}/items/bulk-update`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          department: department === "All" ? undefined : department,
+          department: query.department === "All" ? undefined : query.department,
           increasePercentage: pctNum,
         }),
       });
@@ -427,14 +435,23 @@ export function EmployeePlanningTable({
       }
 
       toast.success(`Applied ${pctNum}% increase to ${data.data.count} employees!`);
-      setShowBulkModal(false);
+      setBulk((prev) => ({ ...prev, showModal: false }));
       fetchItems();
       onRefreshPlan();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to apply bulk increase");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to apply bulk increase";
+      toast.error(message);
     } finally {
-      setIsBulkApplying(false);
+      setBulk((prev) => ({ ...prev, isApplying: false }));
     }
+  };
+
+  const applySearchNow = () => {
+    setQuery((prev) => ({
+      ...prev,
+      debouncedSearch: prev.searchInput,
+      page: 1,
+    }));
   };
 
   return (
@@ -444,8 +461,7 @@ export function EmployeePlanningTable({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            setDebouncedSearch(searchInput);
-            setPage(1);
+            applySearchNow();
           }}
           className="flex-1 max-w-2xl flex items-center gap-2.5 flex-wrap sm:flex-nowrap"
         >
@@ -453,8 +469,10 @@ export function EmployeePlanningTable({
             <Input
               placeholder="Search employee by name, ID or role..."
               shape="pill"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              value={query.searchInput}
+              onChange={(e) =>
+                setQuery((prev) => ({ ...prev, searchInput: e.target.value }))
+              }
               leftIcon={<Search className="w-4 h-4 text-stone-400" />}
               containerClassName="w-full"
             />
@@ -463,10 +481,7 @@ export function EmployeePlanningTable({
               variant="primary"
               size="md"
               shape="pill"
-              onClick={() => {
-                setDebouncedSearch(searchInput);
-                setPage(1);
-              }}
+              onClick={applySearchNow}
             >
               Search
             </Button>
@@ -475,12 +490,11 @@ export function EmployeePlanningTable({
           <SearchableSelect
             name="department"
             options={DEPARTMENTS}
-            defaultValue={department}
+            defaultValue={query.department}
             placeholder="All Departments"
             shape="pill"
             onChange={(val) => {
-              setDepartment(val);
-              setPage(1);
+              setQuery((prev) => ({ ...prev, department: val, page: 1 }));
             }}
           />
         </form>
@@ -492,7 +506,7 @@ export function EmployeePlanningTable({
               variant="secondary"
               size="md"
               shape="pill"
-              onClick={() => setShowBulkModal(true)}
+              onClick={() => setBulk((prev) => ({ ...prev, showModal: true }))}
               leftIcon={<Sparkles className="w-3.5 h-3.5 text-amber-500" />}
             >
               Bulk Apply %
@@ -520,7 +534,7 @@ export function EmployeePlanningTable({
           </TableHeader>
 
           <TableBody>
-            {isLoading ? (
+            {query.isLoading ? (
               <TableLoading colSpan={isEditable ? 10 : 9} message="Loading employee salary proposals..." />
             ) : items.length === 0 ? (
               <TableEmpty
@@ -545,19 +559,19 @@ export function EmployeePlanningTable({
 
         {/* Pagination Footer */}
         <TablePagination
-          page={page}
-          totalPages={totalPages}
-          totalCount={total}
-          pageSize={limit}
-          onPageChange={setPage}
+          page={query.page}
+          totalPages={query.totalPages}
+          totalCount={query.total}
+          pageSize={query.limit}
+          onPageChange={(page) => setQuery((prev) => ({ ...prev, page }))}
           itemLabel="employees"
         />
       </TableContainer>
 
       {/* Bulk Apply Increase Modal */}
       <Modal
-        isOpen={showBulkModal}
-        onClose={() => setShowBulkModal(false)}
+        isOpen={bulk.showModal}
+        onClose={() => setBulk((prev) => ({ ...prev, showModal: false }))}
         maxWidth="md"
         title={
           <div className="flex items-center gap-3">
@@ -581,9 +595,9 @@ export function EmployeePlanningTable({
               Target Scope
             </label>
             <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200/70 dark:border-stone-800 text-xs text-stone-800 dark:text-stone-200 font-medium">
-              {department === "All"
+              {query.department === "All"
                 ? "All employees in compensation plan"
-                : `Employees in ${department} department`}
+                : `Employees in ${query.department} department`}
             </div>
           </div>
 
@@ -594,8 +608,8 @@ export function EmployeePlanningTable({
               min="0"
               max="100"
               step="0.5"
-              value={bulkPct}
-              onChange={(e) => setBulkPct(e.target.value)}
+              value={bulk.pct}
+              onChange={(e) => setBulk((prev) => ({ ...prev, pct: e.target.value }))}
               shape="rounded"
               rightIcon={<Percent className="w-4 h-4 text-stone-400" />}
             />
@@ -607,7 +621,7 @@ export function EmployeePlanningTable({
               variant="secondary"
               size="sm"
               shape="pill"
-              onClick={() => setShowBulkModal(false)}
+              onClick={() => setBulk((prev) => ({ ...prev, showModal: false }))}
             >
               Cancel
             </Button>
@@ -616,7 +630,7 @@ export function EmployeePlanningTable({
               variant="primary"
               size="sm"
               shape="pill"
-              isLoading={isBulkApplying}
+              isLoading={bulk.isApplying}
               onClick={handleApplyBulkIncrease}
             >
               Apply Bulk Increase

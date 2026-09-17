@@ -9,13 +9,19 @@ import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@acme.com");
-  const [password, setPassword] = useState("password123");
+  const [credentials, setCredentials] = useState({
+    email: "admin@acme.com",
+    password: "password123",
+  });
   const [isLoading, setIsLoading] = useState(false);
+
+  const updateCredential = (field: "email" | "password", value: string) => {
+    setCredentials((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!credentials.email || !credentials.password) {
       toast.error("Please enter both email and password.");
       return;
     }
@@ -23,8 +29,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     const formData = new FormData();
-    formData.append("email", email);
-    formData.append("password", password);
+    formData.append("email", credentials.email);
+    formData.append("password", credentials.password);
 
     const result = await loginAction(formData);
 
@@ -41,9 +47,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-[calc(100vh-2rem)] w-full flex items-center justify-center -mt-6">
       <div className="w-full max-w-5xl h-[600px] bg-white/40 dark:bg-stone-900/40 backdrop-blur-2xl border border-stone-200/50 dark:border-stone-800/50 rounded-3xl shadow-2xl overflow-hidden flex relative z-10">
-        {/* Left Side - Visual/Branding */}
         <div className="hidden lg:flex w-1/2 relative bg-stone-950 overflow-hidden flex-col justify-between p-12">
-          {/* Decorative gradients */}
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-amber-500/20 via-transparent to-transparent pointer-events-none"></div>
           <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-amber-500/30 rounded-full blur-[100px] pointer-events-none"></div>
           <div className="absolute top-32 -right-32 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] pointer-events-none"></div>
@@ -68,10 +72,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
         <div className="w-full lg:w-1/2 p-8 sm:p-12 md:p-16 flex flex-col justify-center bg-white/60 dark:bg-stone-950/60 backdrop-blur-md relative">
           <div className="max-w-sm w-full mx-auto">
-            {/* Mobile Branding (hidden on desktop) */}
             <div className="flex lg:hidden items-center gap-2 mb-8">
               <span className="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
               <span className="font-bold text-xl tracking-tight text-stone-900 dark:text-white">
@@ -94,8 +96,8 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 placeholder="jane.doe@acme.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={credentials.email}
+                onChange={(e) => updateCredential("email", e.target.value)}
                 leftIcon={<Mail className="w-4 h-4 text-stone-400" />}
                 required
                 disabled={isLoading}
@@ -107,8 +109,8 @@ export default function LoginPage() {
                   name="password"
                   type="password"
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={credentials.password}
+                  onChange={(e) => updateCredential("password", e.target.value)}
                   leftIcon={<Lock className="w-4 h-4 text-stone-400" />}
                   required
                   disabled={isLoading}

@@ -11,39 +11,54 @@ interface CreatePlanModalProps {
   onSuccess: (planId: string) => void;
 }
 
+const nextFy = `FY${new Date().getFullYear() + 1}`;
+
+const INITIAL_FORM = {
+  name: `${nextFy} Global Compensation Plan`,
+  fiscalYear: nextFy,
+  totalBudgetUSD: "2500000",
+  autoPopulateEmployees: true,
+};
+
 export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalProps) {
-  const [name, setName] = useState(`FY${new Date().getFullYear() + 1} Global Compensation Plan`);
-  const [fiscalYear, setFiscalYear] = useState(`FY${new Date().getFullYear() + 1}`);
-  const [totalBudgetUSD, setTotalBudgetUSD] = useState("2500000");
-  const [autoPopulateEmployees, setAutoPopulateEmployees] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [ui, setUi] = useState({ isSubmitting: false, error: null as string | null });
+
+  const updateForm = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setUi((prev) => ({ ...prev, error: null }));
 
-    const budgetNum = parseFloat(totalBudgetUSD);
+    const budgetNum = parseFloat(form.totalBudgetUSD);
     if (isNaN(budgetNum) || budgetNum < 0) {
-      setError("Please enter a valid positive total budget amount.");
+      setUi((prev) => ({
+        ...prev,
+        error: "Please enter a valid positive total budget amount.",
+      }));
       return;
     }
 
-    if (!name.trim() || !fiscalYear.trim()) {
-      setError("Plan name and fiscal year are required.");
+    if (!form.name.trim() || !form.fiscalYear.trim()) {
+      setUi((prev) => ({
+        ...prev,
+        error: "Plan name and fiscal year are required.",
+      }));
       return;
     }
 
-    setIsSubmitting(true);
+    setUi((prev) => ({ ...prev, isSubmitting: true }));
     try {
       const res = await fetch("/api/compensation-planning", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim(),
-          fiscalYear: fiscalYear.trim(),
+          name: form.name.trim(),
+          fiscalYear: form.fiscalYear.trim(),
           totalBudgetUSD: budgetNum,
-          autoPopulateEmployees,
+          autoPopulateEmployees: form.autoPopulateEmployees,
         }),
       });
 
@@ -56,10 +71,11 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
       toast.success("Compensation plan created successfully!");
       onSuccess(data.data.id);
       onClose();
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+      setUi((prev) => ({ ...prev, error: message }));
     } finally {
-      setIsSubmitting(false);
+      setUi((prev) => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -85,29 +101,27 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-        {error && (
+        {ui.error && (
           <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span className="break-words leading-relaxed">{error}</span>
+            <span className="break-words leading-relaxed">{ui.error}</span>
           </div>
         )}
 
-        {/* Plan Name */}
         <Input
           label="Plan Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={form.name}
+          onChange={(e) => updateForm("name", e.target.value)}
           placeholder="e.g. FY2027 Global Compensation Plan"
           required
           shape="rounded"
         />
 
-        {/* Fiscal Year & Total Budget Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Fiscal Year"
-            value={fiscalYear}
-            onChange={(e) => setFiscalYear(e.target.value)}
+            value={form.fiscalYear}
+            onChange={(e) => updateForm("fiscalYear", e.target.value)}
             placeholder="e.g. FY2027"
             required
             shape="rounded"
@@ -119,8 +133,8 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
             type="number"
             min="0"
             step="1000"
-            value={totalBudgetUSD}
-            onChange={(e) => setTotalBudgetUSD(e.target.value)}
+            value={form.totalBudgetUSD}
+            onChange={(e) => updateForm("totalBudgetUSD", e.target.value)}
             placeholder="2500000"
             required
             shape="rounded"
@@ -128,15 +142,14 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
           />
         </div>
 
-        {/* Option: Auto populate active employees */}
         <div
-          onClick={() => setAutoPopulateEmployees((prev) => !prev)}
+          onClick={() => updateForm("autoPopulateEmployees", !form.autoPopulateEmployees)}
           className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 dark:bg-stone-800/40 border border-stone-200/70 dark:border-stone-800 cursor-pointer group select-none transition-colors"
         >
           <div className="pt-0.5 shrink-0">
             <Checkbox
-              checked={autoPopulateEmployees}
-              onChange={(checked) => setAutoPopulateEmployees(checked)}
+              checked={form.autoPopulateEmployees}
+              onChange={(checked) => updateForm("autoPopulateEmployees", checked)}
               size="sm"
               ariaLabel="Auto-include all active employees & pro-rate department budgets"
             />
@@ -151,15 +164,8 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-200/80 dark:border-stone-800/80">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            shape="pill"
-            onClick={onClose}
-          >
+          <Button type="button" variant="secondary" size="sm" shape="pill" onClick={onClose}>
             Cancel
           </Button>
           <Button
@@ -167,7 +173,7 @@ export function CreatePlanModal({ isOpen, onClose, onSuccess }: CreatePlanModalP
             variant="primary"
             size="sm"
             shape="pill"
-            isLoading={isSubmitting}
+            isLoading={ui.isSubmitting}
             leftIcon={<CheckCircle2 className="w-4 h-4" />}
           >
             Create Compensation Plan
