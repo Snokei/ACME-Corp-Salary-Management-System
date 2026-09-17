@@ -26,6 +26,7 @@ import {
   Modal,
   Input,
   Avatar,
+  ConfirmDialog,
 } from "@/components/ui";
 
 interface EmployeeItem {
@@ -300,6 +301,10 @@ export function EmployeePlanningTable({
     isApplying: false,
     showModal: false,
   });
+  const [pendingRemove, setPendingRemove] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Debounce search input by 300ms to eliminate network storm
   useEffect(() => {
@@ -389,27 +394,32 @@ export function EmployeePlanningTable({
   );
 
   const handleRemoveItem = useCallback(
-    async (itemId: string, name: string) => {
-      if (!confirm(`Remove ${name} from compensation plan?`)) return;
-
-      try {
-        const res = await fetch(`/api/compensation-planning/${planId}/items/${itemId}`, {
-          method: "DELETE",
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || "Failed to remove employee");
-        }
-        toast.success("Employee removed from plan");
-        fetchItems();
-        onRefreshPlan();
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Could not remove employee";
-        toast.error(message);
-      }
+    (itemId: string, name: string) => {
+      setPendingRemove({ id: itemId, name });
     },
-    [planId, fetchItems, onRefreshPlan]
+    []
   );
+
+  const handleConfirmRemove = useCallback(async () => {
+    if (!pendingRemove) return;
+    try {
+      const res = await fetch(
+        `/api/compensation-planning/${planId}/items/${pendingRemove.id}`,
+        { method: "DELETE" }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to remove employee");
+      }
+      toast.success("Employee removed from plan");
+      setPendingRemove(null);
+      fetchItems();
+      onRefreshPlan();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not remove employee";
+      toast.error(message);
+    }
+  }, [pendingRemove, planId, fetchItems, onRefreshPlan]);
 
   const handleApplyBulkIncrease = async () => {
     const pctNum = parseFloat(bulk.pct);
@@ -638,6 +648,19 @@ export function EmployeePlanningTable({
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={!!pendingRemove}
+        title="Remove employee from plan"
+        message={
+          pendingRemove
+            ? `Remove ${pendingRemove.name} from this compensation plan?`
+            : ""
+        }
+        confirmLabel="Remove"
+        onConfirm={handleConfirmRemove}
+        onClose={() => setPendingRemove(null)}
+      />
     </div>
   );
 }

@@ -41,6 +41,7 @@ import {
   SearchableSelect,
   StatusBadge,
   GlassCard,
+  ConfirmDialog,
 } from "@/components/ui";
 import { CreatePlanModal } from "./CreatePlanModal";
 import { usePlanningContext } from "./PlanningProvider";
@@ -73,10 +74,17 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
   const router = useRouter();
   const [plans, setPlans] = useState<PlanItem[]>(initialPlans);
   const { isModalOpen, setIsModalOpen } = usePlanningContext();
-  const [search, setSearch] = useState("");
-  const [fiscalYearFilter, setFiscalYearFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [filters, setFilters] = useState({
+    search: "",
+    fiscalYear: "All",
+    status: "All",
+  });
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    name: string;
+    status: string;
+  } | null>(null);
 
   // Extract unique fiscal years for filter
   const fiscalYears = useMemo(() => {
@@ -102,17 +110,19 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
   const filteredPlans = useMemo(() => {
     return plans.filter((p) => {
       const matchesSearch =
-        !search.trim() ||
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.fiscalYear.toLowerCase().includes(search.toLowerCase()) ||
-        p.createdBy.toLowerCase().includes(search.toLowerCase());
+        !filters.search.trim() ||
+        p.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        p.fiscalYear.toLowerCase().includes(filters.search.toLowerCase()) ||
+        p.createdBy.toLowerCase().includes(filters.search.toLowerCase());
 
-      const matchesYear = fiscalYearFilter === "All" || p.fiscalYear === fiscalYearFilter;
-      const matchesStatus = statusFilter === "All" || p.status === statusFilter;
+      const matchesYear =
+        filters.fiscalYear === "All" || p.fiscalYear === filters.fiscalYear;
+      const matchesStatus =
+        filters.status === "All" || p.status === filters.status;
 
       return matchesSearch && matchesYear && matchesStatus;
     });
-  }, [plans, search, fiscalYearFilter, statusFilter]);
+  }, [plans, filters]);
 
   // Chart dataset comparing plans
   const chartData = useMemo(() => {
@@ -125,27 +135,30 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
     }));
   }, [plans]);
 
-  const handleDeletePlan = async (id: string, name: string, status: string) => {
+  const pendingDeleteMessage = (() => {
+    if (!pendingDelete) return "";
+    const { name, status } = pendingDelete;
     const isFinalized = status === "Finalized";
     const isNonDraft = status !== "Draft" && status !== "Rejected";
-
-    let confirmMsg = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
     if (isFinalized) {
-      confirmMsg = `⚠️ ADMIN ACTION: "${name}" is Finalized & Applied!\n\nForce deleting will remove this plan record. Employee base salaries will remain at their updated rates.\n\nAre you sure you want to permanently delete this plan as Admin?`;
-    } else if (isNonDraft) {
-      confirmMsg = `Are you sure you want to delete "${name}" (Status: ${status})? This action cannot be undone.`;
+      return `ADMIN ACTION: "${name}" is Finalized & Applied!\n\nForce deleting will remove this plan record. Employee base salaries will remain at their updated rates.\n\nAre you sure you want to permanently delete this plan as Admin?`;
     }
+    if (isNonDraft) {
+      return `Are you sure you want to delete "${name}" (Status: ${status})? This action cannot be undone.`;
+    }
+    return `Are you sure you want to delete "${name}"? This action cannot be undone.`;
+  })();
 
-    if (!confirm(confirmMsg)) {
-      return;
-    }
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+    const { id, name, status } = pendingDelete;
+    const isFinalized = status === "Finalized";
+    const isNonDraft = status !== "Draft" && status !== "Rejected";
 
     setIsDeleting(id);
     try {
       const url = `/api/compensation-planning/${id}${isNonDraft ? "?force=true" : ""}`;
-      const res = await fetch(url, {
-        method: "DELETE",
-      });
+      const res = await fetch(url, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Failed to delete plan");
@@ -153,8 +166,10 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
 
       toast.success(isFinalized ? "Plan force deleted (Admin)" : "Compensation plan deleted");
       setPlans((prev) => prev.filter((p) => p.id !== id));
-    } catch (err: any) {
-      toast.error(err.message || "Could not delete plan");
+      setPendingDelete(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not delete plan";
+      toast.error(message);
     } finally {
       setIsDeleting(null);
     }
@@ -327,8 +342,8 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
           {/* Search Input Component */}
           <div className="w-full sm:w-64">
             <SearchInput
-              value={search}
-              onChange={setSearch}
+              value={filters.search}
+              onChange={(val) => setFilters((prev) => ({ ...prev, search: val }))}
               placeholder="Search plans..."
             />
           </div>
@@ -338,10 +353,10 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
             <SearchableSelect
               name="fiscalYear"
               options={fiscalYears}
-              value={fiscalYearFilter}
+              value={filters.fiscalYear}
               placeholder="All Fiscal Years"
               shape="pill"
-              onChange={(val) => setFiscalYearFilter(val)}
+              onChange={(val) => setFilters((prev) => ({ ...prev, fiscalYear: val }))}
             />
           </div>
 
@@ -350,10 +365,10 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
             <SearchableSelect
               name="status"
               options={["All", "Draft", "In Review", "Approved", "Rejected", "Finalized"]}
-              value={statusFilter}
+              value={filters.status}
               placeholder="All Statuses"
               shape="pill"
-              onChange={(val) => setStatusFilter(val)}
+              onChange={(val) => setFilters((prev) => ({ ...prev, status: val }))}
             />
           </div>
         </div>
@@ -439,7 +454,13 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
                         size="sm"
                         shape="rounded"
                         disabled={isDeleting === plan.id}
-                        onClick={() => handleDeletePlan(plan.id, plan.name, plan.status)}
+                        onClick={() =>
+                          setPendingDelete({
+                            id: plan.id,
+                            name: plan.name,
+                            status: plan.status,
+                          })
+                        }
                         className="text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 p-1.5"
                         title={
                           plan.status === "Finalized"
@@ -468,6 +489,18 @@ export function CompensationPlanningOverview({ initialPlans = [] }: Compensation
           handleRefresh();
           router.push(`/compensation-planning/${newId}`);
         }}
+      />
+
+      <ConfirmDialog
+        isOpen={!!pendingDelete}
+        title="Delete compensation plan"
+        message={pendingDeleteMessage}
+        confirmLabel={
+          pendingDelete?.status === "Finalized" ? "Force Delete" : "Delete Plan"
+        }
+        isLoading={!!pendingDelete && isDeleting === pendingDelete.id}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setPendingDelete(null)}
       />
     </div>
   );

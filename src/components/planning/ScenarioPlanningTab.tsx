@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Sparkles, Percent, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
-import { GlassCard, Button } from "@/components/ui";
+import { GlassCard, Button, ConfirmDialog } from "@/components/ui";
 
 interface ScenarioSimulationResult {
   id: string;
@@ -30,25 +30,29 @@ export function ScenarioPlanningTab({
   onRefreshPlan,
 }: ScenarioPlanningTabProps) {
   const [scenarios, setScenarios] = useState<ScenarioSimulationResult[]>([]);
-  const [customPct, setCustomPct] = useState("4.5");
-  const [debouncedCustomPct, setDebouncedCustomPct] = useState("4.5");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isApplying, setIsApplying] = useState<string | null>(null);
+  const [custom, setCustom] = useState({ pct: "4.5", debouncedPct: "4.5" });
+  const [ui, setUi] = useState<{
+    isLoading: boolean;
+    applyingName: string | null;
+  }>({ isLoading: true, applyingName: null });
+  const [pendingApply, setPendingApply] = useState<{
+    pct: number;
+    name: string;
+  } | null>(null);
 
-  // Debounce custom percentage input to avoid firing API requests on every partial keystroke
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedCustomPct(customPct);
+      setCustom((prev) => ({ ...prev, debouncedPct: prev.pct }));
     }, 400);
     return () => clearTimeout(handler);
-  }, [customPct]);
+  }, [custom.pct]);
 
   useEffect(() => {
     const fetchScenarios = async () => {
-      setIsLoading(true);
+      setUi((prev) => ({ ...prev, isLoading: true }));
       try {
         const pcts = [3, 5, 7];
-        const customNum = parseFloat(debouncedCustomPct);
+        const customNum = parseFloat(custom.debouncedPct);
         if (!isNaN(customNum) && !pcts.includes(customNum)) {
           pcts.push(customNum);
         }
@@ -66,19 +70,18 @@ export function ScenarioPlanningTab({
         console.error("Failed to calculate scenario simulations:", err);
         toast.error("Failed to load scenario simulations");
       } finally {
-        setIsLoading(false);
+        setUi((prev) => ({ ...prev, isLoading: false }));
       }
     };
 
     fetchScenarios();
-  }, [planId, debouncedCustomPct]);
+  }, [planId, custom.debouncedPct]);
 
-  const handleApplyScenario = async (pct: number, scenarioName: string) => {
-    if (!confirm(`Apply ${pct}% increase across all employees for "${scenarioName}"?`)) {
-      return;
-    }
+  const handleConfirmApply = async () => {
+    if (!pendingApply) return;
+    const { pct, name: scenarioName } = pendingApply;
 
-    setIsApplying(scenarioName);
+    setUi((prev) => ({ ...prev, applyingName: scenarioName }));
     try {
       const res = await fetch(`/api/compensation-planning/${planId}/items/bulk-update`, {
         method: "POST",
@@ -92,15 +95,17 @@ export function ScenarioPlanningTab({
       }
 
       toast.success(`Applied ${pct}% scenario to all plan items!`);
+      setPendingApply(null);
       onRefreshPlan();
-    } catch (err: any) {
-      toast.error(err.message || "Could not apply scenario");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not apply scenario";
+      toast.error(message);
     } finally {
-      setIsApplying(null);
+      setUi((prev) => ({ ...prev, applyingName: null }));
     }
   };
 
-  if (isLoading) {
+  if (ui.isLoading) {
     return (
       <div className="p-12 text-center text-stone-400 text-xs">
         Calculating compensation scenario models...
@@ -110,7 +115,6 @@ export function ScenarioPlanningTab({
 
   return (
     <div className="space-y-6">
-      {/* Header Banner */}
       <GlassCard className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -124,7 +128,6 @@ export function ScenarioPlanningTab({
           </p>
         </div>
 
-        {/* Custom Scenario Input */}
         <div className="flex items-center gap-2 bg-stone-50 dark:bg-stone-950/80 p-2 rounded-2xl border border-stone-200/80 dark:border-stone-800">
           <span className="text-xs font-semibold text-stone-700 dark:text-stone-300 pl-2">
             Custom Scenario:
@@ -135,8 +138,8 @@ export function ScenarioPlanningTab({
               min="0"
               max="100"
               step="0.1"
-              value={customPct}
-              onChange={(e) => setCustomPct(e.target.value)}
+              value={custom.pct}
+              onChange={(e) => setCustom((prev) => ({ ...prev, pct: e.target.value }))}
               className="w-full pr-5 pl-2 py-1 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-right text-xs font-semibold text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400/50"
             />
             <Percent className="w-3 h-3 absolute right-1.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
@@ -144,7 +147,6 @@ export function ScenarioPlanningTab({
         </div>
       </GlassCard>
 
-      {/* Scenario Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {scenarios.map((scen) => {
           const isOverBudget = scen.remainingBudgetUSD < 0;
@@ -168,7 +170,6 @@ export function ScenarioPlanningTab({
                   </span>
                 </div>
 
-                {/* Main Metrics Breakdown */}
                 <div className="space-y-3 pt-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-stone-500 dark:text-stone-400">
@@ -199,7 +200,6 @@ export function ScenarioPlanningTab({
                     </span>
                   </div>
 
-                  {/* Utilization Progress */}
                   <div className="pt-2">
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="text-stone-500 dark:text-stone-400">Budget Utilization:</span>
@@ -223,16 +223,17 @@ export function ScenarioPlanningTab({
                 </div>
               </div>
 
-              {/* Action Button */}
               {isEditable && (
                 <Button
                   variant={isOverBudget ? "outline" : "primary"}
                   size="sm"
                   shape="pill"
                   className="w-full justify-center"
-                  disabled={isApplying === scen.name || isOverBudget}
-                  onClick={() => handleApplyScenario(scen.increasePct, scen.name)}
-                  isLoading={isApplying === scen.name}
+                  disabled={ui.applyingName === scen.name || isOverBudget}
+                  onClick={() =>
+                    setPendingApply({ pct: scen.increasePct, name: scen.name })
+                  }
+                  isLoading={ui.applyingName === scen.name}
                   rightIcon={!isOverBudget && <ArrowRight className="w-3.5 h-3.5" />}
                 >
                   {isOverBudget ? "Exceeds Total Budget" : "Apply Scenario to Plan"}
@@ -242,6 +243,21 @@ export function ScenarioPlanningTab({
           );
         })}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!pendingApply}
+        title="Apply scenario"
+        message={
+          pendingApply
+            ? `Apply ${pendingApply.pct}% increase across all employees for "${pendingApply.name}"?`
+            : ""
+        }
+        confirmLabel="Apply Scenario"
+        variant="primary"
+        isLoading={!!pendingApply && ui.applyingName === pendingApply.name}
+        onConfirm={handleConfirmApply}
+        onClose={() => setPendingApply(null)}
+      />
     </div>
   );
 }

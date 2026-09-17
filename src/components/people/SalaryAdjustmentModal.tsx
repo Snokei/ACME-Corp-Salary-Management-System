@@ -34,11 +34,13 @@ export function SalaryAdjustmentModal({
   onSuccess,
 }: SalaryAdjustmentModalProps) {
   const [step, setStep] = useState<'form' | 'confirm'>('form');
-  const [newSalary, setNewSalary] = useState<string>('');
-  const [effectiveDate, setEffectiveDate] = useState<string>('');
-  const [reason, setReason] = useState<string>('Annual Increase');
-  const [notes, setNotes] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [form, setForm] = useState({
+    newSalary: '',
+    effectiveDate: '',
+    reason: 'Annual Increase',
+    notes: '',
+  });
+  const [ui, setUi] = useState({ isSubmitting: false, loadingBand: false });
   const [errors, setErrors] = useState<{ newSalary?: string; effectiveDate?: string; reason?: string }>({});
   const [bandData, setBandData] = useState<{
     minSalary: number;
@@ -46,21 +48,26 @@ export function SalaryAdjustmentModal({
     maxSalary: number;
     payGrade: string;
   } | null>(null);
-  const [loadingBand, setLoadingBand] = useState<boolean>(false);
+
+  const updateForm = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
   useEffect(() => {
     if (isOpen && employee) {
       setStep('form');
-      setNewSalary('');
       const today = new Date().toISOString().split('T')[0];
-      setEffectiveDate(today);
-      setReason('Annual Increase');
-      setNotes('');
+      setForm({
+        newSalary: '',
+        effectiveDate: today,
+        reason: 'Annual Increase',
+        notes: '',
+      });
       setErrors({});
-      setIsSubmitting(false);
+      setUi({ isSubmitting: false, loadingBand: false });
 
       if (employee.payGrade) {
-        setLoadingBand(true);
+        setUi((prev) => ({ ...prev, loadingBand: true }));
         const empSalary = employee.baseSalaryUSD ?? employee.baseSalary ?? 0;
         getCompensationAnalysisAction(empSalary, employee.payGrade, employee.currency || 'USD')
           .then((res) => {
@@ -76,7 +83,7 @@ export function SalaryAdjustmentModal({
             }
           })
           .catch(() => setBandData(null))
-          .finally(() => setLoadingBand(false));
+          .finally(() => setUi((prev) => ({ ...prev, loadingBand: false })));
       } else {
         setBandData(null);
       }
@@ -86,7 +93,7 @@ export function SalaryAdjustmentModal({
   if (!employee) return null;
 
   const currentSalary = employee.baseSalaryUSD ?? employee.baseSalary ?? 0;
-  const numericNewSalary = parseFloat(newSalary);
+  const numericNewSalary = parseFloat(form.newSalary);
   const isValidNewSalary = !isNaN(numericNewSalary) && numericNewSalary > 0;
 
   const { change, percentage } = isValidNewSalary
@@ -127,17 +134,17 @@ export function SalaryAdjustmentModal({
   const validateForm = () => {
     const newErrors: { newSalary?: string; effectiveDate?: string; reason?: string } = {};
 
-    if (!newSalary || isNaN(numericNewSalary)) {
+    if (!form.newSalary || isNaN(numericNewSalary)) {
       newErrors.newSalary = 'New salary is required and must be a valid number';
     } else if (numericNewSalary <= 0) {
       newErrors.newSalary = 'New salary must be greater than 0';
     }
 
-    if (!effectiveDate) {
+    if (!form.effectiveDate) {
       newErrors.effectiveDate = 'Effective date is required';
     }
 
-    if (!reason || !reason.trim()) {
+    if (!form.reason || !form.reason.trim()) {
       newErrors.reason = 'Reason is required';
     }
 
@@ -153,19 +160,19 @@ export function SalaryAdjustmentModal({
   };
 
   const handleConfirmSubmit = async () => {
-    if (isSubmitting) return;
+    if (ui.isSubmitting) return;
 
-    setIsSubmitting(true);
+    setUi((prev) => ({ ...prev, isSubmitting: true }));
     const toastId = toast.loading('Applying salary adjustment...');
 
     try {
       const res = await createSalaryAdjustmentAction(employee.id, {
         amount: numericNewSalary,
         currency: employee.currency || 'USD',
-        amountUSD: numericNewSalary, // Assuming 1:1 or USD standard
-        effectiveDate,
-        reason,
-        notes,
+        amountUSD: numericNewSalary,
+        effectiveDate: form.effectiveDate,
+        reason: form.reason,
+        notes: form.notes,
       });
 
       if (res.success) {
@@ -175,10 +182,11 @@ export function SalaryAdjustmentModal({
       } else {
         toast.error(res.error || 'Failed to apply salary adjustment', { id: toastId });
       }
-    } catch (err: any) {
-      toast.error(err.message || 'An unexpected error occurred', { id: toastId });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      toast.error(message, { id: toastId });
     } finally {
-      setIsSubmitting(false);
+      setUi((prev) => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -186,7 +194,7 @@ export function SalaryAdjustmentModal({
     <Modal
       isOpen={isOpen}
       onClose={() => {
-        if (!isSubmitting) onClose();
+        if (!ui.isSubmitting) onClose();
       }}
       title={step === 'form' ? 'Add Salary Adjustment' : 'Confirm Salary Adjustment?'}
       maxWidth="lg"
@@ -225,9 +233,9 @@ export function SalaryAdjustmentModal({
                 step="any"
                 min="0"
                 placeholder="e.g. 135000"
-                value={newSalary}
+                value={form.newSalary}
                 onChange={(e) => {
-                  setNewSalary(e.target.value);
+                  updateForm('newSalary', e.target.value);
                   if (errors.newSalary) setErrors({ ...errors, newSalary: undefined });
                 }}
                 error={errors.newSalary}
@@ -240,9 +248,9 @@ export function SalaryAdjustmentModal({
               <Input
                 label="Effective Date"
                 type="date"
-                value={effectiveDate}
+                value={form.effectiveDate}
                 onChange={(e) => {
-                  setEffectiveDate(e.target.value);
+                  updateForm('effectiveDate', e.target.value);
                   if (errors.effectiveDate) setErrors({ ...errors, effectiveDate: undefined });
                 }}
                 error={errors.effectiveDate}
@@ -255,9 +263,9 @@ export function SalaryAdjustmentModal({
           <div>
             <Select
               label="Reason for Adjustment"
-              value={reason}
+              value={form.reason}
               onChange={(e) => {
-                setReason(e.target.value);
+                updateForm('reason', e.target.value);
                 if (errors.reason) setErrors({ ...errors, reason: undefined });
               }}
               error={errors.reason}
@@ -279,8 +287,8 @@ export function SalaryAdjustmentModal({
               rows={2}
               className="w-full rounded-xl bg-white/90 dark:bg-stone-800/90 border border-stone-200/80 dark:border-stone-700/80 p-2.5 text-xs text-stone-800 dark:text-stone-100 outline-none focus:ring-2 focus:ring-amber-400/50"
               placeholder="e.g. Promoted to Senior Software Engineer"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              value={form.notes}
+              onChange={(e) => updateForm('notes', e.target.value)}
             />
           </div>
 
@@ -392,7 +400,7 @@ export function SalaryAdjustmentModal({
             </div>
           )}
 
-          {loadingBand && (
+          {ui.loadingBand && (
             <div className="py-2 text-center text-xs text-stone-400 animate-pulse">
               Loading salary band metrics...
             </div>
@@ -506,7 +514,7 @@ export function SalaryAdjustmentModal({
                 </span>
                 <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full text-xs">
                   <Tag className="w-3 h-3" />
-                  {reason}
+                  {form.reason}
                 </span>
               </div>
             </div>
@@ -547,7 +555,7 @@ export function SalaryAdjustmentModal({
               <div>
                 <span className="text-stone-400 block text-[10px] uppercase font-bold">Effective Date</span>
                 <span className="font-semibold text-stone-800 dark:text-stone-200">
-                  {new Date(effectiveDate).toLocaleDateString('en-US', {
+                  {new Date(form.effectiveDate).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
@@ -581,10 +589,10 @@ export function SalaryAdjustmentModal({
                   </div>
                 </div>
               )}
-              {notes && (
+              {form.notes && (
                 <div className="col-span-2">
                   <span className="text-stone-400 block text-[10px] uppercase font-bold">Notes</span>
-                  <p className="text-stone-700 dark:text-stone-300 italic">{notes}</p>
+                  <p className="text-stone-700 dark:text-stone-300 italic">{form.notes}</p>
                 </div>
               )}
             </div>
@@ -595,7 +603,7 @@ export function SalaryAdjustmentModal({
               type="button"
               variant="outline"
               shape="pill"
-              disabled={isSubmitting}
+              disabled={ui.isSubmitting}
               onClick={() => setStep('form')}
             >
               Back
@@ -604,10 +612,10 @@ export function SalaryAdjustmentModal({
               type="button"
               variant="amber"
               shape="pill"
-              disabled={isSubmitting}
+              disabled={ui.isSubmitting}
               onClick={handleConfirmSubmit}
             >
-              {isSubmitting ? 'Saving...' : 'Confirm Salary Adjustment'}
+              {ui.isSubmitting ? 'Saving...' : 'Confirm Salary Adjustment'}
             </Button>
           </div>
         </div>

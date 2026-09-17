@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, GlassCard, StatusBadge } from "@/components/ui";
+import { Button, GlassCard, StatusBadge, ConfirmDialog } from "@/components/ui";
 import {
   AlertCircle,
   AlertTriangle,
@@ -80,8 +80,10 @@ export function CompensationPlanDetailView({
   const [activeTab, setActiveTab] = useState<
     "employees" | "departments" | "scenarios"
   >("employees");
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [ui, setUi] = useState({ isTransitioning: false, isDeleting: false });
+  const [confirmAction, setConfirmAction] = useState<
+    null | { type: "finalize" | "delete"; message: string; label: string }
+  >(null);
 
   const fetchPlanDetails = async () => {
     try {
@@ -97,16 +99,19 @@ export function CompensationPlanDetailView({
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === "Finalized") {
-      if (
-        !confirm(
-          `Finalize plan "${plan.name}"? This will permanently update employee base salaries in the system and generate salary history records!`,
-        )
-      ) {
-        return;
-      }
+      setConfirmAction({
+        type: "finalize",
+        label: "Finalize Plan",
+        message: `Finalize plan "${plan.name}"? This will permanently update employee base salaries in the system and generate salary history records!`,
+      });
+      return;
     }
 
-    setIsTransitioning(true);
+    await runStatusChange(newStatus);
+  };
+
+  const runStatusChange = async (newStatus: string) => {
+    setUi((prev) => ({ ...prev, isTransitioning: true }));
     try {
       const res = await fetch(`/api/compensation-planning/${plan.id}/status`, {
         method: "POST",
@@ -124,49 +129,55 @@ export function CompensationPlanDetailView({
           ? "Plan finalized & employee salaries updated!"
           : `Plan status updated to ${newStatus}`,
       );
+      setConfirmAction(null);
       fetchPlanDetails();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to change status");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to change status";
+      toast.error(message);
     } finally {
-      setIsTransitioning(false);
+      setUi((prev) => ({ ...prev, isTransitioning: false }));
     }
   };
 
-  const handleDeletePlan = async () => {
+  const requestDeletePlan = () => {
     const isFinalized = plan.status === "Finalized";
     const isNonDraft = plan.status !== "Draft" && plan.status !== "Rejected";
 
-    let confirmMsg = `Are you sure you want to delete "${plan.name}"? This action cannot be undone.`;
+    let message = `Are you sure you want to delete "${plan.name}"? This action cannot be undone.`;
     if (isFinalized) {
-      confirmMsg = `⚠️ ADMIN ACTION: "${plan.name}" has already been Finalized & Applied!\n\nForce deleting will remove the plan record. Employee base salaries will remain at their updated rates.\n\nAre you sure you want to permanently delete this plan as Admin?`;
+      message = `ADMIN ACTION: "${plan.name}" has already been Finalized & Applied!\n\nForce deleting will remove the plan record. Employee base salaries will remain at their updated rates.\n\nAre you sure you want to permanently delete this plan as Admin?`;
     } else if (isNonDraft) {
-      confirmMsg = `Are you sure you want to delete "${plan.name}" (Status: ${plan.status})? This action cannot be undone.`;
+      message = `Are you sure you want to delete "${plan.name}" (Status: ${plan.status})? This action cannot be undone.`;
     }
 
-    if (!confirm(confirmMsg)) {
-      return;
-    }
+    setConfirmAction({
+      type: "delete",
+      label: isFinalized ? "Force Delete" : "Delete Plan",
+      message,
+    });
+  };
 
-    setIsDeleting(true);
+  const handleConfirmDelete = async () => {
+    const isFinalized = plan.status === "Finalized";
+    const isNonDraft = plan.status !== "Draft" && plan.status !== "Rejected";
+
+    setUi((prev) => ({ ...prev, isDeleting: true }));
     try {
       const url = `/api/compensation-planning/${plan.id}${isNonDraft ? "?force=true" : ""}`;
-      const res = await fetch(url, {
-        method: "DELETE",
-      });
+      const res = await fetch(url, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Failed to delete plan");
       }
 
       toast.success(
-        isFinalized
-          ? "Plan force deleted (Admin)"
-          : "Compensation plan deleted",
+        isFinalized ? "Plan force deleted (Admin)" : "Compensation plan deleted",
       );
       router.push("/compensation-planning");
-    } catch (err: any) {
-      toast.error(err.message || "Could not delete plan");
-      setIsDeleting(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not delete plan";
+      toast.error(message);
+      setUi((prev) => ({ ...prev, isDeleting: false }));
     }
   };
 
@@ -217,7 +228,7 @@ export function CompensationPlanDetailView({
               size="sm"
               shape="pill"
               onClick={() => handleStatusChange("In Review")}
-              isLoading={isTransitioning}
+              isLoading={ui.isTransitioning}
               disabled={!validation.isValid}
               leftIcon={<Send className="w-4 h-4" />}
             >
@@ -232,7 +243,7 @@ export function CompensationPlanDetailView({
                 size="sm"
                 shape="pill"
                 onClick={() => handleStatusChange("Approved")}
-                isLoading={isTransitioning}
+                isLoading={ui.isTransitioning}
                 disabled={!validation.isValid}
                 leftIcon={<CheckCircle2 className="w-4 h-4 text-emerald-400" />}
               >
@@ -243,7 +254,7 @@ export function CompensationPlanDetailView({
                 size="sm"
                 shape="pill"
                 onClick={() => handleStatusChange("Rejected")}
-                isLoading={isTransitioning}
+                isLoading={ui.isTransitioning}
                 leftIcon={<XCircle className="w-4 h-4" />}
               >
                 Reject
@@ -258,7 +269,7 @@ export function CompensationPlanDetailView({
                 size="sm"
                 shape="pill"
                 onClick={() => handleStatusChange("Finalized")}
-                isLoading={isTransitioning}
+                isLoading={ui.isTransitioning}
                 disabled={!validation.isValid}
                 leftIcon={<FileCheck className="w-4 h-4 text-blue-400" />}
               >
@@ -269,7 +280,7 @@ export function CompensationPlanDetailView({
                 size="sm"
                 shape="pill"
                 onClick={() => handleStatusChange("Draft")}
-                disabled={isTransitioning}
+                disabled={ui.isTransitioning}
               >
                 Revert to Draft
               </Button>
@@ -282,7 +293,7 @@ export function CompensationPlanDetailView({
               size="sm"
               shape="pill"
               onClick={() => handleStatusChange("Draft")}
-              disabled={isTransitioning}
+              disabled={ui.isTransitioning}
             >
               Revert to Draft
             </Button>
@@ -299,8 +310,8 @@ export function CompensationPlanDetailView({
             variant="ghost"
             size="sm"
             shape="pill"
-            onClick={handleDeletePlan}
-            disabled={isDeleting || isTransitioning}
+            onClick={requestDeletePlan}
+            disabled={ui.isDeleting || ui.isTransitioning}
             className="text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
             title={
               plan.status === "Finalized"
@@ -471,6 +482,31 @@ export function CompensationPlanDetailView({
           />
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!confirmAction}
+        title={
+          confirmAction?.type === "finalize"
+            ? "Finalize compensation plan"
+            : "Delete compensation plan"
+        }
+        message={confirmAction?.message || ""}
+        confirmLabel={confirmAction?.label || "Confirm"}
+        variant={confirmAction?.type === "finalize" ? "primary" : "danger"}
+        isLoading={
+          confirmAction?.type === "finalize"
+            ? ui.isTransitioning
+            : ui.isDeleting
+        }
+        onConfirm={() => {
+          if (confirmAction?.type === "finalize") {
+            runStatusChange("Finalized");
+          } else {
+            handleConfirmDelete();
+          }
+        }}
+        onClose={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

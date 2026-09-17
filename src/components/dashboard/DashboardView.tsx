@@ -9,7 +9,7 @@ import {
   DEFAULT_RECENT_SALARIES,
   TimeRange,
 } from "@/constants";
-import { ChevronRight, TrendingUp, LayoutDashboard } from "lucide-react";
+import { ChevronRight, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useState, ReactNode } from "react";
 import {
@@ -71,7 +71,7 @@ export function DashboardView({
       {/* Top Welcome & Metrics Bar */}
       <PageHeader
         title={`Hello ${displayName}`}
-        description="Compensation insights, attendance tracking, and scheduled talent reviews."
+        description="Compensation insights and workforce salary overview."
         icon={LayoutDashboard}
       />
 
@@ -81,9 +81,6 @@ export function DashboardView({
           <div className="flex justify-between items-start">
             <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
               Total Global Payroll
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold">
-              +4.8%
             </span>
           </div>
           <div className="text-2xl font-bold text-stone-900 dark:text-white flex items-baseline gap-1">
@@ -97,9 +94,6 @@ export function DashboardView({
             <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
               Average Base Salary
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold">
-              +3.1%
-            </span>
           </div>
           <div className="text-2xl font-bold text-stone-900 dark:text-white">
             {formatCurrency(data?.stats?.averageBaseSalary)}
@@ -110,9 +104,6 @@ export function DashboardView({
           <div className="flex justify-between items-start">
             <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
               Median Compensation
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold">
-              +2.9%
             </span>
           </div>
           <div className="text-2xl font-bold text-stone-900 dark:text-white">
@@ -207,9 +198,6 @@ export function DashboardView({
                 {(
                   chartData[chartData.length - 1]?.current || 84250
                 ).toLocaleString("en-US")}
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] font-semibold flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" /> +14.8%
               </span>
             </div>
 

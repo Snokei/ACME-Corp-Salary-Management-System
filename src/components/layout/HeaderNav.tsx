@@ -148,12 +148,13 @@ export function HeaderNav() {
         </button>
 
         <button
+          type="button"
+          onClick={() => toast("Notifications coming soon")}
           className="hidden sm:flex p-2 rounded-full bg-white/80 dark:bg-stone-900/80 border border-stone-200/70 dark:border-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors relative shrink-0"
           title="Notifications"
           aria-label="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
         </button>
 
         <ThemeToggle />

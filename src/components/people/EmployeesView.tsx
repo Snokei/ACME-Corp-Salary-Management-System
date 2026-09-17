@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Button } from '@/components/ui';
+import { Button, ConfirmDialog } from '@/components/ui';
 import { Plus, Download, Trash2, X, Users } from 'lucide-react';
 
 import { EmployeeDetailDrawer } from './EmployeeDetailDrawer';
@@ -10,7 +10,6 @@ import { AddEmployeeModal } from './AddEmployeeModal';
 import { useEmployeesContext } from '@/components/people/EmployeesProvider';
 import { exportEmployeesToCSV } from '@/lib/employeeUtils';
 import toast from 'react-hot-toast';
-import { showConfirmDeleteToast } from '@/lib/toastUtils';
 import { deleteEmployeesAction } from '@/actions/employees';
 import { useRouter } from 'next/navigation';
 
@@ -26,8 +25,8 @@ export function EmployeesView({
   const router = useRouter();
   const { modalState, setModalState, checkedIds, setCheckedIds, filteredEmployeesRef } = useEmployeesContext();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // CSV Export handlers
   const handleExportCSV = () => {
     const toExport =
       checkedIds.size > 0
@@ -45,18 +44,9 @@ export function EmployeesView({
     setCheckedIds(new Set());
   };
 
-  // Bulk Delete handler
   const handleBulkDeleteClick = () => {
     if (checkedIds.size === 0) return;
-    
-    showConfirmDeleteToast({
-      message: (
-        <>
-          Are you sure you want to delete <strong className="text-stone-900 dark:text-white">{checkedIds.size}</strong> selected employee(s)? This action cannot be undone.
-        </>
-      ),
-      onConfirm: confirmBulkDelete,
-    });
+    setShowDeleteConfirm(true);
   };
 
   const confirmBulkDelete = async () => {
@@ -64,27 +54,30 @@ export function EmployeesView({
     setIsDeleting(true);
     const count = checkedIds.size;
     const toastId = toast.loading('Deleting employees...');
-    
+
     try {
       const idsToDelete = Array.from(checkedIds);
       const res = await deleteEmployeesAction(idsToDelete);
       if (res.success) {
         setCheckedIds(new Set());
+        setShowDeleteConfirm(false);
         router.refresh();
         toast.success(`Successfully deleted ${count} employees`, { id: toastId });
       } else {
         toast.error(`Failed to delete employees: ${res.error}`, { id: toastId });
       }
-    } catch (err: any) {
-      toast.error(`An error occurred while deleting employees: ${err.message}`, { id: toastId });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`An error occurred while deleting employees: ${message}`, { id: toastId });
     } finally {
       setIsDeleting(false);
     }
   };
 
+  const deleteCount = checkedIds.size;
+
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Title & Page Header with Action Buttons */}
       <PageHeader
         title="People"
         description="Manage organization members, compensation tiers, roles, and status."
@@ -109,10 +102,8 @@ export function EmployeesView({
         </Button>
       </PageHeader>
 
-      {/* Server Action Filter Form passed as node */}
       {filtersNode}
 
-      {/* Bulk Selection Actions Toolbar */}
       {checkedIds.size > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-amber-950 dark:text-amber-200 animate-fade-in shadow-sm">
           <div className="flex items-center gap-2.5 font-medium text-xs sm:text-sm">
@@ -160,17 +151,15 @@ export function EmployeesView({
         </div>
       )}
 
-      {/* Server-Rendered Data Payload */}
+      {/* Server-rendered filters/table stay as children — modal is client-only */}
       {children}
 
-      {/* Employee Detail Drawer */}
       <EmployeeDetailDrawer
         employee={modalState.type === 'view' ? modalState.employee : null}
         onClose={() => setModalState({ type: null, employee: null })}
         onEdit={(emp) => setModalState({ type: 'edit', employee: emp })}
       />
 
-      {/* Add Employee Modal */}
       <AddEmployeeModal
         isOpen={modalState.type === 'add' || modalState.type === 'edit'}
         onClose={() => setModalState({ type: null, employee: null })}
@@ -178,6 +167,22 @@ export function EmployeesView({
         onSuccess={() => {
           toast.success(`Employee ${modalState.type === 'edit' ? 'updated' : 'added'} successfully!`);
           router.refresh();
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Confirm Deletion"
+        message={
+          deleteCount === 1
+            ? 'Are you sure you want to delete the selected employee? This action cannot be undone.'
+            : `Are you sure you want to delete ${deleteCount} selected employees? This action cannot be undone.`
+        }
+        confirmLabel={deleteCount === 1 ? 'Delete Employee' : `Delete ${deleteCount} Employees`}
+        isLoading={isDeleting}
+        onConfirm={confirmBulkDelete}
+        onClose={() => {
+          if (!isDeleting) setShowDeleteConfirm(false);
         }}
       />
     </div>

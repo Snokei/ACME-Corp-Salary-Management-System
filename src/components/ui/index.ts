@@ -15,4 +15,5 @@ export * from './TableSkeleton';
 export * from './MetricsSkeleton';
 export * from './AnalyticsChartsSkeleton';
 export * from './Avatar';
+export * from './ConfirmDialog';
  
