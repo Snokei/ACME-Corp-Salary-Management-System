@@ -14,18 +14,23 @@ Web-based salary management and compensation analytics for ACME’s HR Manager �
 | Email | `admin@acme.com` |
 | Password | `password123` |
 
-### Vercel environment variables (required)
+### Vercel environment variables
 
-In **Vercel → Project → Settings → Environment Variables**:
+This project uses the **Prisma / Postgres integration** on Vercel. These are managed for you (no Edit option) — leave them:
+
+- `DATABASE_URL`
+- `POSTGRES_URL`
+- `PRISMA_DATABASE_URL`
+
+**Add manually** (Secret → Production):
 
 | Name | Value |
 |------|--------|
-| `DATABASE_URL` | `file:./dev.db` |
-| `JWT_SECRET` | a long random secret |
+| `JWT_SECRET` | `acme-salary-management-system-super-secure-production-key-2024` |
 
-**Important:** If Vercel created a Postgres `DATABASE_URL` (`postgres://...`), **edit it** to `file:./dev.db`. This app uses SQLite. The production build runs `prisma db push` + seed (~10k employees) so the DB is created on the server — you do not need to commit `prisma/dev.db`.
+After pushing code that uses PostgreSQL, **Redeploy**. The build runs `prisma db push` + seed (~10k employees) into your Vercel Postgres.
 
-After changing env vars: **Deployments → Redeploy**.
+> Video demo: add your walkthrough link here when ready.
 
 ## What it does
 

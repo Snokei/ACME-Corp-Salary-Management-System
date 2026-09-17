@@ -70,19 +70,17 @@ export async function loginAction(formData: FormData) {
     if (
       message.includes('Unable to open') ||
       message.includes('does not exist') ||
-      message.includes('SQLITE') ||
       message.includes('P1001') ||
       message.includes('P1003') ||
       message.includes('P1012') ||
-      message.includes('the URL must start with the protocol') ||
       message.includes('Error validating datasource') ||
-      message.includes('postgres') ||
-      message.includes('PrismaClientInitializationError')
+      message.includes('PrismaClientInitializationError') ||
+      message.includes('Can\'t reach database')
     ) {
       return {
         success: false,
         error:
-          'Database unavailable. On Vercel set DATABASE_URL to file:./dev.db (not Postgres) and redeploy so the build can seed SQLite.',
+          'Database unavailable. Check Vercel DATABASE_URL (Postgres) and that the latest deploy finished seeding.',
       };
     }
     return {

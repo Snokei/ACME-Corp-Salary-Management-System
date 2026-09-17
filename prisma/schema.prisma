@@ -5,9 +5,10 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  // Relative to the prisma/ directory. On Vercel set: DATABASE_URL="file:./dev.db"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Vercel Prisma/Postgres integration provides these (locked — no Edit needed).
+  url       = env("DATABASE_URL")
+  directUrl = env("POSTGRES_URL")
 }
 
 model Employee {
