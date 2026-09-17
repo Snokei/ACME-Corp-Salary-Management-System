@@ -9,7 +9,7 @@
 # Production build
 /build
 
-# Database
+# Database (large SQLite files — do not commit; breaks HTTPS push ~14MB)
 /prisma/*.db
 /prisma/*.db-journal
 

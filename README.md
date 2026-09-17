@@ -14,7 +14,18 @@ Web-based salary management and compensation analytics for ACME’s HR Manager �
 | Email | `admin@acme.com` |
 | Password | `password123` |
 
-> Video demo: add your walkthrough link here when ready (assessment requirement).
+### Vercel environment variables (required)
+
+In **Vercel → Project → Settings → Environment Variables**, set:
+
+| Name | Value |
+|------|--------|
+| `DATABASE_URL` | `file:./dev.db` |
+| `JWT_SECRET` | a long random secret (same idea as local `.env`) |
+
+Also ensure `prisma/dev.db` (seeded SQLite file) is committed so the serverless build can include it. Without these, login returns a server error.
+
+> Video demo: add your walkthrough link here when ready.
 
 ## What it does
 
@@ -45,7 +56,7 @@ Full shipped feature list: [`PRODUCT_OVERVIEW.md`](./PRODUCT_OVERVIEW.md)
 # Install
 npm install
 
-# Env — create .env with at least:
+# Env — copy .env.example to .env and set:
 # DATABASE_URL="file:./dev.db"
 # JWT_SECRET="your-long-random-secret"
 

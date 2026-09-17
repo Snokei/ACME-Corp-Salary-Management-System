@@ -6,7 +6,8 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  // Use DATABASE_URL in env (local + Vercel). Example: file:./dev.db
+  url      = env("DATABASE_URL")
 }
 
 model Employee {

@@ -1,5 +1,7 @@
 # ACME Salary Management — Optimization Report
 
+> Follow-up improvements backlog. Companion to [`performance.md`](./performance.md). Index: [`README.md`](./README.md).
+
 ## Overview
 This report covers concrete optimizations across **database queries**, **backend logic**, **security**, **frontend performance**, and **code quality** — all grounded in the actual codebase.
 

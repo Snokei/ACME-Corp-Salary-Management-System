@@ -20,6 +20,14 @@ export async function loginAction(formData: FormData) {
     return { success: false, error: 'Email and password are required.' };
   }
 
+  if (!JWT_SECRET) {
+    console.error('Login error: JWT_SECRET is not configured');
+    return {
+      success: false,
+      error: 'Server auth is misconfigured (JWT_SECRET missing).',
+    };
+  }
+
   try {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -57,6 +65,20 @@ export async function loginAction(formData: FormData) {
     return { success: true };
   } catch (error) {
     console.error('Login error:', error);
+    const message = error instanceof Error ? error.message : '';
+    // Surface DB path / missing-file errors clearly on production demos
+    if (
+      message.includes('Unable to open') ||
+      message.includes('does not exist') ||
+      message.includes('SQLITE') ||
+      message.includes('P1001') ||
+      message.includes('P1003')
+    ) {
+      return {
+        success: false,
+        error: 'Database unavailable on server. Ensure DATABASE_URL and seeded prisma/dev.db are deployed.',
+      };
+    }
     return { success: false, error: 'An unexpected error occurred.' };
   }
 }
