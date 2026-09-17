@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { EmployeeFilters } from './EmployeeFilters';
+import type { EmployeeStatusTab } from '@/constants';
 
 interface Props {
   searchParams: { [key: string]: string | string[] | undefined };
@@ -11,29 +12,36 @@ export async function EmployeeFiltersServer({ searchParams }: Props) {
   const role = typeof searchParams?.role === 'string' ? searchParams.role : 'All';
   const location = typeof searchParams?.location === 'string' ? searchParams.location : 'All';
   const tabRaw = searchParams?.tab;
-  const tab = (typeof tabRaw === 'string' && ['Active', 'On Leave', 'Contract', 'All'].includes(tabRaw)) 
-    ? (tabRaw as 'Active' | 'On Leave' | 'Contract' | 'All') 
-    : 'Active';
+  const selectedTab: EmployeeStatusTab =
+    typeof tabRaw === 'string' &&
+    ['Active', 'On Leave', 'Contract', 'All'].includes(tabRaw)
+      ? (tabRaw as EmployeeStatusTab)
+      : 'Active';
 
   const [uniqueRolesResult, uniqueLocationsResult] = await Promise.all([
     prisma.employee.findMany({ select: { role: true }, distinct: ['role'] }),
-    prisma.employee.findMany({ select: { country: true }, distinct: ['country'] })
+    prisma.employee.findMany({ select: { country: true }, distinct: ['country'] }),
   ]);
 
-  // Filter out null values and ensure string[] type
-  const uniqueRoles = ['All', ...(uniqueRolesResult as { role: string | null }[])
-    .map((r) => r.role)
-    .filter((r): r is string => r !== null)
-    .sort()];
-  const uniqueLocations = ['All', ...(uniqueLocationsResult as { country: string | null }[])
-    .map((l) => l.country)
-    .filter((l): l is string => l !== null)
-    .sort()];
+  const uniqueRoles = [
+    'All',
+    ...(uniqueRolesResult as { role: string | null }[])
+      .map((r) => r.role)
+      .filter((r): r is string => r !== null)
+      .sort(),
+  ];
+  const uniqueLocations = [
+    'All',
+    ...(uniqueLocationsResult as { country: string | null }[])
+      .map((l) => l.country)
+      .filter((l): l is string => l !== null)
+      .sort(),
+  ];
 
   return (
     <EmployeeFilters
       search={search}
-      selectedTab={tab}
+      selectedTab={selectedTab}
       department={department}
       role={role}
       location={location}

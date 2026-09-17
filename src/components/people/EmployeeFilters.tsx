@@ -1,6 +1,5 @@
 "use client";
 
-import { filterEmployeesAction } from "@/actions/employees";
 import { Button, Input, SearchableSelect } from "@/components/ui";
 import {
   DEPARTMENTS,
@@ -8,8 +7,8 @@ import {
   EmployeeStatusTab,
 } from "@/constants";
 import { RotateCcw, Search } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 
 export interface EmployeeFiltersProps {
   search?: string;
@@ -32,29 +31,80 @@ export function EmployeeFilters({
   uniqueLocations = [],
   className = "",
 }: EmployeeFiltersProps) {
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const hasActiveFilters = Boolean(
-    search.trim() !== "" ||
-    (selectedTab !== "Active" && selectedTab !== "All") ||
-    department !== "All" ||
-    role !== "All" ||
-    location !== "All",
-  );
-
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
   const [searchValue, setSearchValue] = useState(search);
 
   useEffect(() => {
     setSearchValue(search);
   }, [search]);
 
+  const pushParams = (mutate: (params: URLSearchParams) => void) => {
+    const params = new URLSearchParams(searchParams.toString());
+    mutate(params);
+    params.delete("page");
+    const query = params.toString();
+    startTransition(() => {
+      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    });
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    pushParams((params) => {
+      if (searchValue.trim()) {
+        params.set("search", searchValue.trim());
+      } else {
+        params.delete("search");
+      }
+    });
+  };
+
+  const handleSelectChange = (
+    key: "department" | "role" | "location",
+    value: string,
+  ) => {
+    pushParams((params) => {
+      if (value && value !== "All") {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+  };
+
+  const handleTabChange = (tab: EmployeeStatusTab) => {
+    pushParams((params) => {
+      if (tab !== "Active") {
+        params.set("tab", tab);
+      } else {
+        params.delete("tab");
+      }
+    });
+  };
+
+  const handleReset = () => {
+    setSearchValue("");
+    startTransition(() => {
+      router.push(pathname, { scroll: false });
+    });
+  };
+
+  const hasActiveFilters = Boolean(
+    search.trim() !== "" ||
+      (selectedTab !== "Active" && selectedTab !== "All") ||
+      department !== "All" ||
+      role !== "All" ||
+      location !== "All",
+  );
+
   return (
     <form
-      ref={formRef}
-      action={filterEmployeesAction}
-      className={`relative z-20 p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 ${className}`}
+      onSubmit={handleSearchSubmit}
+      className={`relative z-20 p-4 rounded-2xl bg-white/90 dark:bg-stone-900/90 border border-stone-200/70 dark:border-stone-800 shadow-sm backdrop-blur-md flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 ${isPending ? "opacity-80" : ""} ${className}`}
     >
-      {/* Left side: Search field */}
       <div className="w-full sm:flex-1 sm:max-w-md flex items-center gap-2">
         <Input
           name="search"
@@ -70,69 +120,65 @@ export function EmployeeFilters({
         </Button>
       </div>
 
-      {/* Right side: Dropdowns, Status tabs, Reset */}
       <div className="flex items-center gap-2 flex-wrap">
         <SearchableSelect
           name="department"
           options={[...DEPARTMENTS]}
-          defaultValue={department}
+          value={department}
           placeholder="All Depts"
-          onChange={() => formRef.current?.requestSubmit()}
+          onChange={(val) => handleSelectChange("department", val)}
         />
 
         <SearchableSelect
           name="role"
           options={uniqueRoles}
-          defaultValue={role}
+          value={role}
           placeholder="All Roles"
-          onChange={() => formRef.current?.requestSubmit()}
+          onChange={(val) => handleSelectChange("role", val)}
         />
 
         <SearchableSelect
           name="location"
           options={uniqueLocations}
-          defaultValue={location}
+          value={location}
           placeholder="All Locations"
-          onChange={() => formRef.current?.requestSubmit()}
+          onChange={(val) => handleSelectChange("location", val)}
         />
 
-        {/* Status Tabs as Submit Buttons */}
         <div className="overflow-x-auto">
           <div className="inline-flex p-1 rounded-full bg-stone-100 dark:bg-stone-800/80 border border-stone-200/60 dark:border-stone-700/60 whitespace-nowrap">
-          {EMPLOYEE_STATUS_TABS.map((tab) => {
-            const isSelected = selectedTab === tab;
-            return (
-              <button
-                key={tab}
-                type="submit"
-                name="tab"
-                value={tab}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                  isSelected
-                    ? "bg-amber-500 text-stone-950 shadow-sm"
-                    : "text-stone-600 dark:text-stone-400 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/30 dark:hover:text-amber-100"
-                }`}
-              >
-                {tab}
-              </button>
-            );
-          })}
+            {EMPLOYEE_STATUS_TABS.map((tab) => {
+              const isSelected = selectedTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => handleTabChange(tab)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                    isSelected
+                      ? "bg-amber-500 text-stone-950 shadow-sm"
+                      : "text-stone-600 dark:text-stone-400 hover:bg-amber-100 hover:text-amber-900 dark:hover:bg-amber-900/30 dark:hover:text-amber-100"
+                  }`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {hasActiveFilters && (
-          <Link href="/people">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              shape="pill"
-              leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-              className="text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
-            >
-              Reset
-            </Button>
-          </Link>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            shape="pill"
+            onClick={handleReset}
+            leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
+            className="text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200"
+          >
+            Reset
+          </Button>
         )}
       </div>
     </form>

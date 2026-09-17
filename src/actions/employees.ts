@@ -4,37 +4,12 @@ import { getEmployeesData, GetEmployeesParams, EmployeesResponseData } from '@/l
 import { prisma } from '@/lib/prisma';
 import { createAuditLog } from '@/lib/auditLogService';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 /**
  * Server Action to fetch employees directly based on filters, search query, and pagination.
  */
 export async function getEmployeesAction(params: GetEmployeesParams): Promise<EmployeesResponseData> {
   return await getEmployeesData(params);
-}
-
-/**
- * Server Action to handle employee filter and search submissions by redirecting with new URL parameters.
- * Eliminates the need for client-side state management for filters.
- */
-export async function filterEmployeesAction(formData: FormData) {
-  const search = formData.get('search')?.toString() || '';
-  const department = formData.get('department')?.toString() || 'All';
-  const role = formData.get('role')?.toString() || 'All';
-  const location = formData.get('location')?.toString() || 'All';
-  const tab = formData.get('tab')?.toString() || 'Active';
-  const page = formData.get('page')?.toString() || '1';
-
-  const params = new URLSearchParams();
-  if (search.trim()) params.set('search', search.trim());
-  if (department !== 'All') params.set('department', department);
-  if (role !== 'All') params.set('role', role);
-  if (location !== 'All') params.set('location', location);
-  if (tab !== 'Active') params.set('tab', tab);
-  if (page !== '1') params.set('page', page);
-
-  const queryString = params.toString();
-  redirect(queryString ? `/people?${queryString}` : '/people');
 }
 
 /**
